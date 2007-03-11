@@ -5,14 +5,15 @@
 #include <sstream>
 
 #include "fhtagn/xml/parser.h"
+#include "fhtagn/xml/defaulthandler.h"
 
 using namespace std;
+using namespace fhtagn;
 
 int main (int argc, char * const argv[])
 {
 	try
 	{
-		fhtagn::xml::parser parser;
 	
 		string filename = argv[1];
 		ifstream file(filename.c_str());
@@ -22,8 +23,11 @@ int main (int argc, char * const argv[])
 		cout << "----- loaded data -----" << endl;
 		cout << os.str() << endl;
 		cout << "----- ends ------------" << endl;
-		
-		if(!parser.parse(os.str())) throw runtime_error("couldn't fully parse document");
+
+		xml::defaulthandler handler;
+		xml::parser<xml::defaulthandler> parser;
+
+		if(!parser.parse(os.str(), handler)) throw runtime_error("couldn't fully parse document");
 		
 		cout << " -- Ok -- " << endl;
 		
