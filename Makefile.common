@@ -5,15 +5,23 @@
 # included in this source distribution.
 
 FHTAGN_INCLUDES = \
-	-I $(top_srcdir) \
-	$(BOOST_CPPFLAGS)
+	-I $(top_srcdir)
 
-FHTAGN_CXXFLAGS = -Wall -Wold-style-cast -Wsign-promo
+FHTAGN_CPPFLAGS = -Wall -Wold-style-cast -Wsign-promo -ggdb
+
 if EXTRA_CHECKS
-FHTAGN_CXXFLAGS += -Weffc++
+FHTAGN_CPPFLAGS += -Weffc++
 endif
 
-AM_CXXFLAGS = $(FHTAGN_CXXFLAGS) $(FHTAGN_INCLUDES)
+if ENABLE_DEBUG
+FHTAGN_CPPFLAGS += -DDEBUG -O0
+else
+FHTAGN_CPPFLAGS += -DNDEBUG -O2
+endif
+
+AM_CPPFLAGS = \
+	$(BOOST_CPPFLAGS) \
+	$(FHTAGN_CPPFLAGS) $(FHTAGN_INCLUDES)
 
 LIB_MAJOR = $$(echo $(PACKAGE_VERSION) | sed 's/\..*//g')
 LIB_MINOR = $$(echo $(PACKAGE_VERSION) | sed 's/[^.]*\.//g')

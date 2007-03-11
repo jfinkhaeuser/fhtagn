@@ -34,17 +34,9 @@ AC_TYPE_UINT32_T
 
 # Checks for library functions.
 
-# Extra code checks
-AC_ARG_ENABLE([extra-checks],
-[  --enable-extra-checks   Turn on extra static code checking (-Weffc++). This
-                          will lead to spam in headers included from the STL
-                          and/or boost, but may help finding flaws in Fhtagn!],
-[case "${enableval}" in
-  yes) extra_checks=true ;;
-  no)  extra_checks=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-extra-checks]) ;;
-esac],[extra_checks=false])
-AM_CONDITIONAL([EXTRA_CHECKS], [test x$extra_checks = xtrue])
+# Optional features
+AM_FHTAGN_ENABLE_EXTRA_CHECKS
+AM_FHTAGN_ENABLE_DEBUG
 
 AC_CONFIG_FILES([
   Makefile

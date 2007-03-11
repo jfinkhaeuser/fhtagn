@@ -267,3 +267,40 @@ AC_ARG_WITH(cppunit-exec-prefix,[  --with-cppunit-exec-prefix=PFX  Exec prefix w
 
 
 
+
+dnl
+dnl Extra code checks
+dnl
+AC_DEFUN([AM_FHTAGN_ENABLE_EXTRA_CHECKS],
+[
+AC_ARG_ENABLE([extra-checks],
+  [AS_HELP_STRING([--enable-extra-checks],
+    [(default is no) Turn on extra static code checking (-Weffc++).
+     This will lead to spam in headers included from the STL and/or boost,
+     but may help finding flaws in Fhtagn!])],
+[case "${enableval}" in
+  yes) extra_checks=true ;;
+  no)  extra_checks=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-extra-checks]) ;;
+esac],[extra_checks=false])
+AM_CONDITIONAL([EXTRA_CHECKS], [test x$extra_checks = xtrue])
+])
+
+
+dnl
+dnl Debug/release builds
+dnl
+AC_DEFUN([AM_FHTAGN_ENABLE_DEBUG],
+[
+AC_ARG_ENABLE([debug],
+  [AS_HELP_STRING([--enable-debug],
+    [(default is yes) Switch off debug builds, i.e. pass the -DNDEBUG flag and
+     use more highly optimized build flags. Use --disable-debug for production
+     builds.])],
+[case "${enableval}" in
+  yes) enable_debug=true ;;
+  no)  enable_debug=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+esac],[enable_debug=true])
+AM_CONDITIONAL([ENABLE_DEBUG], [test x$enable_debug = xtrue])
+])
