@@ -14,3 +14,8 @@ FHTAGN_CXXFLAGS += -Weffc++
 endif
 
 AM_CXXFLAGS = $(FHTAGN_CXXFLAGS) $(FHTAGN_INCLUDES)
+
+LIB_MAJOR = $$(echo $(PACKAGE_VERSION) | sed 's/\..*//g')
+LIB_MINOR = $$(echo $(PACKAGE_VERSION) | sed 's/[^.]*\.//g')
+LIB_AGE = 0
+LIB_VERSION = -version-info $(LIB_MAJOR):$(LIB_MINOR):$(LIB_AGE)

@@ -17,4 +17,7 @@ UTIL_HDR += cppunit_output.h
 endif
 
 libfhtagn_util_la_SOURCES = $(UTIL_SRC)
+
+libfhtagn_util_la_LDFLAGS = $(LIB_VERSION)
+
 include_HEADERS = $(UTIL_HDR)

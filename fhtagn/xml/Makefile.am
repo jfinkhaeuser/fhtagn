@@ -9,10 +9,12 @@ include $(top_srcdir)/Makefile.common
 lib_LTLIBRARIES = libfhtagn_xml.la
 
 libfhtagn_xml_la_SOURCES = \
-	xmlparser.cpp
+	parser.cpp
+
+libfhtagn_xml_la_LDFLAGS = $(LIB_VERSION)
 
 include_HEADERS = \
-	xmlparser.h
+	parser.h
 
 noinst_HEADERS = \
-	xmlgrammar.h
+	grammar.h

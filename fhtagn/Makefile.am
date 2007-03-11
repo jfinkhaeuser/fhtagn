@@ -13,5 +13,7 @@ lib_LTLIBRARIES = libfhtagn.la
 libfhtagn_la_SOURCES = \
 	variant.cpp
 
+libfhtagn_la_LDFLAGS = $(LIB_VERSION)
+
 include_HEADERS = \
 	variant.h variant.tcc
