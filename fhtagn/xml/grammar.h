@@ -35,6 +35,7 @@ using phoenix::arg1;
 using phoenix::arg2;
 using phoenix::construct_;
 using phoenix::bind;
+using phoenix::var;
 
 ////////////////////
 /// from http://article.gmane.org/gmane.comp.parsers.spirit.general/6051/match=map
@@ -109,18 +110,18 @@ struct grammar : public boost::spirit::grammar<xml::grammar<HANDLER> >
 						>> *space_p
 						>> '/'
 						>> '>')
-						[bind(&HANDLER::start_element)(self.handler, node.tag, node.attributes)]
-						[bind(&HANDLER::end_element)(self.handler, node.tag)];
+						[bind(&HANDLER::start_element)(var(self.handler), node.tag, node.attributes)]
+						[bind(&HANDLER::end_element)(var(self.handler), node.tag)];
 			node_content = list_p(node, *space_p) 
 						   | 
-						   data[bind(&HANDLER::characters)(self.handler, construct_<std::string>(arg1, arg2))];
-			full_node =	   open_tag[bind(&HANDLER::start_element)(self.handler, node.tag, node.attributes)]
+						   data[bind(&HANDLER::characters)(var(self.handler), construct_<std::string>(arg1, arg2))];
+			full_node =	   open_tag[bind(&HANDLER::start_element)(var(self.handler), node.tag, node.attributes)]
 						>> *space_p 
 						>> node_content 
 						>> *space_p 
-						>> close_tag[bind(&HANDLER::end_element)(self.handler, node.tag)];
+						>> close_tag[bind(&HANDLER::end_element)(var(self.handler), node.tag)];
 			node = empty_node | full_node;
-			xmldocument =      eps_p	[bind(&HANDLER::start_document)(self.handler)]
+			xmldocument =      eps_p	[bind(&HANDLER::start_document)(var(self.handler))]
 							>> *space_p
 							>> !list_p(processing_instruction, *space_p)
 							>> *space_p 
@@ -128,7 +129,7 @@ struct grammar : public boost::spirit::grammar<xml::grammar<HANDLER> >
 							>> *space_p
 							>> +list_p(node, *space_p)
 							>> *space_p
-							>> eps_p   [bind(&HANDLER::end_document)(self.handler)]; 
+							>> eps_p   [bind(&HANDLER::end_document)(var(self.handler))]; 
 								 
 			BOOST_SPIRIT_DEBUG_NODE(processing_instruction);
 			BOOST_SPIRIT_DEBUG_NODE(doctype);

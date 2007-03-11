@@ -15,13 +15,11 @@ namespace xml
 
 struct defaulthandler {
 
-	mutable std::map<std::string, long> tagcount;
-	mutable std::string tag;
-
+	mutable std::map<std::string, long> tagcount;	
+		
 	void start_document() const
 	{
 		std::cout << "starting parser" << std::endl;
-		tagcount["henry"] = 13;
 	}
 
 	void end_document() const
@@ -32,7 +30,6 @@ struct defaulthandler {
 		{
 			std::cout << i->first << " : " << i->second << std::endl;
 		}
-		std::cout << "tag: " << tag << std::endl;
 	}
 
 	void start_element(const std::string& name, const std::map<std::string, std::string>& attributes) const
@@ -44,8 +41,7 @@ struct defaulthandler {
 			std::cout <<"(" << i->first << " = " << i->second <<")";
 		}
 		std::cout << std::endl;
-		tagcount[name] = 1;
-		tag = name;
+		tagcount[name] += 1;
 	}
 
 	void end_element(const std::string& name) const
@@ -57,7 +53,6 @@ struct defaulthandler {
 	{
 		std::cout << "characters: '" << name << "'" << std::endl;
 	}		
-
 };
 
 } // xml
