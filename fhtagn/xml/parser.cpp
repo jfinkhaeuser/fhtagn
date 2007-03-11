@@ -9,8 +9,8 @@
 
 //#define BOOST_SPIRIT_DEBUG
 
-#include "xmlparser.h"
-#include "xmlgrammar.h"
+#include "fhtagn/xml/parser.h"
+#include "fhtagn/xml/grammar.h"
 
 namespace fhtagn
 {
