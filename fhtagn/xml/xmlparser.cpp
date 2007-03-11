@@ -12,19 +12,30 @@
 #include "xmlparser.h"
 #include "xmlgrammar.h"
 
-xmlparser::xmlparser()
+namespace fhtagn
+{
+
+namespace xml
+{
+
+
+parser::parser()
 {
 
 }
 
-xmlparser::~xmlparser()
+parser::~parser()
 {
 
 }
 
-bool xmlparser::parse(const std::string& data)
+bool parser::parse(const std::string& data)
 {
-	xmlgrammar xmlgr;
+	fhtagn::xml::grammar xmlgr;
 	BOOST_SPIRIT_DEBUG_NODE(xmlgr);		 
 	return boost::spirit::parse(data.c_str(), xmlgr).full;
 }
+
+} // xml
+
+} // fhtagn

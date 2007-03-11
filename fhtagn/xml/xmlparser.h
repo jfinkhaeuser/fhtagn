@@ -12,13 +12,23 @@
 
 #include <string>
 
-class xmlparser
+namespace fhtagn
+{
+
+namespace xml
+{
+
+class parser
 {
 public:
-	xmlparser();
-	virtual ~xmlparser();
+	parser();
+	virtual ~parser();
 	
 	bool parse(const std::string& data);
 };
+
+} // xml
+
+} // fhtagn
 
 #endif

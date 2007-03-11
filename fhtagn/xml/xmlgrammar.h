@@ -35,19 +35,6 @@ using phoenix::arg2;
 using phoenix::construct_;
 using phoenix::bind;
 
-
-struct node_closure : closure<node_closure, std::string, std::map<std::string, std::string> >
-{
-	member1 tag;
-	member2 attributes;
-};
-
-struct attribute_closure : closure<attribute_closure, std::string, std::string >
-{
-	member1 key;
-	member2 val;
-};
-
 ////////////////////
 /// from http://article.gmane.org/gmane.comp.parsers.spirit.general/6051/match=map
 namespace phoenix {
@@ -68,13 +55,30 @@ struct binary_operator<index_op, T0, T1> {
 }
 //////////////////////////////////
 
+namespace fhtagn
+{
 
-struct xmlgrammar : public grammar<xmlgrammar>
+namespace xml
+{
+
+struct node_closure : closure<node_closure, std::string, std::map<std::string, std::string> >
+{
+	member1 tag;
+	member2 attributes;
+};
+
+struct attribute_closure : closure<attribute_closure, std::string, std::string >
+{
+	member1 key;
+	member2 val;
+};
+
+struct grammar : public boost::spirit::grammar<xml::grammar>
 {
 	template <typename ScannerT>
 	struct definition
 	{
-		definition(xmlgrammar const& self) 
+		definition(xml::grammar const& self) 
 		{ 
 			processing_instruction = str_p("<?") >> +(anychar_p-"?>") >> "?>";
 			doctype = str_p("<!") >> +(anychar_p-'>') >> '>';
@@ -100,16 +104,16 @@ struct xmlgrammar : public grammar<xmlgrammar>
 						>> *space_p
 						>> '/'
 						>> '>')
-						[bind(&xmlgrammar::start_element)(self, node.tag, node.attributes)]
-						[bind(&xmlgrammar::end_element)(self, node.tag)];
+						[bind(&xml::grammar::start_element)(self, node.tag, node.attributes)]
+						[bind(&xml::grammar::end_element)(self, node.tag)];
 			node_content = list_p(node, *space_p) 
 						   | 
-						   data[bind(&xmlgrammar::characters)(self, construct_<std::string>(arg1, arg2))];
-			full_node =	   open_tag[bind(&xmlgrammar::start_element)(self, node.tag, node.attributes)]
+						   data[bind(&xml::grammar::characters)(self, construct_<std::string>(arg1, arg2))];
+			full_node =	   open_tag[bind(&xml::grammar::start_element)(self, node.tag, node.attributes)]
 						>> *space_p 
 						>> node_content 
 						>> *space_p 
-						>> close_tag[bind(&xmlgrammar::end_element)(self, node.tag)];
+						>> close_tag[bind(&xml::grammar::end_element)(self, node.tag)];
 			node = empty_node | full_node;
 			xmldocument =    *space_p
 							 >> !list_p(processing_instruction, *space_p)
@@ -178,5 +182,9 @@ struct xmlgrammar : public grammar<xmlgrammar>
 		std::cout << "'" << data << "'" << std::endl;
 	}
 };
+
+} // xml
+
+} // fhtagn
 
 #endif 
