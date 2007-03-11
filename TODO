@@ -1,0 +1,11 @@
+Source code:
+
+- doxygen template
+- variant:
+  make variant accept character string literals and store them as std::string
+  documentation
+- always pass -DDEBUG or -DNDEBUG
+
+Other:
+
+- MoinMoin (?) on the website
