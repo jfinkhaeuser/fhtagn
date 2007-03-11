@@ -22,6 +22,7 @@
 using boost::spirit::grammar;
 using boost::spirit::rule;
 using boost::spirit::str_p;
+using boost::spirit::eps_p;
 using boost::spirit::ch_p;
 using boost::spirit::ch_p;
 using boost::spirit::anychar_p;
@@ -73,12 +74,16 @@ struct attribute_closure : closure<attribute_closure, std::string, std::string >
 	member2 val;
 };
 
-struct grammar : public boost::spirit::grammar<xml::grammar>
+template<class HANDLER>
+struct grammar : public boost::spirit::grammar<xml::grammar<HANDLER> >
 {
+	HANDLER& handler;
+	grammar(HANDLER& h) : handler(h) {};
+
 	template <typename ScannerT>
 	struct definition
 	{
-		definition(xml::grammar const& self) 
+		definition(xml::grammar<HANDLER> const& self) 
 		{ 
 			processing_instruction = str_p("<?") >> +(anychar_p-"?>") >> "?>";
 			doctype = str_p("<!") >> +(anychar_p-'>') >> '>';
@@ -104,23 +109,26 @@ struct grammar : public boost::spirit::grammar<xml::grammar>
 						>> *space_p
 						>> '/'
 						>> '>')
-						[bind(&xml::grammar::start_element)(self, node.tag, node.attributes)]
-						[bind(&xml::grammar::end_element)(self, node.tag)];
+						[bind(&HANDLER::start_element)(self.handler, node.tag, node.attributes)]
+						[bind(&HANDLER::end_element)(self.handler, node.tag)];
 			node_content = list_p(node, *space_p) 
 						   | 
-						   data[bind(&xml::grammar::characters)(self, construct_<std::string>(arg1, arg2))];
-			full_node =	   open_tag[bind(&xml::grammar::start_element)(self, node.tag, node.attributes)]
+						   data[bind(&HANDLER::characters)(self.handler, construct_<std::string>(arg1, arg2))];
+			full_node =	   open_tag[bind(&HANDLER::start_element)(self.handler, node.tag, node.attributes)]
 						>> *space_p 
 						>> node_content 
 						>> *space_p 
-						>> close_tag[bind(&xml::grammar::end_element)(self, node.tag)];
+						>> close_tag[bind(&HANDLER::end_element)(self.handler, node.tag)];
 			node = empty_node | full_node;
-			xmldocument =    *space_p
-							 >> !list_p(processing_instruction, *space_p)
-							 >> *space_p 
-							 >> !doctype 
-							 >> *space_p
-							 >> +list_p(node, *space_p) >> *space_p; 
+			xmldocument =      eps_p	[bind(&HANDLER::start_document)(self.handler)]
+							>> *space_p
+							>> !list_p(processing_instruction, *space_p)
+							>> *space_p 
+							>> !doctype 
+							>> *space_p
+							>> +list_p(node, *space_p)
+							>> *space_p
+							>> eps_p   [bind(&HANDLER::end_document)(self.handler)]; 
 								 
 			BOOST_SPIRIT_DEBUG_NODE(processing_instruction);
 			BOOST_SPIRIT_DEBUG_NODE(doctype);
@@ -155,32 +163,6 @@ struct grammar : public boost::spirit::grammar<xml::grammar>
 		
 		rule<ScannerT> const& start() const { return xmldocument; }
 	};
-
-	void start_element(const std::string& name, const std::map<std::string, std::string>& attributes) const
-	{
-		std::cout << "start element: '" << name << "' ";
-		std::map<std::string, std::string>::const_iterator i;
-		for(i = attributes.begin(); i != attributes.end(); ++i)
-		{
-			std::cout <<"(" << i->first << " = " << i->second <<")";
-		}
-		std::cout << std::endl;
-	}
-
-	void end_element(const std::string& name) const
-	{
-		std::cout << "end element: '" << name << "'" << std::endl;
-	}
-	
-	void characters(const std::string& name) const
-	{
-		std::cout << "characters: '" << name << "'" << std::endl;
-	}
-		
-	void print(const std::string& data) const
-	{
-		std::cout << "'" << data << "'" << std::endl;
-	}
 };
 
 } // xml
