@@ -1,0 +1,33 @@
+      ___
+     /   \  Fhtagn!
+    /    |  /
+    |oO /
+   /|| \/\
+  //  // VV\
+  m . m  |
+  ; _, _,>
+  '" '"
+
+Copyright (C) 2007 by the authors.
+
+Requirements
+==================
+
+   The Fhtagn! C++ Library depends heavily on boost. If boost is not part
+of your development environment yet, obtain a copy from http://www.boost.org/
+
+Installation
+==================
+
+   In addition to the generic installation instructions in the INSTALL file,
+you may need to specifice the --with-boost parameter to the configure script.
+
+   If your copy of boost is installed in a non-standard location, specify where
+`configure' may find boost by providing the `--with-boost' option followed by
+an installation root.  On my machine, I run:
+
+    ./configure --with-boost=/opt/local
+
+   `configure` then attempts to locate the boost header files in
+`/opt/local/include/boost' and the libraries in `/opt/local/lib'.
+
