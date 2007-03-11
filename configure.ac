@@ -50,6 +50,7 @@ AC_CONFIG_FILES([
   Makefile
   fhtagn/Makefile
   fhtagn/util/Makefile
+  fhtagn/xml/Makefile
   test/Makefile
 ])
 AC_OUTPUT

@@ -4,14 +4,15 @@
 # the following license terms and conditions as set forth in the COPYING file
 # included in this source distribution.
 
-SUBDIRS = util xml
-
 include $(top_srcdir)/Makefile.common
 
-lib_LTLIBRARIES = libfhtagn.la
+lib_LTLIBRARIES = libfhtagn_xml.la
 
-libfhtagn_la_SOURCES = \
-	variant.cpp
+libfhtagn_xml_la_SOURCES = \
+	xmlparser.cpp
 
 include_HEADERS = \
-	variant.h variant.tcc
+	xmlparser.h
+
+noinst_HEADERS = \
+	xmlgrammar.h
