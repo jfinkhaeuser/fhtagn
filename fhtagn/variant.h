@@ -351,6 +351,19 @@ public:
     template <typename T>
     static bool check(variant const & var);
 
+    /**
+     * The two static versions of safe_get() below can be used in much the same
+     * way as check() above. They either return the specified type, or, if that's
+     * not possible, throw an error.
+     **/
+    template <typename T>
+    static typename specialization_traits<T>::holder_type const &
+    safe_get(variant const & var);
+
+    template <typename T>
+    static typename specialization_traits<T>::holder_type &
+    safe_get(variant & var);
+
 private:
     /**
      * Internally, variants can be in three states:

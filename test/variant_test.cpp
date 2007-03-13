@@ -46,6 +46,7 @@ public:
       CPPUNIT_TEST(testMap);
       CPPUNIT_TEST(testString);
       CPPUNIT_TEST(testCheck);
+      CPPUNIT_TEST(testSafeGet);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -70,11 +71,11 @@ private:
         CPPUNIT_ASSERT(y[0].as<int>() == 1276);
 
         // treating y[0] as a container must fail
-        CPPUNIT_ASSERT_THROW(y[0]["foo"] = 123, std::logic_error);
+        CPPUNIT_ASSERT_THROW(y[0]["foo"] = 123, fhtagn::variant::error);
 
         // automatically promoting an undefined variant to array must fail
         fhtagn::variant x;
-        CPPUNIT_ASSERT_THROW(x[0] = 42, std::logic_error);
+        CPPUNIT_ASSERT_THROW(x[0] = 42, fhtagn::variant::error);
 
         // try using a vector method...
         fhtagn::variant z = fhtagn::variant::array_t();
@@ -99,7 +100,7 @@ private:
         CPPUNIT_ASSERT(y["foo"]["bar"]["baz"].is<int>());
 
         // again, as with arrays, can't change a map to another type implicitly
-        CPPUNIT_ASSERT_THROW(y["foo"][0] = 123, std::logic_error);
+        CPPUNIT_ASSERT_THROW(y["foo"][0] = 123, fhtagn::variant::error);
 
         // but can do so explicitly
         CPPUNIT_ASSERT_NO_THROW(y["foo"] = 123);
@@ -132,6 +133,20 @@ private:
 
         x["foo"]["bar"] = 3;
         CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::check<int>(x["foo"]["bar"]));
+    }
+
+    void testSafeGet()
+    {
+        fhtagn::variant x;
+        CPPUNIT_ASSERT_THROW(fhtagn::variant::safe_get<int>(x), fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(fhtagn::variant::safe_get<int>(x["foo"]["bar"]), fhtagn::variant::error);
+
+        x["foo"]["bar"] = 3.141592;
+        CPPUNIT_ASSERT_THROW(fhtagn::variant::safe_get<int>(x["foo"]["bar"]), fhtagn::variant::error);
+
+        x["foo"]["bar"] = 3;
+        CPPUNIT_ASSERT_NO_THROW(fhtagn::variant::safe_get<int>(x["foo"]["bar"]));
+        CPPUNIT_ASSERT_EQUAL(3, fhtagn::variant::safe_get<int>(x["foo"]["bar"]));
     }
 };
 

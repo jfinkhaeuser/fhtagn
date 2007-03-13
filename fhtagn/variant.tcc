@@ -109,7 +109,7 @@ variant::is_valid() const
 
 
 template <typename T>
-bool
+inline bool
 variant::check(variant const & var)
 {
     try {
@@ -118,6 +118,31 @@ variant::check(variant const & var)
         return false;
     }
 }
+
+
+template <typename T>
+inline
+typename variant::specialization_traits<T>::holder_type const &
+variant::safe_get(variant const & var)
+{
+    if (!var.is<T>()) {
+        throw variant::error("fhtagn::variant::safe_get: invalid type");
+    }
+    return var.as<T>();
+}
+
+
+template <typename T>
+inline
+typename variant::specialization_traits<T>::holder_type &
+variant::safe_get(variant & var)
+{
+    if (!var.is<T>()) {
+        throw variant::error("fhtagn::variant::safe_get: invalid type");
+    }
+    return var.as<T>();
+}
+
 
 
 } // namespace fhtagn
