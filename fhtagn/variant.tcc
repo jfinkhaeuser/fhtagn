@@ -54,7 +54,7 @@ variant::operator=(T const & other)
 {
     switch (m_state) {
         case IS_INVALID:
-            throw std::logic_error("Cannot assign to the variant::invalid_value!");
+            throw error("Cannot assign to the variant::invalid_value!");
             break;
 
         case IS_EMPTY:
@@ -106,6 +106,19 @@ variant::is_valid() const
 {
     return (m_state != IS_INVALID);
 }
+
+
+template <typename T>
+bool
+variant::check(variant const & var)
+{
+    try {
+        return var.is<T>();
+    } catch (error const & ex) {
+        return false;
+    }
+}
+
 
 } // namespace fhtagn
 

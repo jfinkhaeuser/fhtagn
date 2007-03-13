@@ -247,6 +247,12 @@ public:
     typedef std::map<std::string, variant> map_t;
 
     /**
+     * Variants throw error on some occasion, which is derived from
+     * std::logic_error.
+     **/
+    typedef std::logic_error error;
+
+    /**
      * See class documentation. Specialized array of variants.
      **/
     typedef std::vector<variant> array_t;
@@ -320,7 +326,7 @@ public:
      * Variants may be invalid. Invalid variants can be returned from the
      * subscript operators, if the variant you called the subcript operator
      * on was not subscriptable. If you further use an invalid variant, that
-     * will result in a std::logic_error exception. Using this function, you
+     * will result in a variant::error  exception. Using this function, you
      * can explicitly check if a variant is invalid.
      **/
     bool is_valid() const;
@@ -337,6 +343,14 @@ public:
     variant const & operator[](uint32_t index) const;
     variant const & operator[](std::string const & key) const;
 
+    /**
+     * Use ths function to simplify checking of the type of a nested variant:
+     *    variant::check<int>(x["foo"]["bar"])
+     * returns true if x["foo"]["bar"] exists and contains an int.
+     **/
+    template <typename T>
+    static bool check(variant const & var);
+
 private:
     /**
      * Internally, variants can be in three states:
@@ -350,7 +364,7 @@ private:
      * - IS_INVALID cannot be constructed explicitly, rather, it's used
      *   internally when the user has tried to perform an illegal operation
      *   on the variant. Using a variant in the IS_INVALID state will result
-     *   in a std::logic_error exception.
+     *   in an variant::error exception.
      **/
     enum variant_state
     {

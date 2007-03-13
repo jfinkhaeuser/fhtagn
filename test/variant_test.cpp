@@ -45,6 +45,7 @@ public:
       CPPUNIT_TEST(testArray);
       CPPUNIT_TEST(testMap);
       CPPUNIT_TEST(testString);
+      CPPUNIT_TEST(testCheck);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -118,6 +119,19 @@ private:
 
         // TODO dosn't work yet
         // CPPUNIT_ASSERT(x = "baz");
+    }
+
+    void testCheck()
+    {
+        fhtagn::variant x;
+        CPPUNIT_ASSERT_EQUAL(false, fhtagn::variant::check<int>(x));
+        CPPUNIT_ASSERT_EQUAL(false, fhtagn::variant::check<int>(x["foo"]["bar"]));
+
+        x["foo"]["bar"] = 3.141592;
+        CPPUNIT_ASSERT_EQUAL(false, fhtagn::variant::check<int>(x["foo"]["bar"]));
+
+        x["foo"]["bar"] = 3;
+        CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::check<int>(x["foo"]["bar"]));
     }
 };
 

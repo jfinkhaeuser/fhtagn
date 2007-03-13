@@ -5,3 +5,5 @@
 # included in this source distribution.
 
 SUBDIRS = fhtagn test
+
+include $(top_srcdir)/Makefile.common
