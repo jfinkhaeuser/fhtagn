@@ -5,6 +5,7 @@
 # included in this source distribution.
 
 include $(top_srcdir)/Makefile.common
+utilincludedir=$(pkgincludedir)/util
 
 lib_LTLIBRARIES = libfhtagn_util.la
 
@@ -20,4 +21,4 @@ libfhtagn_util_la_SOURCES = $(UTIL_SRC)
 
 libfhtagn_util_la_LDFLAGS = $(LIB_VERSION)
 
-include_HEADERS = $(UTIL_HDR)
+utilinclude_HEADERS = $(UTIL_HDR)

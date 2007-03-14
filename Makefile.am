@@ -15,3 +15,6 @@ if ENABLE_COVERAGE
 gencov: run-tests
 	@$(top_srcdir)/gencov.sh "$(srcdir)" "$(builddir)"
 endif
+
+EXTRA_DIST = \
+	Makefile.common bootstrap.sh gencov.sh

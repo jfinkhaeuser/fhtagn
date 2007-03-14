@@ -15,5 +15,5 @@ libfhtagn_la_SOURCES = \
 
 libfhtagn_la_LDFLAGS = $(LIB_VERSION)
 
-include_HEADERS = \
-	variant.h variant.tcc
+pkginclude_HEADERS = \
+	variant.h variant.tcc stdvariant.h

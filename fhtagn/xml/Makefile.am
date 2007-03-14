@@ -5,6 +5,7 @@
 # included in this source distribution.
 
 include $(top_srcdir)/Makefile.common
+xmlincludedir=$(pkgincludedir)/xml
 
 # lib_LTLIBRARIES = libfhtagn_xml.la
 # 
@@ -12,9 +13,9 @@ include $(top_srcdir)/Makefile.common
 # 	parser.cpp
 # 
 # libfhtagn_xml_la_LDFLAGS = $(LIB_VERSION)
-
-include_HEADERS = \
-	parser.h
-
-noinst_HEADERS = \
-	grammar.h
+#
+# xml_HEADERS = \
+# 	parser.h
+#
+# noinst_HEADERS = \
+# 	grammar.h
