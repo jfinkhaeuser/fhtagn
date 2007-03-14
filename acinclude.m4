@@ -273,34 +273,74 @@ dnl Extra code checks
 dnl
 AC_DEFUN([AM_FHTAGN_ENABLE_EXTRA_CHECKS],
 [
+AC_MSG_CHECKING([whether extra static code checking is enabled])
 AC_ARG_ENABLE([extra-checks],
   [AS_HELP_STRING([--enable-extra-checks],
-    [(default is no) Turn on extra static code checking (-Weffc++).
-     This will lead to spam in headers included from the STL and/or boost,
-     but may help finding flaws in Fhtagn!])],
+    [(default is no) Turn on extra static code checking (`-Weffc++' compiler
+     option). This will lead to spam in headers included from the STL and/or
+     boost, but may help finding flaws in Fhtagn!])],
 [case "${enableval}" in
-  yes) extra_checks=true ;;
-  no)  extra_checks=false ;;
+  yes) enable_extra_checks=true ; result_extra_checks=yes ;;
+  no)  enable_extra_checks=false ; result_extra_checks=no ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-extra-checks]) ;;
-esac],[extra_checks=false])
-AM_CONDITIONAL([EXTRA_CHECKS], [test x$extra_checks = xtrue])
+esac],[enable_extra_checks=false ; result_extra_checks=no])
+AM_CONDITIONAL([ENABLE_EXTRA_CHECKS], [test x$enable_extra_checks = xtrue])
+AC_MSG_RESULT([${result_extra_checks}])
 ])
-
 
 dnl
 dnl Debug/release builds
 dnl
 AC_DEFUN([AM_FHTAGN_ENABLE_DEBUG],
 [
+AC_MSG_CHECKING([whether we're creating a debug build])
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug],
     [(default is yes) Switch off debug builds, i.e. pass the -DNDEBUG flag and
-     use more highly optimized build flags. Use --disable-debug for production
+     use more highly optimized build flags. Use `--disable-debug' for production
      builds.])],
 [case "${enableval}" in
-  yes) enable_debug=true ;;
-  no)  enable_debug=false ;;
+  yes)
+    enable_debug=true
+    if test x$enable_coverage = xtrue ; then
+      result_debug="yes, forced by --enable-coverage"
+    else
+      result_debug=yes
+    fi
+    ;;
+  no)  enable_debug=false ; result_debug=no ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
-esac],[enable_debug=true])
+esac],[enable_debug=true ; result_debug=yes])
 AM_CONDITIONAL([ENABLE_DEBUG], [test x$enable_debug = xtrue])
+AC_MSG_RESULT([${result_debug}])
+])
+
+
+dnl
+dnl Extra coverage information (test coverage, etc)
+dnl
+AC_DEFUN([AM_FHTAGN_ENABLE_COVERAGE],
+[
+AC_CHECK_PROG([have_gcov], [gcov], [yes], [no])
+AC_MSG_CHECKING([whether coverage information is to be produced])
+AC_ARG_ENABLE([coverage],
+  [AS_HELP_STRING([--enable-coverage],
+    [(default is no) Embed coverage information into the build, that can be
+     be used for test coverage analysis. Coverage information is extracted by
+     `gcov'; if that program cannot be found, `--enable-coverage' has no effect.
+     Implies `--enable-debug=yes'])],
+[
+  if test x"$have_gcov" = xyes ; then
+    case "${enableval}" in
+      yes) enable_coverage=true ; result_coverage=yes ; enable_debug=yes ;;
+      no)  enable_coverage=false ; result_coverage=no ;;
+      *) AC_MSG_ERROR([bad value ${enableval} for --enable-coverage]) ;;
+    esac
+  else
+    enable_coverage=false
+    result_coverage="no, gcov not found"
+  fi
+],[enable_coverage=false ; result_coverage=no])
+AM_CONDITIONAL([ENABLE_COVERAGE], [test x$enable_coverage = xtrue])
+AC_MSG_RESULT([${result_coverage}])
 ])

@@ -15,7 +15,8 @@ testsuite_SOURCES = \
 	variant_test.cpp \
 	testdriver.cpp
 
-testsuite_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+testsuite_CXXFLAGS = \
+	$(AM_CXXFLAGS) $(CPPUNIT_CFLAGS)
 
 testsuite_LDADD = \
 	$(top_builddir)/fhtagn/libfhtagn.la \

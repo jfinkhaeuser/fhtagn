@@ -28,6 +28,77 @@ an installation root.  On my machine, I run:
 
     ./configure --with-boost=/opt/local
 
-   `configure` then attempts to locate the boost header files in
+   `configure' then attempts to locate the boost header files in
 `/opt/local/include/boost' and the libraries in `/opt/local/lib'.
 
+Options
+==================
+
+  --enable-extra-checks   (default is no) Turn on extra static code checking
+                          (`-Weffc++' compiler option). This will lead to spam
+                          in headers included from the STL and/or boost, but
+                          may help finding flaws in Fhtagn!
+
+  GCC supports a compiler option `-Weffc++' which performs static checks on C++
+code based on guidelines from Scott Meyers' book "Effective C++". Some of these
+checks can turn up flaws in your program, but when one of these checks fails,
+that does not necessarily imply that your program is faulty.
+
+  Both the STL implementation provided with GCC and boost use code that is in
+violation of these guidelines, but works just fine. One example is to not
+initialize data members in a class' constructor - when metaprogramming with
+templates, it often matters little what the data member's value is, what matters
+is whether the template class can be instanciated.
+
+  Turning on this switch will lead to a lot of compiler warnings, most of which
+turn out to be superfluous. Still, it can be helpful.
+
+  --enable-coverage       (default is no) Embed coverage information into the
+                          build, that can be be used for test coverage
+                          analysis. Coverage information is extracted by
+                          `gcov'; if that program cannot be found,
+                          `--enable-coverage' has no effect. Implies
+                          `--enable-debug=yes'
+
+  GCC comes with the ability to instrumentalize function calls. A program
+compiled with the appropriate compiler options will produce output files from
+this instrumentalization. GCC comes with a tool called `gcov' that can parse
+these output files, and create an annotated source file in which each line is
+marked with how often it was called.
+
+  There are some drawbacks to GCC's approach to instrumentalization; most
+notably, it doesn't work well with inlined code. In order to produce better
+output, when you use `--enable-coverage', that also implies `--enable-debug'
+and overrides any other parameters you might specifiy on the command line.
+
+  There will still be lines in the annotated source files that make little
+sense - `gcov' might tell you that the line containing the closing brace of a
+function was never called, but that every other line in the function has been
+executed, etc.
+
+  One other thing to note is that an instrumentalized binary creates an output
+file per .cpp file used to create the binary. Since the header files associated
+with each .cpp file may be included in numerous places, each header file may be
+annotated more than once.
+
+  The gencov.sh script included in this distribution will collect coverage
+information per each output file of the instrumentalized binary. It's up to you
+to correlate the information in the resulting coverage files.
+
+  Still, looking at coverage output may help you find code that is never
+executed, or identify code that is executed many times and could therefore
+benefit from optimization.
+
+  --enable-debug          (default is yes) Switch off debug builds, i.e. pass
+                          the -DNDEBUG flag and use more highly optimized
+                          build flags. Use `--disable-debug' for production
+                          builds.
+
+  By default, `--enable-debug' is set, and that implies that the sources are
+built without optimization and with the `-DDEBUG' flag passed to the compiler.
+By contrast, if you disable the debug build, sources are optimized with the
+`-O2' optimizer flag, and `-DNDEBUG' is passed to the compiler. The latter is
+strongly recommended by some boost libraries used in Fhtagn!.
+
+  As a rule of thumb, leave this option as it is unless you want to produce
+production builds.

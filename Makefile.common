@@ -4,26 +4,42 @@
 # the following license terms and conditions as set forth in the COPYING file
 # included in this source distribution.
 
-FHTAGN_INCLUDES = \
+INCLUDES_FHTAGN = \
 	-I $(top_srcdir)
 
-FHTAGN_CPPFLAGS = -Wall -Wold-style-cast -Wsign-promo -ggdb
+# disable user-provided CXXFLAGS, because they default to "-O2 -g"
+# that really sucks - there might be a better way.
+CXXFLAGS=
 
-if EXTRA_CHECKS
-FHTAGN_CPPFLAGS += -Weffc++
+CXXFLAGS_FHTAGN = -Wall -Wold-style-cast -Wsign-promo -ggdb
+LDFLAGS_FHTAGN =
+
+if ENABLE_EXTRA_CHECKS
+CXXFLAGS_FHTAGN += -Weffc++
+endif
+
+if ENABLE_COVERAGE
+CXXFLAGS_FHTAGN += -fprofile-arcs -ftest-coverage
+LDFLAGS_FHTAGN += -lgcov
 endif
 
 if ENABLE_DEBUG
-FHTAGN_CPPFLAGS += -DDEBUG -O0
+CXXFLAGS_FHTAGN += -DDEBUG -O0
 else
-FHTAGN_CPPFLAGS += -DNDEBUG -O2
+CXXFLAGS_FHTAGN += -DNDEBUG -O2
 endif
 
-AM_CPPFLAGS = \
+AM_CXXFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(FHTAGN_CPPFLAGS) $(FHTAGN_INCLUDES)
+	$(CXXFLAGS_FHTAGN) $(INCLUDES_FHTAGN)
+
+AM_LDFLAGS = \
+	$(LDFLAGS_FHTAGN)
 
 LIB_MAJOR = $$(echo $(PACKAGE_VERSION) | sed 's/\..*//g')
 LIB_MINOR = $$(echo $(PACKAGE_VERSION) | sed 's/[^.]*\.//g')
 LIB_AGE = 0
 LIB_VERSION = -version-info $(LIB_MAJOR):$(LIB_MINOR):$(LIB_AGE)
+
+clean-local:
+	rm -f *.gcov *.gcno *.gcda

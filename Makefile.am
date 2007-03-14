@@ -7,3 +7,11 @@
 SUBDIRS = fhtagn test
 
 include $(top_srcdir)/Makefile.common
+
+run-tests: check
+	@test/testsuite
+
+if ENABLE_COVERAGE
+gencov: run-tests
+	@$(top_srcdir)/gencov.sh "$(srcdir)" "$(builddir)"
+endif
