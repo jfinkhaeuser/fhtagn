@@ -12,8 +12,11 @@ run-tests: check
 	@test/testsuite
 
 if ENABLE_COVERAGE
-gencov: run-tests
-	@$(top_srcdir)/gencov.sh "$(srcdir)" "$(builddir)"
+cleancov:
+	@find "$(top_builddir)" -type f -name \*.gcda -exec rm \{\} \;
+
+gencov: cleancov run-tests
+	@"$(top_srcdir)/gencov.sh" "$(srcdir)" "$(builddir)"
 endif
 
 EXTRA_DIST = \

@@ -60,6 +60,12 @@ private:
         x = 3.141592;
         CPPUNIT_ASSERT(x.is<double>());
         CPPUNIT_ASSERT(!x.is<int>());
+
+        // copy the variant, make sure the copy behaves the same
+        fhtagn::variant y;
+        y = x;
+        CPPUNIT_ASSERT(y.is<double>());
+        CPPUNIT_ASSERT(!y.is<int>());
     }
 
     void testArray()
@@ -104,6 +110,12 @@ private:
 
         // but can do so explicitly
         CPPUNIT_ASSERT_NO_THROW(y["foo"] = 123);
+
+        // Force a throw. First, we assign a variant a non-map value. Then we try
+        // to use that variant as a map, which should return an invalid_value.
+        fhtagn::variant z = 123;
+        CPPUNIT_ASSERT_NO_THROW(z["foo"]);
+        CPPUNIT_ASSERT_THROW(z["foo"]["bar"], fhtagn::variant::error);
     }
 
 
