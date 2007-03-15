@@ -16,7 +16,7 @@ cleancov:
 	@find "$(top_builddir)" -type f -name \*.gcda -exec rm \{\} \;
 
 gencov: cleancov run-tests
-	@"$(top_srcdir)/gencov.sh" "$(srcdir)" "$(builddir)"
+	@"$(top_srcdir)/gencov.sh" "$(top_srcdir)" "$(top_builddir)"
 endif
 
 EXTRA_DIST = \

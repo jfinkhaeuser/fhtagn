@@ -16,6 +16,10 @@ Requirements
    The Fhtagn! C++ Library depends heavily on boost. If boost is not part
 of your development environment yet, obtain a copy from http://www.boost.org/
 
+   There are version requirements on autotools as well, but at the moment,
+these are not clearly defined. It's pretty clear that automake 1.4 is too old
+to work with Fhtagn!
+
 Installation
 ==================
 
@@ -102,3 +106,16 @@ strongly recommended by some boost libraries used in Fhtagn!.
 
   As a rule of thumb, leave this option as it is unless you want to produce
 production builds.
+
+Platforms
+==================
+
+   Fhtagn! is supposed to be pretty portable, but at the time of writing, it
+hasn't been built on many platforms yet. The list of currently tested platforms
+includes:
+
+   Mac OS 10.4 (Intel), using their version of GCC 4.0.1
+   Ubuntu Edgy Eft, using their version of GCC 4.1.2
+
+   If you can add more platforms to this list, please send a mail to
+fhtagn-devel@lists.sourceforge.net with details.

@@ -18,7 +18,9 @@ for gcda_file in $(find "$top_builddir" -type f -name \*.gcda) ; do
     trunc_dir=$(echo "$gcda_dir" | sed 's:/\.libs$::g')
     remain_dir=".$(echo "$gcda_dir" | sed "s:$trunc_dir::g")"
     gcda_filename=$(echo $gcda_file | sed "s:$gcda_dir/::g")
-    pushd "$trunc_dir" >/dev/null
+
+    cwd=$(pwd)
+    cd "$trunc_dir"
     gcov -p -o "$remain_dir" "$gcda_filename" >/dev/null
     mkdir -p "$remain_dir/coverage/$gcda_filename"
     # collect and prune gcov files
@@ -37,7 +39,7 @@ for gcda_file in $(find "$top_builddir" -type f -name \*.gcda) ; do
         fi
         mv "$gcov_file" "$remain_dir/coverage/$gcda_filename"
     done
-    popd >/dev/null
+    cd "$cwd"
 done
 
 if test -z "$have_gcda" ; then
