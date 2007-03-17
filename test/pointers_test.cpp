@@ -52,8 +52,8 @@ struct pointer_test_struct
     mutable int m_counter;
 };
 
-template <template <typename> class pointer_type>
-void pointer_tester(typename pointer_type<pointer_test_struct>::type param)
+template <template <typename> class pointerT>
+void pointer_tester(typename pointerT<pointer_test_struct>::type param)
 {
     param->inc();
 }

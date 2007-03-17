@@ -45,8 +45,8 @@ namespace pointers {
  * should work both with pointers and const pointers. It avoids hardcoding the
  * type of pointer to use:
  *
- * template <typename T, template <typename> class pointer_type>
- * void foo(pointer_type<T>::type bar)
+ * template <typename T, template <typename> class pointerT>
+ * void foo(pointerT<T>::type bar)
  * {
  *    bar->doSomething();
  * }
@@ -96,13 +96,13 @@ struct const_pointer_const
  **/
 template <
     typename dataT,
-    template <typename> class pointer_type = const_pointer
+    template <typename> class pointerT = const_pointer
 >
 struct shallow_copy
 {
-    typename pointer_type<dataT>::type m_pointer;
+    typename pointerT<dataT>::type m_pointer;
 
-    shallow_copy(typename pointer_type<dataT>::type pointer)
+    shallow_copy(typename pointerT<dataT>::type pointer)
         : m_pointer(pointer)
     {
     }
@@ -124,11 +124,11 @@ struct shallow_copy
 
 template <
     typename dataT,
-    template <typename> class pointer_type = const_pointer
+    template <typename> class pointerT = const_pointer
 >
 struct deep_copy
 {
-    typename pointer_type<dataT>::type m_pointer;
+    typename pointerT<dataT>::type m_pointer;
 
     /**
      * Must distinguish between copy-constructed and non-copy-constructed
@@ -138,7 +138,7 @@ struct deep_copy
      **/
     bool m_owner;
 
-    deep_copy(typename pointer_type<dataT>::type pointer)
+    deep_copy(typename pointerT<dataT>::type pointer)
         : m_pointer(pointer)
         , m_owner(false)
     {
