@@ -13,6 +13,7 @@ check_PROGRAMS = \
 
 testsuite_SOURCES = \
 	variant_test.cpp \
+	pointers_test.cpp \
 	testdriver.cpp
 
 testsuite_CXXFLAGS = \
