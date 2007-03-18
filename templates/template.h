@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2007 the authors.
  *
- * Author * Author: Author's Name <author@users.sourceforge.net>
+ * Author: Author's Name <author@users.sourceforge.net>
  * ...
  *
  * This file is part of the Fhtagn! C++ Library, and may be distributed under
