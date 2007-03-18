@@ -34,6 +34,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <fhtagn/property.h>
+#include <fhtagn/mandatory.h>
 
 namespace {
 
@@ -60,6 +61,12 @@ struct rw_property_test
     int m_value;
 };
 
+
+fhtagn::throw_if_unchecked<int> foo()
+{
+    return 42;
+}
+
 } // anonymous namespace
 
 class EnhancedTypesTest
@@ -69,6 +76,7 @@ public:
     CPPUNIT_TEST_SUITE(EnhancedTypesTest);
 
         CPPUNIT_TEST(testProperty);
+        CPPUNIT_TEST(testMandatory);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -89,7 +97,18 @@ private:
         // just as well.
         tester.the_property = tester.the_property * 10;
         CPPUNIT_ASSERT_EQUAL(tester.m_value, 120);
-   }
+    }
+
+
+    void testMandatory()
+    {
+        CPPUNIT_ASSERT_THROW(foo(), std::logic_error);
+        CPPUNIT_ASSERT_NO_THROW(fhtagn::ignore_return_value(foo()));
+        CPPUNIT_ASSERT_NO_THROW(int ret = foo());
+
+        int ret = foo();
+        CPPUNIT_ASSERT_EQUAL(ret, 42);
+    }
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(EnhancedTypesTest);
