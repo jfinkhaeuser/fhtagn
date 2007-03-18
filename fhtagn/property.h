@@ -41,8 +41,6 @@
 
 #include <boost/concept_check.hpp>
 
-#include <fhtagn/interceptable.h>
-
 namespace fhtagn {
 
 namespace concepts {
