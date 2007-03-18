@@ -409,6 +409,6 @@ private:
     static boost::shared_ptr<variant> invalid_value;
 };
 
-#include <fhtagn/variant.tcc>
+#include <fhtagn/detail/variant.tcc>
 
 #endif // guard

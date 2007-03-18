@@ -35,6 +35,7 @@
 
 #include <fhtagn/property.h>
 #include <fhtagn/mandatory.h>
+#include <fhtagn/restrictions.h>
 
 namespace {
 
@@ -62,10 +63,22 @@ struct rw_property_test
 };
 
 
-fhtagn::throw_if_unchecked<int> foo()
+fhtagn::throw_if_unchecked<int> mandatory_function()
 {
     return 42;
 }
+
+
+/** test a few restrictions, thereby proving the general mechanism */
+fhtagn::restricted<int, fhtagn::restrictions::numeric::even<int> >
+restricted_function(fhtagn::restricted<
+        std::string,
+        fhtagn::restrictions::container::non_empty<std::string>
+    >, int return_value)
+{
+    return return_value;
+}
+
 
 } // anonymous namespace
 
@@ -77,6 +90,7 @@ public:
 
         CPPUNIT_TEST(testProperty);
         CPPUNIT_TEST(testMandatory);
+        CPPUNIT_TEST(testRestricted);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -102,12 +116,33 @@ private:
 
     void testMandatory()
     {
-        CPPUNIT_ASSERT_THROW(foo(), std::logic_error);
-        CPPUNIT_ASSERT_NO_THROW(fhtagn::ignore_return_value(foo()));
-        CPPUNIT_ASSERT_NO_THROW(int ret = foo());
+        CPPUNIT_ASSERT_THROW(mandatory_function(), std::logic_error);
+        CPPUNIT_ASSERT_NO_THROW(fhtagn::ignore_return_value(mandatory_function()));
+        CPPUNIT_ASSERT_NO_THROW(int ret = mandatory_function());
 
-        int ret = foo();
+        int ret = mandatory_function();
         CPPUNIT_ASSERT_EQUAL(ret, 42);
+    }
+
+
+    void testRestricted()
+    {
+        // doesn't throw, all restrictions are fulfilled
+        CPPUNIT_ASSERT_NO_THROW(restricted_function(std::string("Hello, world!"), 10));
+
+        // throws because std::string() produces a non-empty container
+        CPPUNIT_ASSERT_THROW(restricted_function(std::string(), 10), fhtagn::restrictions::violation_error);
+
+        // throws because 11 is not an even integer
+        CPPUNIT_ASSERT_THROW(restricted_function(std::string("Hello, world!"), 11), fhtagn::restrictions::violation_error);
+
+        // test a special numeric restriction, i.e. that a pointer is non-zero:
+        typedef fhtagn::restricted<
+            char *,
+            fhtagn::restrictions::numeric::non_default_value<char *>
+        > non_zero_char_pointer;
+        CPPUNIT_ASSERT_THROW(non_zero_char_pointer p, fhtagn::restrictions::violation_error);
+        CPPUNIT_ASSERT_NO_THROW(non_zero_char_pointer p = "Hello, world!");
     }
 };
 

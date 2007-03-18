@@ -42,6 +42,8 @@ AM_FHTAGN_ENABLE_DEBUG
 AC_CONFIG_FILES([
   Makefile
   fhtagn/Makefile
+  fhtagn/detail/Makefile
+  fhtagn/restrictions/Makefile
   fhtagn/util/Makefile
   fhtagn/xml/Makefile
   test/Makefile
