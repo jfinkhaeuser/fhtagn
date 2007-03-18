@@ -119,6 +119,12 @@ struct shallow_copy
         m_pointer = other.m_pointer;
         return *this;
     }
+
+
+    typename pointerT<dataT>::type operator->() const
+    {
+        return m_pointer;
+    }
 };
 
 
@@ -168,6 +174,12 @@ struct deep_copy
         m_pointer = new dataT(*other.m_pointer);
         m_owner = true;
         return *this;
+    }
+
+
+    typename pointerT<dataT>::type operator->() const
+    {
+        return m_pointer;
     }
 };
 
