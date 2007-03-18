@@ -276,9 +276,9 @@ AC_DEFUN([AM_FHTAGN_ENABLE_EXTRA_CHECKS],
 AC_MSG_CHECKING([whether extra static code checking is enabled])
 AC_ARG_ENABLE([extra-checks],
   [AS_HELP_STRING([--enable-extra-checks],
-    [(default is no) Turn on extra static code checking (`-Weffc++' compiler
-     option). This will lead to spam in headers included from the STL and/or
-     boost, but may help finding flaws in Fhtagn!])],
+    [(default is no) Turn on extra static code checking (`-Weffc++' and
+     `-Wold-style-cast' compiler options). This will lead to spam from headers
+     included from the STL and/or boost, but may help finding flaws in Fhtagn!])],
 [case "${enableval}" in
   yes) enable_extra_checks=true ; result_extra_checks=yes ;;
   no)  enable_extra_checks=false ; result_extra_checks=no ;;

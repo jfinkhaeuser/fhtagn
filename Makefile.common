@@ -11,11 +11,11 @@ INCLUDES_FHTAGN = \
 # that really sucks - there might be a better way.
 CXXFLAGS=
 
-CXXFLAGS_FHTAGN = -Wall -Wold-style-cast -Wsign-promo -ggdb
+CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb
 LDFLAGS_FHTAGN =
 
 if ENABLE_EXTRA_CHECKS
-CXXFLAGS_FHTAGN += -Weffc++
+CXXFLAGS_FHTAGN += -Weffc++ -Wold-style-cast
 endif
 
 if ENABLE_COVERAGE
