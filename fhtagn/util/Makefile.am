@@ -19,6 +19,6 @@ endif
 
 libfhtagn_util_la_SOURCES = $(UTIL_SRC)
 
-libfhtagn_util_la_LDFLAGS = $(LIB_VERSION)
+libfhtagn_util_la_LDFLAGS = $(LIB_VERSION) $(LDFLAGS_FHTAGN)
 
 utilinclude_HEADERS = $(UTIL_HDR)

@@ -13,7 +13,7 @@ lib_LTLIBRARIES = libfhtagn.la
 libfhtagn_la_SOURCES = \
 	variant.cpp
 
-libfhtagn_la_LDFLAGS = $(LIB_VERSION)
+libfhtagn_la_LDFLAGS = $(LIB_VERSION) $(LDFLAGS_FHTAGN)
 
 pkginclude_HEADERS = \
 	variant.h stdvariant.h \

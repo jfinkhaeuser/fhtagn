@@ -15,7 +15,7 @@ CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb
 LDFLAGS_FHTAGN =
 
 if ENABLE_EXTRA_CHECKS
-CXXFLAGS_FHTAGN += -Weffc++ -Wold-style-cast
+CXXFLAGS_FHTAGN += -Weffc++ -Wold-style-cast -Wshadow
 endif
 
 if ENABLE_COVERAGE
