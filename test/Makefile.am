@@ -25,6 +25,8 @@ testsuite_LDADD = \
 	$(top_builddir)/fhtagn/util/libfhtagn_util.la \
 	$(CPPUNIT_LIBS)
 
+testsuite_LDFLAGS = $(LDFLAGS_FHTAGN)
+
 else
 
 check-local:

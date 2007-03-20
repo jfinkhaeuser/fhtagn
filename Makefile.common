@@ -33,9 +33,6 @@ AM_CXXFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(CXXFLAGS_FHTAGN) $(INCLUDES_FHTAGN)
 
-AM_LDFLAGS = \
-	$(LDFLAGS_FHTAGN)
-
 LIB_MAJOR = $$(echo $(PACKAGE_VERSION) | sed 's/\..*//g')
 LIB_MINOR = $$(echo $(PACKAGE_VERSION) | sed 's/[^.]*\.//g')
 LIB_AGE = 0
