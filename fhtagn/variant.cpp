@@ -1,4 +1,6 @@
 /**
+ * $Id$
+ *
  * Copyright (C) 2007 the authors.
  *
  * Author: Henning Pfeiffer <slashgod@users.sourceforge.net>

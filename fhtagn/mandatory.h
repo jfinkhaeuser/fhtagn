@@ -1,4 +1,6 @@
 /**
+ * $Id$
+ *
  * Copyright (C) 2007 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
