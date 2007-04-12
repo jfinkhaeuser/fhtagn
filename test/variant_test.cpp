@@ -54,6 +54,9 @@ public:
 private:
     void testSimple()
     {
+        fhtagn::variant b = true;
+        CPPUNIT_ASSERT(b.is<bool>());
+        CPPUNIT_ASSERT(b.as<bool>() == true);
         fhtagn::variant x = 42;
         CPPUNIT_ASSERT(x.is<int>());
         x.as<int>() += 3;

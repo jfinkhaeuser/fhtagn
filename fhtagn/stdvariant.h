@@ -46,6 +46,9 @@
 
 #include <fhtagn/variant.h>
 
+// specialization for builtin bool type
+FHTAGN_VARIANT_SPECIALIZE(bool);
+
 // specializations for builtin integer types
 FHTAGN_VARIANT_SPECIALIZE(int8_t);
 FHTAGN_VARIANT_SPECIALIZE(uint8_t);
