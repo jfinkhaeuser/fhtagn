@@ -60,7 +60,7 @@ private:
         fhtagn::variant x = 42;
         CPPUNIT_ASSERT(x.is<int>());
         x.as<int>() += 3;
-        CPPUNIT_ASSERT(x.as<int>() == 45);
+        CPPUNIT_ASSERT_EQUAL(45, x.as<int>());
 
         x = 3.141592;
         CPPUNIT_ASSERT(x.is<double>());
@@ -79,7 +79,7 @@ private:
         CPPUNIT_ASSERT(y.is<fhtagn::variant::array_t>());
         y[0] = 42;
         y[0].as<int>() += 1234;
-        CPPUNIT_ASSERT(y[0].as<int>() == 1276);
+        CPPUNIT_ASSERT_EQUAL(1276, y[0].as<int>());
 
         // treating y[0] as a container must fail
         CPPUNIT_ASSERT_THROW(y[0]["foo"] = 123, fhtagn::variant::error);
