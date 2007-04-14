@@ -4,7 +4,7 @@
 # the following license terms and conditions as set forth in the COPYING file
 # included in this source distribution.
 
-SUBDIRS = util xml restrictions detail
+SUBDIRS = util text xml restrictions detail
 
 include $(top_srcdir)/Makefile.common
 
@@ -14,8 +14,11 @@ libfhtagn_la_SOURCES = \
 	variant.cpp
 
 libfhtagn_la_LDFLAGS = $(LIB_VERSION)
+libfhtagn_la_LIBADD = \
+	$(top_builddir)/fhtagn/text/libfhtagn_text.la
 
 pkginclude_HEADERS = \
 	variant.h stdvariant.h \
 	pointers.h property.h mandatory.h \
-	restricted.h restrictions.h
+	restricted.h restrictions.h \
+	byteorder.h
