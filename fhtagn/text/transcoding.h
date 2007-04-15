@@ -177,9 +177,17 @@ struct decoder_base
      * Attempts to interpret the internal byte buffer as a UTF-32 character.
      * If have_full_sequence() is false, the results of this call are undefined.
      **/
-    utf32_char_t to_utf32() const
+    template <
+        typename output_iterT
+    >
+    void to_utf32(output_iterT & iter, bool is_beginning_of_stream) const
     {
-        return this->derived().convert_to_utf32();
+        utf32_char_t value = this->derived().convert_to_utf32();
+        // skip BOM characters (at beginning of stream)
+        if (is_beginning_of_stream && value == 0xfeff) {
+            return;
+        }
+        *iter++ = value;
     }
 
 
@@ -258,12 +266,14 @@ decode(input_iterT first, input_iterT last, output_iterT result,
 {
     decoderT decoder;
 
+    bool at_first = true;
     input_iterT iter = first;
     for ( ; iter != last ; ++iter) {
         if (decoder.have_full_sequence()) {
             // if we have a full sequence, we can decode it to utf32, and
             // restart.
-            *result++ = decoder.to_utf32();
+            decoder.to_utf32(result, at_first);
+            at_first = false;
             decoder.reset();
         }
 
@@ -275,6 +285,7 @@ decode(input_iterT first, input_iterT last, output_iterT result,
                 // if the caller wants us to produce replacement chars for
                 // anything we can't decode, let's do that...
                 *result++ = 0xfffd;
+                at_first = false;
                 decoder.reset();
             } else {
                 // ... otherwise we bail out, providing the iterator that
@@ -286,7 +297,7 @@ decode(input_iterT first, input_iterT last, output_iterT result,
 
     if (decoder.have_full_sequence()) {
         // the decoder might still have a full sequence
-        *result++ = decoder.to_utf32();
+        decoder.to_utf32(result, at_first);
     }
 
     return iter;

@@ -275,6 +275,31 @@ struct utf16_decoder
         }
 
         m_next_word = (byte << 8) + m_buffer[m_buffer_used - 1];
+
+        if (m_endian == byte_order::FHTAGN_UNKNOWN_ENDIAN) {
+            switch (m_next_word) {
+                case 0xfffe:
+                    // LE BOM, but due to the way we assemble words it means the
+                    // input is BE.
+                    m_endian = byte_order::FHTAGN_BIG_ENDIAN;
+                    m_size = 2;
+                    return true;
+                    break;
+
+                case 0xfeff:
+                    // BE BOM, but due to the way we assemble words it means the
+                    // input is LE.
+                    m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
+                    m_size = 2;
+                    return true;
+                    break;
+
+                default:
+                    return false;
+                    break;
+            }
+        }
+
         m_next_word = byte_order::to_host(m_next_word, m_endian);
 
         // if m_next_word is the leading word...
@@ -329,9 +354,9 @@ struct utf16_decoder
         return result;
     }
 
-    byte_order::endian  m_endian;
-    mutable uint8_t     m_size;
-    mutable uint16_t    m_next_word;
+    mutable byte_order::endian  m_endian;
+    mutable uint8_t             m_size;
+    mutable uint16_t            m_next_word;
 };
 
 

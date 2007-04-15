@@ -63,13 +63,6 @@ private:
         namespace t = fhtagn::text;
         t::ascii_decoder dec;
 
-        // very simple test - in ASCII, all bytes < 127 represent one unicode code
-        // point
-        CPPUNIT_ASSERT_EQUAL(true, dec.append('a'));
-        CPPUNIT_ASSERT_EQUAL(false, dec.append('b'));
-        CPPUNIT_ASSERT_EQUAL(true, dec.have_full_sequence());
-        CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>('a'), dec.to_utf32());
-
         // decode an ASCII string
         {
             std::string source = "Hello, world!";
@@ -167,23 +160,27 @@ private:
         // Numeric values: D834 DD1E
         //
         // LE: 34 D8 1E DD
-        char le_source[] = { 'H', '\x00', 'e', '\x00', 'l', '\x00', 'l', '\x00',
-                             'o', '\x00', ',', '\x00', ' ', '\x00', '\x34', '\xd8',
-                             '\x1e', '\xdd', ' ', '\x00', 'w', '\x00', 'o', '\x00',
-                             'r', '\x00', 'l', '\x00', 'd', '\x00', '!', '\x00' };
+        char le_source[] = { '\xff', '\xfe', 'H',    '\x00', 'e', '\x00', 'l', '\x00',
+                             'l',    '\x00', 'o',    '\x00', ',', '\x00', ' ', '\x00',
+                             '\x34', '\xd8', '\x1e', '\xdd', ' ', '\x00', 'w', '\x00',
+                             'o',    '\x00', 'r',    '\x00', 'l', '\x00', 'd', '\x00',
+                             '!', '\x00' };
         // BE: D8 34 DD 1E
-        char be_source[] = { '\x00', 'H', '\x00', 'e', '\x00', 'l', '\x00', 'l',
-                             '\x00', 'o', '\x00', ',', '\x00', ' ', '\xd8', '\x34',
-                             '\xdd', '\x1e', '\x00', ' ', '\x00', 'w', '\x00', 'o',
-                             '\x00', 'r', '\x00', 'l', '\x00', 'd', '\x00', '!' };
+        char be_source[] = { '\xfe', '\xff', '\x00', 'H',    '\x00', 'e', '\x00', 'l',
+                             '\x00', 'l',    '\x00', 'o',    '\x00', ',', '\x00', ' ',
+                             '\xd8', '\x34', '\xdd', '\x1e', '\x00', ' ', '\x00', 'w',
+                             '\x00', 'o',    '\x00', 'r',    '\x00', 'l', '\x00', 'd',
+                             '\x00', '!' };
 
         // UTF-16LE decoding, with a specialized utf16le_decoder
         t::utf32_string target1;
         {
+            // add 2 to start & end to skip BOM
             char * error_ptr = t::decode<t::utf16le_decoder>(
-                    le_source, le_source + 32,
+                    le_source + 2, le_source + 34,
                     std::back_insert_iterator<t::utf32_string>(target1));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target1.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, le_source + 34);
             // ensure that the G clef sign has been decoded properly
             CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target1[7]);
         }
@@ -191,16 +188,42 @@ private:
         // UTF-16BE decoding, with a specialized utf16be_decoder
         t::utf32_string target2;
         {
+            // add 2 to start & end to skip BOM
             char * error_ptr = t::decode<t::utf16be_decoder>(
-                    be_source, be_source + 32,
+                    be_source + 2, be_source + 34,
                     std::back_insert_iterator<t::utf32_string>(target2));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target2.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, be_source + 34);
             // ensure that the G clef sign has been decoded properly
             CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target2[7]);
         }
 
         // compare both conversions
         CPPUNIT_ASSERT(target1 == target2);
+
+        // UTF-16LE decoding based on a BOM
+        {
+            t::utf32_string target;
+            char * error_ptr = t::decode<t::utf16_decoder>(
+                    le_source, le_source + 34,
+                    std::back_insert_iterator<t::utf32_string>(target));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, le_source + 34);
+            // ensure that the G clef sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target[7]);
+        }
+
+        // UTF-16BE decoding based on a BOM
+        {
+            t::utf32_string target;
+            char * error_ptr = t::decode<t::utf16_decoder>(
+                    be_source, be_source + 34,
+                    std::back_insert_iterator<t::utf32_string>(target));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, be_source + 34);
+            // ensure that the G clef sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target[7]);
+        }
 
     }
 
