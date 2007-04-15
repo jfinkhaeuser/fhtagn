@@ -77,7 +77,7 @@ typedef char      utf8_char_t;
 typedef std::basic_string<utf8_char_t>  utf8_string;
 typedef uint16_t  utf16_char_t;
 typedef std::basic_string<utf16_char_t> utf16_string;
-typedef wchar_t   utf32_char_t;
+typedef uint32_t  utf32_char_t;
 typedef std::basic_string<utf32_char_t> utf32_string;
 
 
@@ -147,7 +147,6 @@ template <
 struct decoder_base
 {
     decoder_base()
-        : m_buffer_used(0)
     {
     }
 
@@ -157,7 +156,7 @@ struct decoder_base
      **/
     void reset()
     {
-        m_buffer_used = 0;
+        this->derived().do_reset();
     }
 
 
@@ -167,7 +166,7 @@ struct decoder_base
      * interpreted as a UTF-32 character according to the derived decoder.
      * If the sequence is not complete, false is returned.
      **/
-    bool have_full_sequence() const
+    bool have_full_sequence()
     {
         return !this->derived().need_more();
     }
@@ -177,17 +176,9 @@ struct decoder_base
      * Attempts to interpret the internal byte buffer as a UTF-32 character.
      * If have_full_sequence() is false, the results of this call are undefined.
      **/
-    template <
-        typename output_iterT
-    >
-    void to_utf32(output_iterT & iter, bool is_beginning_of_stream) const
+    utf32_char_t to_utf32()
     {
-        utf32_char_t value = this->derived().convert_to_utf32();
-        // skip BOM characters (at beginning of stream)
-        if (is_beginning_of_stream && value == 0xfeff) {
-            return;
-        }
-        *iter++ = value;
+        return this->derived().convert_to_utf32();
     }
 
 
@@ -204,25 +195,9 @@ struct decoder_base
             return false; // not adding more
         }
 
-        if (this->derived().is_valid(byte)) {
-            m_buffer[m_buffer_used++] = byte;
-            return true;
-        }
-
-        return false;
+        return this->derived().store_if_valid(byte);
     }
 
-
-    /**
-     * As the excerpt from the Unicode FAQ above shows, UTF sequences can be at
-     * most 4 bytes in length.
-     **/
-    unsigned char m_buffer[4];
-
-    /**
-     * Number of bytes in the buffer currently in use.
-     **/
-    uint8_t m_buffer_used;
 
     derived_decoderT & derived()
     {
@@ -266,14 +241,12 @@ decode(input_iterT first, input_iterT last, output_iterT result,
 {
     decoderT decoder;
 
-    bool at_first = true;
     input_iterT iter = first;
     for ( ; iter != last ; ++iter) {
         if (decoder.have_full_sequence()) {
             // if we have a full sequence, we can decode it to utf32, and
             // restart.
-            decoder.to_utf32(result, at_first);
-            at_first = false;
+            *result++ = decoder.to_utf32();
             decoder.reset();
         }
 
@@ -285,7 +258,6 @@ decode(input_iterT first, input_iterT last, output_iterT result,
                 // if the caller wants us to produce replacement chars for
                 // anything we can't decode, let's do that...
                 *result++ = 0xfffd;
-                at_first = false;
                 decoder.reset();
             } else {
                 // ... otherwise we bail out, providing the iterator that
@@ -297,7 +269,7 @@ decode(input_iterT first, input_iterT last, output_iterT result,
 
     if (decoder.have_full_sequence()) {
         // the decoder might still have a full sequence
-        decoder.to_utf32(result, at_first);
+        *result++ = decoder.to_utf32();
     }
 
     return iter;

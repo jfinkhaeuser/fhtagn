@@ -54,6 +54,7 @@ public:
         CPPUNIT_TEST(testDecodeISO_8859_15);
         CPPUNIT_TEST(testDecodeUTF_8);
         CPPUNIT_TEST(testDecodeUTF_16);
+//        CPPUNIT_TEST(testDecodeUTF_32);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -150,7 +151,6 @@ private:
         CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
     }
 
-
     void testDecodeUTF_16()
     {
         namespace t = fhtagn::text;
@@ -228,6 +228,82 @@ private:
     }
 
 
+#if 0
+    void testDecodeUTF_32()
+    {
+        namespace t = fhtagn::text;
+
+        // unicode code point 119070 (hex 1D11E) is musical G clef, which
+        // is an example of code points encoded in four bytes in UTF-32:
+        // Numeric values: D834 DD1E
+        char le_source[] = "H\0\0\0e\0\0\0l\0\0\0l\0\0\0o\0\0\0,\0\0\0 \0\0\0"
+                           "\xd8\x34\xdd\x1e \0\0\0w\0\0\0o\0\0\0r\0\0\0l\0\0\0"
+                           "d\0\0\0!\0\0\0";
+//        char be_source[] = { '\xfe', '\xff', '\x00', 'H',    '\x00', 'e', '\x00', 'l',
+//                             '\x00', 'l',    '\x00', 'o',    '\x00', ',', '\x00', ' ',
+//                             '\xd8', '\x34', '\xdd', '\x1e', '\x00', ' ', '\x00', 'w',
+//                             '\x00', 'o',    '\x00', 'r',    '\x00', 'l', '\x00', 'd',
+//                             '\x00', '!' };
+
+        // UTF-32LE decoding, with a specialized utf32le_decoder
+        t::utf32_string target1;
+        {
+            // add 2 to start & end to skip BOM
+            char * error_ptr = t::decode<t::utf32le_decoder>(
+                    le_source, le_source + 34,
+                    std::back_insert_iterator<t::utf32_string>(target1));
+            for (int i = 0 ; i < target1.size() ; ++i) {
+                std::cout << "i: 0x" << std::hex << target1[i] << std::dec << " - " << (char) target1[i] << std::endl;
+            }
+//            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target1.size());
+//            CPPUNIT_ASSERT_EQUAL(error_ptr, le_source + 34);
+//            // ensure that the G clef sign has been decoded properly
+//            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target1[7]);
+        }
+
+#if 0
+        // UTF-32BE decoding, with a specialized utf32be_decoder
+        t::utf32_string target2;
+        {
+            // add 2 to start & end to skip BOM
+            char * error_ptr = t::decode<t::utf32be_decoder>(
+                    be_source + 2, be_source + 34,
+                    std::back_insert_iterator<t::utf32_string>(target2));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target2.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, be_source + 34);
+            // ensure that the G clef sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target2[7]);
+        }
+
+        // compare both conversions
+        CPPUNIT_ASSERT(target1 == target2);
+
+        // UTF-32LE decoding based on a BOM
+        {
+            t::utf32_string target;
+            char * error_ptr = t::decode<t::utf32_decoder>(
+                    le_source, le_source + 34,
+                    std::back_insert_iterator<t::utf32_string>(target));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, le_source + 34);
+            // ensure that the G clef sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target[7]);
+        }
+
+        // UTF-32BE decoding based on a BOM
+        {
+            t::utf32_string target;
+            char * error_ptr = t::decode<t::utf32_decoder>(
+                    be_source, be_source + 34,
+                    std::back_insert_iterator<t::utf32_string>(target));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, be_source + 34);
+            // ensure that the G clef sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target[7]);
+        }
+#endif
+    }
+#endif
 };
 
 

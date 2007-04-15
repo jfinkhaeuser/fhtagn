@@ -96,12 +96,22 @@ inline uint16_t swap(uint16_t const & orig)
            ((orig & 0x00ff) << 8);
 }
 
+inline int16_t swap(int16_t const & orig)
+{
+    return swap(static_cast<uint16_t>(orig));
+}
+
 inline uint32_t swap(uint32_t const & orig)
 {
     return ((orig & 0xff000000UL) >> 24) |
            ((orig & 0x00ff0000UL) >> 8)  |
            ((orig & 0x0000ff00UL) << 8)  |
            ((orig & 0x000000ffUL) << 24);
+}
+
+inline int32_t swap(int32_t const & orig)
+{
+    return swap(static_cast<uint32_t>(orig));
 }
 
 inline uint64_t swap(uint64_t const & orig)
@@ -114,6 +124,11 @@ inline uint64_t swap(uint64_t const & orig)
            ((orig & 0x0000000000ff0000ULL) >> 24) |
            ((orig & 0x000000000000ff00ULL) << 40) |
            ((orig & 0x00000000000000ffULL) << 56);
+}
+
+inline int64_t swap(int64_t const & orig)
+{
+    return swap(static_cast<uint64_t>(orig));
 }
 
 

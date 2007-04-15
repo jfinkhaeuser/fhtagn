@@ -55,20 +55,39 @@ struct ascii_decoder
 {
     typedef ascii_decoder self_t;
 
-    bool is_valid(unsigned char byte) const
+    ascii_decoder()
+        : m_byte(128)
     {
-        return (byte <= 127);
     }
 
-    bool need_more() const
+    bool store_if_valid(unsigned char byte)
     {
-        return (m_buffer_used == 0);
+        if (byte <= 127) {
+            m_byte = byte;
+            return true;
+        }
+        return false;
     }
 
-    utf32_char_t convert_to_utf32() const
+    bool need_more()
     {
-        return m_buffer[0];
+        // use invalid char value 128 to signal an empty buffer
+        return (m_byte == 128);
     }
+
+    void do_reset()
+    {
+        // signal empty buffer
+        m_byte = 128;
+    }
+
+    utf32_char_t convert_to_utf32()
+    {
+        utf32_char_t retval = m_byte;
+        return retval;
+    }
+
+    unsigned char m_byte;
 };
 
 
@@ -81,31 +100,45 @@ struct iso8859_decoder_base
 {
     iso8859_decoder_base(uint32_t subencoding)
         : m_subencoding(subencoding)
+        , m_byte(128)
     {
     }
 
 
-    bool is_valid(unsigned char byte) const
+    bool store_if_valid(unsigned char byte)
     {
-        return (byte <= 127 || byte >= 160);
+        if (byte <= 127 || byte >= 160) {
+            m_byte = byte;
+            return true;
+        }
+        return false;
     }
 
 
-    bool need_more() const
+    bool need_more()
     {
-        return (m_buffer_used == 0);
+        // 128 is an invalid byte value, we use it to signal that the buffer
+        // is unused.
+        return (m_byte == 128);
     }
 
 
-    utf32_char_t convert_to_utf32() const
+    void do_reset()
+    {
+        // signal empty buffer
+        m_byte = 128;
+    }
+
+
+    utf32_char_t convert_to_utf32()
     {
         if (m_subencoding == 1) {
             // in ISO-8859-1 all characters correspond to the unicode code point
             // of the same value
-            return m_buffer[0];
+            return m_byte;
         }
 
-        unsigned char tmp = m_buffer[0];
+        unsigned char tmp = m_byte;
         if (tmp <= 127) {
             return tmp;
         }
@@ -124,6 +157,7 @@ struct iso8859_decoder_base
      **/
     static utf32_char_t m_mapping[];
     uint32_t            m_subencoding;
+    unsigned char       m_byte;
 };
 
 
@@ -166,27 +200,36 @@ struct utf8_decoder
     utf8_decoder()
         : decoder_base<utf8_decoder>()
         , m_size(0)
+        , m_buffer_used(0)
     {
     }
 
 
-    void reset()
+    void do_reset()
     {
-        decoder_base<utf8_decoder>::reset();
         m_size = 0;
+        m_buffer_used = 0;
     }
 
 
-    bool is_valid(unsigned char byte) const
+    bool store_if_valid(unsigned char byte)
     {
+        bool valid = false;
         if (m_size == 0) {
-            return is_valid_leading_octet(byte);
+            valid = is_valid_leading_octet(byte);
+        } else {
+            valid = is_valid_continuing_octet(byte);
         }
-        return is_valid_continuing_octet(byte);
+
+        if (valid) {
+            m_buffer[m_buffer_used++] = byte;
+        }
+
+        return valid;
     }
 
 
-    bool is_valid_leading_octet(unsigned char byte) const
+    bool is_valid_leading_octet(unsigned char byte)
     {
         if (byte < 0x7f) {
             m_size = 1;
@@ -207,7 +250,7 @@ struct utf8_decoder
     }
 
 
-    bool is_valid_continuing_octet(unsigned char byte) const
+    bool is_valid_continuing_octet(unsigned char byte)
     {
         if (byte < 0x80|| 0xbf< byte) {
             return false;
@@ -216,13 +259,13 @@ struct utf8_decoder
     }
 
 
-    bool need_more() const
+    bool need_more()
     {
         return (m_size == 0 || m_buffer_used < m_size);
     }
 
 
-    utf32_char_t convert_to_utf32() const
+    utf32_char_t convert_to_utf32()
     {
         static utf32_char_t const modifier_table[] = {
             0x00, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc,
@@ -238,9 +281,10 @@ struct utf8_decoder
         return result;
     }
 
-    mutable uint8_t m_size;
+    uint8_t       m_size;
+    unsigned char m_buffer[4];
+    uint8_t       m_buffer_used;
 };
-
 
 /**
  * UTF-16 decoder
@@ -254,20 +298,163 @@ struct utf16_decoder
     utf16_decoder(byte_order::endian e = byte_order::FHTAGN_UNKNOWN_ENDIAN)
         : decoder_base<utf16_decoder>()
         , m_endian(e)
+        , m_buffer_used(0)
         , m_size(0)
     {
     }
 
 
-    void reset()
+    void do_reset()
     {
-        decoder_base<utf16_decoder>::reset();
         m_size = 0;
+        m_buffer_used = 0;
     }
 
 
-    bool is_valid(unsigned char byte) const
+    bool store_if_valid(unsigned char byte)
     {
+        uint16_t & next_word = m_buffer[m_buffer_used / 2];
+
+        // if we're reading the first byte of either word that can make up a
+        // UTF-16 sequence we /always/ need another byte.
+        if (m_buffer_used == 0 || m_buffer_used == 2) {
+            next_word = byte;
+            ++m_buffer_used;
+            return true;
+        }
+
+        next_word += (byte << 8);
+        ++m_buffer_used;
+
+        if (m_endian == byte_order::FHTAGN_UNKNOWN_ENDIAN) {
+            switch (next_word) {
+                case 0xfffe:
+                    // LE BOM, but due to the way we assemble words it means the
+                    // input is BE.
+                    m_endian = byte_order::FHTAGN_BIG_ENDIAN;
+                    do_reset();
+                    return true;
+                    break;
+
+                case 0xfeff:
+                    // BE BOM, but due to the way we assemble words it means the
+                    // input is LE.
+                    m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
+                    do_reset();
+                    return true;
+                    break;
+
+                default:
+                    do_reset();
+                    return false;
+                    break;
+            }
+        }
+
+        next_word = byte_order::to_host(next_word, m_endian);
+
+        // if m_next_word is the leading word...
+        if (m_size == 0) {
+            m_size = 2;
+            // ... it might signal that there's a following word ...
+            if (0xd800UL < next_word && next_word <= 0xdbffUL) {
+                m_size += 2;
+                return true;
+            } else
+            // ... or it might be invalid.
+            if (0xdc00UL < next_word && next_word <= 0xdfffUL) {
+                do_reset();
+                return false;
+            }
+            return true;
+        }
+
+        // if m_next_word is a second word, it may not be in a valid range.
+        if (!(0xdc00UL < next_word && next_word <= 0xdfffUL)) {
+            do_reset();
+            return false;
+        }
+
+        return true;
+    }
+
+
+    bool need_more()
+    {
+        return (m_size == 0 || m_buffer_used < m_size);
+    }
+
+
+    utf32_char_t convert_to_utf32()
+    {
+        utf32_char_t result = m_buffer[0];
+        if (m_size == 4) {
+            result = ((result - 0xd800UL) << 10)
+                + (m_buffer[1] - 0xdc00UL) + 0x0010000UL;
+        }
+
+        return result;
+    }
+
+    byte_order::endian  m_endian;
+    uint16_t            m_buffer[2];
+
+    /** bytes used in m_buffer (not words) */
+    uint8_t             m_buffer_used;
+    /** word size of the character */
+    uint8_t             m_size;
+};
+
+
+struct utf16le_decoder
+    : public utf16_decoder
+{
+    typedef utf16le_decoder self_t;
+
+    utf16le_decoder()
+        : utf16_decoder(byte_order::FHTAGN_LITTLE_ENDIAN)
+    {
+    }
+};
+
+
+struct utf16be_decoder
+    : public utf16_decoder
+{
+    typedef utf16be_decoder self_t;
+
+    utf16be_decoder()
+        : utf16_decoder(byte_order::FHTAGN_BIG_ENDIAN)
+    {
+    }
+};
+
+
+#if 0
+/**
+ * UTF-32 decoder
+ **/
+struct utf32_decoder
+    : public decoder_base<utf32_decoder>
+{
+    typedef utf32_decoder self_t;
+
+
+    utf32_decoder(byte_order::endian e = byte_order::FHTAGN_UNKNOWN_ENDIAN)
+        : decoder_base<utf32_decoder>()
+        , m_endian(e)
+    {
+    }
+
+
+    bool is_valid(unsigned char byte)
+    {
+        // we always need 4 bytes ber character, so the next byte is always
+        // considered valid until we can evaluate the whole character.
+        if (m_buffer_used < 3) {
+            return true;
+        }
+#if 0
         // if we're reading the first byte of either word that can make up a
         // UTF-16 sequence we /always/ need another byte.
         if (m_buffer_used == 0 || m_buffer_used == 2) {
@@ -323,67 +510,56 @@ struct utf16_decoder
         }
 
         return true;
+#endif
     }
 
 
-    bool need_more() const
+    bool need_more()
     {
-        return (m_size == 0 || m_buffer_used < m_size);
+        // we always need 4 bytes ber character, so the next byte is always
+        // considered valid until we can evaluate the whole character.
+        if (m_buffer_used < 3) {
+            return true;
+        }
     }
 
 
-    uint16_t as_int(uint8_t offs) const
+    utf32_char_t convert_to_utf32()
     {
-        return byte_order::to_host(
-                static_cast<uint16_t>((m_buffer[1 + offs] << 8) + m_buffer[0 + offs]),
+        return byte_order::to_host(*reinterpret_cast<utf32_char_t*>(m_buffer),
                 m_endian);
     }
 
-
-
-    utf32_char_t convert_to_utf32() const
-    {
-        // TODO m_buffer in the base class may not be the best idea, as we have
-        // to convert each word twice, once in is_valid() and once here.
-        utf32_char_t result = as_int(0);
-        if (m_size == 4) {
-            result = ((result - 0xd800UL) << 10)
-                + (as_int(2) - 0xdc00UL) + 0x0010000UL;
-        }
-
-        return result;
-    }
-
-    mutable byte_order::endian  m_endian;
-    mutable uint8_t             m_size;
-    mutable uint16_t            m_next_word;
+    byte_order::endian  m_endian;
 };
 
 
-struct utf16le_decoder
-    : public utf16_decoder
+struct utf32le_decoder
+    : public utf32_decoder
 {
-    typedef utf16le_decoder self_t;
+    typedef utf32le_decoder self_t;
 
-    utf16le_decoder()
-        : utf16_decoder(byte_order::FHTAGN_LITTLE_ENDIAN)
+    utf32le_decoder()
+        : utf32_decoder(byte_order::FHTAGN_LITTLE_ENDIAN)
     {
     }
 };
 
 
-struct utf16be_decoder
-    : public utf16_decoder
+struct utf32be_decoder
+    : public utf32_decoder
 {
-    typedef utf16be_decoder self_t;
+    typedef utf32be_decoder self_t;
 
-    utf16be_decoder()
-        : utf16_decoder(byte_order::FHTAGN_BIG_ENDIAN)
+    utf32be_decoder()
+        : utf32_decoder(byte_order::FHTAGN_BIG_ENDIAN)
     {
     }
 };
 
 
+
+#endif
 }} // namespace fhtagn::text
 
 #endif // guard
