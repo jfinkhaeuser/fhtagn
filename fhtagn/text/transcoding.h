@@ -41,8 +41,6 @@
 
 #include <string>
 
-#include <iostream> // FIXME
-
 namespace fhtagn {
 namespace text {
 

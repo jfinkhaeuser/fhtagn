@@ -286,6 +286,8 @@ struct utf8_decoder
     uint8_t       m_buffer_used;
 };
 
+
+
 /**
  * UTF-16 decoder
  **/
@@ -430,7 +432,6 @@ struct utf16be_decoder
 };
 
 
-#if 0
 /**
  * UTF-32 decoder
  **/
@@ -443,94 +444,74 @@ struct utf32_decoder
     utf32_decoder(byte_order::endian e = byte_order::FHTAGN_UNKNOWN_ENDIAN)
         : decoder_base<utf32_decoder>()
         , m_endian(e)
+        , m_buffer_used(0)
     {
     }
 
 
-    bool is_valid(unsigned char byte)
+    void do_reset()
     {
-        // we always need 4 bytes ber character, so the next byte is always
-        // considered valid until we can evaluate the whole character.
-        if (m_buffer_used < 3) {
-            return true;
-        }
-#if 0
-        // if we're reading the first byte of either word that can make up a
-        // UTF-16 sequence we /always/ need another byte.
-        if (m_buffer_used == 0 || m_buffer_used == 2) {
-            return true;
-        }
+        m_buffer_used = 0;
+    }
 
-        m_next_word = (byte << 8) + m_buffer[m_buffer_used - 1];
+
+    bool store_if_valid(unsigned char byte)
+    {
+        unsigned char * buffer = reinterpret_cast<unsigned char *>(&m_buffer);
+        buffer[m_buffer_used++] = byte;
+
+        if (m_buffer_used < 4) {
+            return true;
+        }
 
         if (m_endian == byte_order::FHTAGN_UNKNOWN_ENDIAN) {
-            switch (m_next_word) {
-                case 0xfffe:
-                    // LE BOM, but due to the way we assemble words it means the
-                    // input is BE.
+            switch (m_buffer) {
+                case 0xfffe0000:
+                    // LE BOM, but due to the way we assemble the buffer it
+                    // means the input is BE.
                     m_endian = byte_order::FHTAGN_BIG_ENDIAN;
-                    m_size = 2;
+                    do_reset();
                     return true;
                     break;
 
-                case 0xfeff:
-                    // BE BOM, but due to the way we assemble words it means the
-                    // input is LE.
+                case 0x0000feff:
+                    // BE BOM, but due to the way we assemble the buffer it
+                    // means the input is LE.
                     m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
-                    m_size = 2;
+                    do_reset();
                     return true;
                     break;
 
                 default:
+                    do_reset();
                     return false;
                     break;
             }
+
         }
 
-        m_next_word = byte_order::to_host(m_next_word, m_endian);
-
-        // if m_next_word is the leading word...
-        if (m_size == 0) {
-            m_size = 2;
-            // ... it might signal that there's a following word ...
-            if (0xd800UL < m_next_word && m_next_word <= 0xdbffUL) {
-                m_size += 2;
-                return true;
-            } else
-            // ... or it might be invalid.
-            if (0xdc00UL < m_next_word && m_next_word <= 0xdfffUL) {
-                return false;
-            }
-            return true;
-        }
-
-        // if m_next_word is a second word, it may not be in a valid range.
-        if (!(0xdc00UL < m_next_word && m_next_word <= 0xdfffUL)) {
-            return false;
-        }
-
+        m_buffer = byte_order::to_host(m_buffer, m_endian);
         return true;
-#endif
     }
 
 
     bool need_more()
     {
-        // we always need 4 bytes ber character, so the next byte is always
-        // considered valid until we can evaluate the whole character.
-        if (m_buffer_used < 3) {
-            return true;
-        }
+        return (m_buffer_used < 4);
     }
 
 
     utf32_char_t convert_to_utf32()
     {
-        return byte_order::to_host(*reinterpret_cast<utf32_char_t*>(m_buffer),
-                m_endian);
+        return m_buffer;
     }
 
+
     byte_order::endian  m_endian;
+    uint32_t            m_buffer;
+
+    /** bytes used in m_buffer (not words) */
+    uint8_t             m_buffer_used;
 };
 
 
@@ -559,7 +540,7 @@ struct utf32be_decoder
 
 
 
-#endif
+
 }} // namespace fhtagn::text
 
 #endif // guard
