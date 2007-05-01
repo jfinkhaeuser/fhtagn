@@ -41,6 +41,8 @@
 
 #include <string>
 
+#include <boost/concept_check.hpp>
+
 namespace fhtagn {
 namespace text {
 
@@ -133,81 +135,65 @@ enum char_encoding_type
 
 
 /**
- * Base class for decoding byte sequence into a single UTF-32 character. Derived
- * classes determine the way the byte sequence is interpreted, e.g. as ASCII,
- * ISO-8859-1, UTF-8, you name it.
- *
- * In most cases you'll want to use the decode() function below.
+ * Concept for decoders decoding byte sequences into a single UTF-32 character.
+ * The decoders are intended to be used with the decode() function below.
  **/
-template <
-    typename derived_decoderT
->
-struct decoder_base
+namespace concepts {
+
+template <typename T>
+struct CharDecoderConcept
 {
-    decoder_base()
+    void constraints()
     {
+        /**
+         * Decoders must be DefaultConstructible
+         **/
+        T decoder;
+
+        // test const contstraints
+        const_constraints(decoder);
+
+        /**
+         * Decoders must have a reset() function, accepting no parameters (or
+         * having only default parameters). The return value is ignored. The
+         * function results in have_full_sequence() returning false, until
+         * append() has been called at least once.
+         **/
+        decoder.reset();
+
+        /**
+         * Append a byte to an internal buffer - some decoders require only a
+         * single byte to construct a UTF-32 character, some require more. If
+         * the byte was successfully appended to the internal buffer, the
+         * function returns true, else false.
+         **/
+        unsigned char byte;
+        bool ret = decoder.append(byte);
+
+        boost::ignore_unused_variable_warning(ret);
     }
 
-
-    /**
-     * Reset decoder to try decoding a new byte sequence.
-     **/
-    void reset()
+    void const_constraints(T const & decoder)
     {
-        this->derived().do_reset();
-    }
+        /**
+         * Returns true if the decoder's internal buffer has enough bytes to
+         * construct a UTF-32 character, false if not.
+         **/
+        bool ret = decoder.have_full_sequence();
 
+        /**
+         * Return the UTF-32 character represented by the decoder's internal
+         * buffer.
+         **/
+        utf32_char_t result = decoder.to_utf32();
 
-    /**
-     * Returns true if the internal byte buffer (filled via the append()
-     * function) holds a full sequence of bytes, i.e. a sequence that can be
-     * interpreted as a UTF-32 character according to the derived decoder.
-     * If the sequence is not complete, false is returned.
-     **/
-    bool have_full_sequence()
-    {
-        return !this->derived().need_more();
-    }
-
-
-    /**
-     * Attempts to interpret the internal byte buffer as a UTF-32 character.
-     * If have_full_sequence() is false, the results of this call are undefined.
-     **/
-    utf32_char_t to_utf32()
-    {
-        return this->derived().convert_to_utf32();
-    }
-
-
-    /**
-     * Append tries to add the provided byte to an internal byte buffer, held in
-     * order to decode full byte sequences. If append can add the byte to the
-     * buffer (because the buffer does not yet contain a full sequence and the
-     * byte is valid according to the derived decoder), append() returns true,
-     * else false is returned.
-     **/
-    bool append(unsigned char byte)
-    {
-        if (this->derived().have_full_sequence()) {
-            return false; // not adding more
-        }
-
-        return this->derived().store_if_valid(byte);
-    }
-
-
-    derived_decoderT & derived()
-    {
-        return *static_cast<derived_decoderT *>(this);
-    }
-
-
-    derived_decoderT const & derived() const
-    {
-        return *static_cast<derived_decoderT const *>(this);
+        boost::ignore_unused_variable_warning(ret);
+        boost::ignore_unused_variable_warning(result);
     }
 };
+
+} // namespace concepts
+
 
 
 
@@ -235,8 +221,11 @@ template <
 >
 inline input_iterT
 decode(input_iterT first, input_iterT last, output_iterT result,
-    bool use_replacement_char = true)
+        bool use_replacement_char = true)
 {
+    // ensure that decoderT is a valid charcter decoder
+    boost::function_requires<concepts::CharDecoderConcept<decoderT> >();
+
     decoderT decoder;
 
     input_iterT iter = first;
@@ -274,6 +263,119 @@ decode(input_iterT first, input_iterT last, output_iterT result,
 }
 
 
+
+/**
+ * Concept for encoders, encoding a UTF-32 character into a byte sequence. The
+ * encoders are intended to be used with the encode() function below.
+ **/
+namespace concepts {
+
+template <typename T>
+struct CharEncoderConcept
+{
+    void constraints()
+    {
+        /**
+         * Enoders must be DefaultConstructible
+         **/
+        T encoder;
+
+        /**
+         * Encoders must have a const_iterator typedef...
+         **/
+        typename T::const_iterator iter;
+
+        /**
+         * ... that must be dereferenced into a char in the signedness the
+         * environment proscribes.
+         **/
+        char c = *iter;
+
+        // test const contstraints
+        const_constraints(encoder);
+
+        /**
+         * Encode a UTF-32 character in the encoding specific to this encoder.
+         * Must accepts a UTF-32 character, and return true if the encoding was
+         * successful, else false.
+         **/
+        utf32_char_t character;
+        bool ret = encoder.encode(character);
+
+        boost::ignore_unused_variable_warning(iter);
+        boost::ignore_unused_variable_warning(c);
+        boost::ignore_unused_variable_warning(ret);
+    }
+
+    void const_constraints(T const & encoder)
+    {
+        /**
+         * Encoders must have begin() and end() functions that return a
+         * const_iterator. The two iterators mark the beginning and end of a byte
+         * sequence representing the last UTF-32 character fed to encode().
+         **/
+        typename T::const_iterator b = encoder.begin();
+        typename T::const_iterator e = encoder.end();
+
+        boost::ignore_unused_variable_warning(b);
+        boost::ignore_unused_variable_warning(e);
+    }
+};
+
+} // namespace concepts
+
+
+
+
+/**
+ * FIXME docs, and need to figure out what to do with chars that the output
+ * encoding can't handle.
+ *
+ * For now, if the use_replacement_char flag is true, illegal UTF-32 characters
+ * are encoded as the replacement char. That only exists in encodings that
+ * allow for more than one byte per character; if encoding the replacement char
+ * fails, the illegal character is simply skipped. If the flag is false,
+ * encoding breaks off and the iterator pointing to the illegal character is
+ * returned.
+ **/
+template <
+    typename encoderT,
+    typename input_iterT,
+    typename output_iterT
+>
+inline input_iterT
+encode(input_iterT first, input_iterT last, output_iterT result,
+        bool use_replacement_char = true, utf32_char_t replacement_char = 0xfffd)
+{
+    // ensure that encoderT is a valid charcter encoder
+    boost::function_requires<concepts::CharEncoderConcept<encoderT> >();
+
+    encoderT encoder;
+
+    input_iterT iter = first;
+    for ( ; iter != last ; ++iter) {
+        if (!encoder.encode(*iter)) {
+          if (!use_replacement_char) {
+            break;
+          }
+          // try encoding the replacement character. if that works, copy that
+          // to the output (happens below). If it doesn't work, simply skip to
+          // the next input character.
+          if (!encoder.encode(replacement_char)) {
+            continue;
+          }
+        }
+
+        typename encoderT::const_iterator char_end = encoder.end();
+        for (typename encoderT::const_iterator char_iter = encoder.begin()
+            ; char_iter != char_end ; ++char_iter)
+        {
+            *result++ = *char_iter;
+        }
+    }
+
+    return iter;
+}
 
 
 }} // namespace fhtagn::text

@@ -37,6 +37,7 @@
 
 #include <fhtagn/text/transcoding.h>
 #include <fhtagn/text/decoders.h>
+#include <fhtagn/text/encoders.h>
 // #include <fhtagn/text/xparser.h>
 
 namespace {
@@ -55,6 +56,8 @@ public:
         CPPUNIT_TEST(testDecodeUTF_8);
         CPPUNIT_TEST(testDecodeUTF_16);
         CPPUNIT_TEST(testDecodeUTF_32);
+
+        CPPUNIT_TEST(testEncodeASCII);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -293,6 +296,24 @@ private:
             // ensure that the G clef sign has been decoded properly
             CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target[7]);
         }
+    }
+
+
+    void testEncodeASCII()
+    {
+        namespace t = fhtagn::text;
+
+        t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+        t::utf32_string source = source_array;
+
+        std::string expected = "Hello, world!";
+
+        // simple test, expected to succeed.
+        std::string target;
+        t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
+            source.end(), std::back_insert_iterator<std::string>(target));
+        CPPUNIT_ASSERT(source.end() == error_iter);
+        CPPUNIT_ASSERT_EQUAL(expected, target);
     }
 };
 

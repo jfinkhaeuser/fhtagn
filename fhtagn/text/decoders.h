@@ -51,37 +51,39 @@ namespace text {
  * values above 127 are considered invalid.
  **/
 struct ascii_decoder
-    : public decoder_base<ascii_decoder>
 {
-    typedef ascii_decoder self_t;
-
     ascii_decoder()
         : m_byte(128)
     {
     }
 
-    bool store_if_valid(unsigned char byte)
+    bool append(unsigned char byte)
     {
+        if (have_full_sequence()) {
+            return false;
+        }
+
         if (byte <= 127) {
             m_byte = byte;
             return true;
         }
+
         return false;
     }
 
-    bool need_more()
+    bool have_full_sequence() const
     {
         // use invalid char value 128 to signal an empty buffer
-        return (m_byte == 128);
+        return (m_byte != 128);
     }
 
-    void do_reset()
+    void reset()
     {
         // signal empty buffer
         m_byte = 128;
     }
 
-    utf32_char_t convert_to_utf32()
+    utf32_char_t to_utf32() const
     {
         utf32_char_t retval = m_byte;
         return retval;
@@ -96,7 +98,6 @@ struct ascii_decoder
  * value between 160 and 255, but the in between block of bytes is left undefined.
  **/
 struct iso8859_decoder_base
-    : public decoder_base<iso8859_decoder_base>
 {
     iso8859_decoder_base(uint32_t subencoding)
         : m_subencoding(subencoding)
@@ -105,32 +106,37 @@ struct iso8859_decoder_base
     }
 
 
-    bool store_if_valid(unsigned char byte)
+    bool append(unsigned char byte)
     {
+        if (have_full_sequence()) {
+            return false;
+        }
+
         if (byte <= 127 || byte >= 160) {
             m_byte = byte;
             return true;
         }
+
         return false;
     }
 
 
-    bool need_more()
+    bool have_full_sequence() const
     {
         // 128 is an invalid byte value, we use it to signal that the buffer
         // is unused.
-        return (m_byte == 128);
+        return (m_byte != 128);
     }
 
 
-    void do_reset()
+    void reset()
     {
         // signal empty buffer
         m_byte = 128;
     }
 
 
-    utf32_char_t convert_to_utf32()
+    utf32_char_t to_utf32() const
     {
         if (m_subencoding == 1) {
             // in ISO-8859-1 all characters correspond to the unicode code point
@@ -165,8 +171,6 @@ struct iso8859_decoder_base
     struct iso8859_##subencoding##_decoder                    \
         : public iso8859_decoder_base                         \
     {                                                         \
-        typedef iso8859_##subencoding##_decoder self_t;       \
-                                                              \
         iso8859_##subencoding##_decoder()                     \
             : iso8859_decoder_base(subencoding)               \
         {                                                     \
@@ -193,27 +197,27 @@ FHTAGN_TEXT_DEFINE_ISO8859_DECODER(16);
  * UTF-8 decoder
  **/
 struct utf8_decoder
-    : public decoder_base<utf8_decoder>
 {
-    typedef utf8_decoder self_t;
-
     utf8_decoder()
-        : decoder_base<utf8_decoder>()
-        , m_size(0)
+        : m_size(0)
         , m_buffer_used(0)
     {
     }
 
 
-    void do_reset()
+    void reset()
     {
         m_size = 0;
         m_buffer_used = 0;
     }
 
 
-    bool store_if_valid(unsigned char byte)
+    bool append(unsigned char byte)
     {
+        if (have_full_sequence()) {
+            return false;
+        }
+
         bool valid = false;
         if (m_size == 0) {
             valid = is_valid_leading_octet(byte);
@@ -259,13 +263,13 @@ struct utf8_decoder
     }
 
 
-    bool need_more()
+    bool have_full_sequence() const
     {
-        return (m_size == 0 || m_buffer_used < m_size);
+        return !(m_size == 0 || m_buffer_used < m_size);
     }
 
 
-    utf32_char_t convert_to_utf32()
+    utf32_char_t to_utf32() const
     {
         static utf32_char_t const modifier_table[] = {
             0x00, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc,
@@ -292,29 +296,29 @@ struct utf8_decoder
  * UTF-16 decoder
  **/
 struct utf16_decoder
-    : public decoder_base<utf16_decoder>
 {
-    typedef utf16_decoder self_t;
-
-
-    utf16_decoder(byte_order::endian e = byte_order::FHTAGN_UNKNOWN_ENDIAN)
-        : decoder_base<utf16_decoder>()
-        , m_endian(e)
+    explicit utf16_decoder(byte_order::endian e
+            = byte_order::FHTAGN_UNKNOWN_ENDIAN)
+        : m_endian(e)
         , m_buffer_used(0)
         , m_size(0)
     {
     }
 
 
-    void do_reset()
+    void reset()
     {
         m_size = 0;
         m_buffer_used = 0;
     }
 
 
-    bool store_if_valid(unsigned char byte)
+    bool append(unsigned char byte)
     {
+        if (have_full_sequence()) {
+            return false;
+        }
+
         uint16_t & next_word = m_buffer[m_buffer_used / 2];
 
         // if we're reading the first byte of either word that can make up a
@@ -334,7 +338,7 @@ struct utf16_decoder
                     // LE BOM, but due to the way we assemble words it means the
                     // input is BE.
                     m_endian = byte_order::FHTAGN_BIG_ENDIAN;
-                    do_reset();
+                    reset();
                     return true;
                     break;
 
@@ -342,12 +346,12 @@ struct utf16_decoder
                     // BE BOM, but due to the way we assemble words it means the
                     // input is LE.
                     m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
-                    do_reset();
+                    reset();
                     return true;
                     break;
 
                 default:
-                    do_reset();
+                    reset();
                     return false;
                     break;
             }
@@ -365,7 +369,7 @@ struct utf16_decoder
             } else
             // ... or it might be invalid.
             if (0xdc00UL < next_word && next_word <= 0xdfffUL) {
-                do_reset();
+                reset();
                 return false;
             }
             return true;
@@ -373,7 +377,7 @@ struct utf16_decoder
 
         // if m_next_word is a second word, it may not be in a valid range.
         if (!(0xdc00UL < next_word && next_word <= 0xdfffUL)) {
-            do_reset();
+            reset();
             return false;
         }
 
@@ -381,13 +385,13 @@ struct utf16_decoder
     }
 
 
-    bool need_more()
+    bool have_full_sequence() const
     {
-        return (m_size == 0 || m_buffer_used < m_size);
+        return !(m_size == 0 || m_buffer_used < m_size);
     }
 
 
-    utf32_char_t convert_to_utf32()
+    utf32_char_t to_utf32() const
     {
         utf32_char_t result = m_buffer[0];
         if (m_size == 4) {
@@ -436,27 +440,30 @@ struct utf16be_decoder
  * UTF-32 decoder
  **/
 struct utf32_decoder
-    : public decoder_base<utf32_decoder>
 {
     typedef utf32_decoder self_t;
 
 
-    utf32_decoder(byte_order::endian e = byte_order::FHTAGN_UNKNOWN_ENDIAN)
-        : decoder_base<utf32_decoder>()
-        , m_endian(e)
+    explicit utf32_decoder(byte_order::endian e
+            = byte_order::FHTAGN_UNKNOWN_ENDIAN)
+        : m_endian(e)
         , m_buffer_used(0)
     {
     }
 
 
-    void do_reset()
+    void reset()
     {
         m_buffer_used = 0;
     }
 
 
-    bool store_if_valid(unsigned char byte)
+    bool append(unsigned char byte)
     {
+        if (have_full_sequence()) {
+            return false;
+        }
+
         unsigned char * buffer = reinterpret_cast<unsigned char *>(&m_buffer);
         buffer[m_buffer_used++] = byte;
 
@@ -470,7 +477,7 @@ struct utf32_decoder
                     // LE BOM, but due to the way we assemble the buffer it
                     // means the input is BE.
                     m_endian = byte_order::FHTAGN_BIG_ENDIAN;
-                    do_reset();
+                    reset();
                     return true;
                     break;
 
@@ -478,12 +485,12 @@ struct utf32_decoder
                     // BE BOM, but due to the way we assemble the buffer it
                     // means the input is LE.
                     m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
-                    do_reset();
+                    reset();
                     return true;
                     break;
 
                 default:
-                    do_reset();
+                    reset();
                     return false;
                     break;
             }
@@ -495,13 +502,13 @@ struct utf32_decoder
     }
 
 
-    bool need_more()
+    bool have_full_sequence() const
     {
-        return (m_buffer_used < 4);
+        return (m_buffer_used == 4);
     }
 
 
-    utf32_char_t convert_to_utf32()
+    utf32_char_t to_utf32() const
     {
         return m_buffer;
     }
