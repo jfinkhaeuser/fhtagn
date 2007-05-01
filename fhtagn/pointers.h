@@ -87,7 +87,7 @@ struct const_pointer_const
  * problems:
  *
  *  1) Who owns the object? (that's the obvious problem)
- *  2) What are the semnatics for this object, if the enclosing class gets
+ *  2) What are the semantics for this object, if the enclosing class gets
  *     copy constructed or assigned?
  *
  * Pointer policies answer the second question, by giving different approaches
