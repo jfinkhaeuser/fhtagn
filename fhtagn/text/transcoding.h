@@ -134,6 +134,17 @@ enum char_encoding_type
 };
 
 
+namespace detail {
+
+/**
+ * ISO-8859 decoders and encoders make use of a mapping table for mapping unicode
+ * code points to byte values between 160 and 255.
+ **/
+extern utf32_char_t iso8859_mapping[];
+
+} // namespace detail
+
+
 /**
  * Concept for decoders decoding byte sequences into a single UTF-32 character.
  * The decoders are intended to be used with the decode() function below.

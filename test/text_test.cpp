@@ -58,6 +58,7 @@ public:
         CPPUNIT_TEST(testDecodeUTF_32);
 
         CPPUNIT_TEST(testEncodeASCII);
+        CPPUNIT_TEST(testEncodeISO_8859_15);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -303,18 +304,142 @@ private:
     {
         namespace t = fhtagn::text;
 
-        t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
-        t::utf32_string source = source_array;
+        // simple test, expected to succeed.
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
 
-        std::string expected = "Hello, world!";
+            std::string expected = "Hello, world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // test with non-ASCII character (a umlaut). Because the replacement
+        // char cannot be encoded in ASCII, we merely expect this char to be
+        // skipped in the output
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0xe4, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello, world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // Sometimes you see ASCII text encoding unknown characters as ? - let's
+        // see if that works.
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0xe4, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,? world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target), true, '?');
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // lastly, ensure that when we want to fail at invalid characters we
+        // fail at the correct input position.
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0xe4, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target), false);
+            CPPUNIT_ASSERT(source.begin() + 6 == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+    }
+
+    void testEncodeISO_8859_15()
+    {
+        namespace t = fhtagn::text;
 
         // simple test, expected to succeed.
-        std::string target;
-        t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
-            source.end(), std::back_insert_iterator<std::string>(target));
-        CPPUNIT_ASSERT(source.end() == error_iter);
-        CPPUNIT_ASSERT_EQUAL(expected, target);
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello, world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // test with non-ASCII character (a umlaut). This must be valid in iso-8859-15
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0xe4, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,\xe4 world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // test with non-ISO-8859-15 character (G clef) - that's expected to be ignored ...
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0x1d11e, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello, world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // ... or optionally encoded as a ? ...
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0x1d11e, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,? world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target), true, '?');
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // ... or encoding breaks off at that point
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0x1d11e, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target), false);
+            CPPUNIT_ASSERT(source.begin() + 6 == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
     }
+
 };
 
 

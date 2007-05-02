@@ -82,6 +82,101 @@ struct ascii_encoder
 };
 
 
+
+/**
+ * TODO
+ **/
+struct iso8859_encoder_base
+{
+    typedef char const * const_iterator;
+
+    iso8859_encoder_base(uint32_t subencoding)
+        : m_subencoding(subencoding)
+        , m_byte(-1)
+    {
+    }
+
+    const_iterator begin() const
+    {
+        // If m_byte has a valid value, return m_byte's address. Else return
+        // end()
+        return &m_byte + (m_byte == -1 ? 1 : 0);
+    }
+
+    const_iterator end() const
+    {
+        return &m_byte + 1;
+    }
+
+    bool encode(utf32_char_t ch)
+    {
+        // Characters with values <= 127 can be encoded in just like in ASCII
+        if (0 <= ch && ch <= 127) {
+            m_byte = static_cast<char>(ch);
+            return true;
+        }
+
+        if (m_subencoding == 1) {
+            // in iso-8859-1, all characters correspond to unicode code points
+            // of the same value.
+            if (ch <= 255) {
+                m_byte = static_cast<char>(ch);
+                return true;
+            }
+        } else {
+            // compute offset into mapping table
+            uint32_t offset = m_subencoding - 2;
+            if (m_subencoding > 11) {
+                --offset;
+            }
+            offset *= 96; // number of characters special to each subencoding
+
+            for (uint32_t i = offset ; i < offset + 96 ; ++i) {
+                if (detail::iso8859_mapping[i] == ch) {
+                    m_byte = i - offset + 160;
+                    return true;
+                }
+            }
+        }
+
+        // other bytes can't be encoded in any of the iso8859 encodings.
+        m_byte = -1; // signal empty buffer
+        return false;
+    }
+
+    uint32_t  m_subencoding;
+    char      m_byte;
+};
+
+
+#define FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(subencoding)       \
+    struct iso8859_##subencoding##_encoder                    \
+        : public iso8859_encoder_base                         \
+    {                                                         \
+        iso8859_##subencoding##_encoder()                     \
+            : iso8859_encoder_base(subencoding)               \
+        {                                                     \
+        }                                                     \
+    };
+
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(1);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(2);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(3);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(4);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(5);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(6);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(7);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(8);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(9);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(11);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(13);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(14);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(15);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(16);
+
+
+
+
 }} // namespace fhtagn::text
 
 #endif //guard

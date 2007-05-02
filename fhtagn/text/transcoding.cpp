@@ -38,13 +38,14 @@
 namespace fhtagn {
 namespace text {
 
+namespace detail {
 /**
  * The mapping table for ISO-8859 decoding is subdivided into the subencodings.
  * Mapping data is from http://unicode.org/Public/MAPPINGS/ISO8859/
  * Byte values not covered by ISO-8859 subencodings are defined as the
  * replacement character here (0xfffd).
  **/
-utf32_char_t iso8859_decoder_base::m_mapping[1344] = {
+utf32_char_t iso8859_mapping[1344] = {
     /** ISO-8859-2 **/
 /* a0 */ 0x000000a0, 0x00000104, 0x000002d8, 0x00000141, 0x000000a4, 0x0000013d,
 /* a6 */ 0x0000015a, 0x000000a7, 0x000000a8, 0x00000160, 0x0000015e, 0x00000164,
@@ -299,6 +300,8 @@ utf32_char_t iso8859_decoder_base::m_mapping[1344] = {
 /* f4 */ 0x000000f4, 0x00000151, 0x000000f6, 0x0000015b, 0x00000171, 0x000000f9,
 /* fa */ 0x000000fa, 0x000000fb, 0x000000fc, 0x00000119, 0x0000021b, 0x000000ff,
 };
+
+} // namespace detail
 
 
 

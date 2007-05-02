@@ -155,13 +155,9 @@ struct iso8859_decoder_base
         }
         offset *= 96; // number of characters special to each subencoding
         offset += tmp - 160;
-        return m_mapping[offset];
+        return detail::iso8859_mapping[offset];
     }
 
-    /**
-     * Mapping table to use for all ISO-8859 decoders.
-     **/
-    static utf32_char_t m_mapping[];
     uint32_t            m_subencoding;
     unsigned char       m_byte;
 };
