@@ -1,10 +1,38 @@
 Source code:
 
-- doxygen template
 - variant:
-  make variant accept character string literals and store them as std::string
-  documentation
+  - make variant accept character string literals and store them as std::string.
+    low prio - people can work around it, but it'd be nice.
+- char encoding:
+  - encode various encodings
+  - add output_size parameter to encode/decode, to allow stack-based transcoding.
+    the output iterator gets advanced only output_size times, after which
+    transcoding stops even if there is more input (the returned input iterator
+    indicates where to pick up transcoding again).
+  - transcode function in the style of encode/decode
+  - universal encoder/decoder (pimpl that hands off to specialized enc/dec).
+  - base xparser on universal decoder/encoder
+  - stream transcoder - accepts istream ref in it's ctor, and has an ostream<<
+    operator.
+- xml:
+  - clean up
+  - add good error reporting (which line/character failed)
+  - add character encoding awareness (see xparser above)
+  - add namespace awareness
+  - xml entity encoder - encode characters outside of a given charset as
+    &#1234; entities
+  - add (optional) validation
+- stack based allocator
+  - split into traits & policies (see linked article). investigate if we need to
+    throw out-of-memory ourselves or that happens when we return 0.
+  - create alloca()-based policy
+  - create alloca()-based policy with fallback to malloc - must maintain list of
+    heap pointers for that to work.
+- move url class from libwool here
+  - add composing of URLs (right now URL class can only parse)
+- mime-parser
 
 Other:
 
+- doxygen template?
 - MoinMoin (?) on the website
