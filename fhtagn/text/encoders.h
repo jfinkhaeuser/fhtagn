@@ -84,7 +84,8 @@ struct ascii_encoder
 
 
 /**
- * TODO
+ * Base encoder for ISO-8859 encoders. ISO-8859 includes ASCII and bytes with a
+ * value between 160 and 255, but the in between block of bytes is left undefined.
  **/
 struct iso8859_encoder_base
 {
@@ -119,7 +120,7 @@ struct iso8859_encoder_base
         if (m_subencoding == 1) {
             // in iso-8859-1, all characters correspond to unicode code points
             // of the same value.
-            if (ch <= 255) {
+            if (160 <= ch && ch <= 255) {
                 m_byte = static_cast<char>(ch);
                 return true;
             }
