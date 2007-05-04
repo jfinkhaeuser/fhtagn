@@ -59,6 +59,7 @@ public:
 
         CPPUNIT_TEST(testEncodeASCII);
         CPPUNIT_TEST(testEncodeISO_8859_15);
+        CPPUNIT_TEST(testEncodeUTF_8);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -436,6 +437,54 @@ private:
             t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target), false);
             CPPUNIT_ASSERT(source.begin() + 6 == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+    }
+
+
+    void testEncodeUTF_8()
+    {
+        namespace t = fhtagn::text;
+
+        // simple test, expected to succeed.
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello, world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::utf8_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // test with non-ASCII character (a umlaut). This must be valid in UTF-8
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0xe4, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,\xc3\xa4 world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::utf8_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // test with euro sign - again must be valid
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0x20ac, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,\xe2\x82\xac world!";
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::utf8_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
         }
     }

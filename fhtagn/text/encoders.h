@@ -176,6 +176,70 @@ FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(15);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(16);
 
 
+/**
+ * UTF-8 encoder
+ **/
+struct utf8_encoder
+{
+    typedef char const * const_iterator;
+
+    utf8_encoder()
+        : m_end(m_buffer)
+    {
+    }
+
+    const_iterator begin() const
+    {
+        return m_buffer;
+    }
+
+    const_iterator end() const
+    {
+        return m_end;
+    }
+
+    bool encode(utf32_char_t ch)
+    {
+        static utf32_char_t const modifier_table[] = {
+            0x00, 0xc0, 0xe0, 0xf0,
+        };
+
+        uint8_t size = 0;
+        if (ch < 0x80) {
+          size = 1;
+        } else if (ch < 0x800) {
+          size = 2;
+        } else if (ch < 0x10000) {
+          size = 3;
+        } else if (ch < 0x110000) {
+          size = 4;
+        } else {
+          // Character is outside of the scope that UTF-8 may represent
+          return false;
+        }
+
+        char * offset = &m_buffer[size];
+        m_end = offset;
+        switch (size) {
+          // everything falls through
+          case 4:
+            *--offset = (ch | 0x80) & 0xbf;
+            ch >>= 6;
+          case 3:
+            *--offset = (ch | 0x80) & 0xbf;
+            ch >>= 6;
+          case 2:
+            *--offset = (ch | 0x80) & 0xbf;
+            ch >>= 6;
+          case 1:
+            *--offset = ch | modifier_table[size - 1];
+        }
+        return true;
+    }
+
+    char    m_buffer[4];
+    char *  m_end;
+};
 
 
 }} // namespace fhtagn::text

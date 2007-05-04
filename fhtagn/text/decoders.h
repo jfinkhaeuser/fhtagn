@@ -268,7 +268,7 @@ struct utf8_decoder
     utf32_char_t to_utf32() const
     {
         static utf32_char_t const modifier_table[] = {
-            0x00, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc,
+            0x00, 0xc0, 0xe0, 0xf0,
         };
 
         utf32_char_t result = static_cast<unsigned char>(m_buffer[0])
