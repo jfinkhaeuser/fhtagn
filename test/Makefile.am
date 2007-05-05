@@ -15,7 +15,7 @@ testsuite_SOURCES = \
 	variant_test.cpp \
 	pointers_test.cpp \
 	enhanced_types_test.cpp \
-	text_test.cpp \
+	transcoding_test.cpp \
 	misc_test.cpp \
 	testdriver.cpp
 
