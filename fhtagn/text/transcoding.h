@@ -68,6 +68,12 @@ namespace text {
  *       EF BB BF      UTF-8
  **/
 
+extern char const utf32_be_bom[4];
+extern char const utf32_le_bom[4];
+extern char const utf16_be_bom[2];
+extern char const utf16_le_bom[2];
+extern char const utf8_bom[3];
+
 
 /**
  * Some basic type definitions. Of course, instead of utf8_string you could just

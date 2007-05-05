@@ -411,8 +411,6 @@ struct utf16_decoder
 struct utf16le_decoder
     : public utf16_decoder
 {
-    typedef utf16le_decoder self_t;
-
     utf16le_decoder()
         : utf16_decoder(byte_order::FHTAGN_LITTLE_ENDIAN)
     {
@@ -423,8 +421,6 @@ struct utf16le_decoder
 struct utf16be_decoder
     : public utf16_decoder
 {
-    typedef utf16be_decoder self_t;
-
     utf16be_decoder()
         : utf16_decoder(byte_order::FHTAGN_BIG_ENDIAN)
     {
@@ -437,9 +433,6 @@ struct utf16be_decoder
  **/
 struct utf32_decoder
 {
-    typedef utf32_decoder self_t;
-
-
     explicit utf32_decoder(byte_order::endian e
             = byte_order::FHTAGN_UNKNOWN_ENDIAN)
         : m_endian(e)
@@ -521,8 +514,6 @@ struct utf32_decoder
 struct utf32le_decoder
     : public utf32_decoder
 {
-    typedef utf32le_decoder self_t;
-
     utf32le_decoder()
         : utf32_decoder(byte_order::FHTAGN_LITTLE_ENDIAN)
     {
@@ -533,8 +524,6 @@ struct utf32le_decoder
 struct utf32be_decoder
     : public utf32_decoder
 {
-    typedef utf32be_decoder self_t;
-
     utf32be_decoder()
         : utf32_decoder(byte_order::FHTAGN_BIG_ENDIAN)
     {

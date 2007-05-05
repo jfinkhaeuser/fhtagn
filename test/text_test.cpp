@@ -45,11 +45,11 @@ namespace {
 
 } // anonymous namespace
 
-class TextTest
+class TranscodingTest
     : public CppUnit::TestFixture
 {
 public:
-    CPPUNIT_TEST_SUITE(TextTest);
+    CPPUNIT_TEST_SUITE(TranscodingTest);
 
         CPPUNIT_TEST(testDecodeASCII);
         CPPUNIT_TEST(testDecodeISO_8859_15);
@@ -60,6 +60,7 @@ public:
         CPPUNIT_TEST(testEncodeASCII);
         CPPUNIT_TEST(testEncodeISO_8859_15);
         CPPUNIT_TEST(testEncodeUTF_8);
+        CPPUNIT_TEST(testEncodeUTF_16);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -489,7 +490,51 @@ private:
         }
     }
 
+
+    void testEncodeUTF_16()
+    {
+        namespace t = fhtagn::text;
+
+        // simple test, expected to succeed.
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 0x1d11e, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+            // unicode code point 119070 (hex 1D11E) is musical G clef, which
+            // is an example of code points encoded in four bytes in UTF-16:
+            // Numeric values: D834 DD1E
+            //
+            // LE: 34 D8 1E DD
+            char le_target[] = { 'H', '\x00', 'e',    '\x00', 'l',    '\x00',
+                                 'l', '\x00', 'o',    '\x00', ',',    '\x00',
+                                 ' ', '\x00', '\x34', '\xd8', '\x1e', '\xdd',
+                                 ' ', '\x00', 'w',    '\x00', 'o',    '\x00',
+                                 'r', '\x00', 'l',    '\x00', 'd',    '\x00',
+                                 '!', '\x00' };
+            // BE: D8 34 DD 1E
+            char be_target[] = { '\x00', 'H', '\x00', 'e',    '\x00', 'l',
+                                 '\x00', 'l', '\x00', 'o',    '\x00', ',',
+                                 '\x00', ' ', '\xd8', '\x34', '\xdd', '\x1e',
+                                 '\x00', ' ', '\x00', 'w',    '\x00', 'o',
+                                 '\x00', 'r', '\x00', 'l',    '\x00', 'd',
+                                 '\x00', '!' };
+
+            std::string le_expected(le_target, sizeof(le_target));
+            std::string be_expected(be_target, sizeof(be_target));
+
+            std::string target;
+            t::utf32_string::const_iterator error_iter = t::encode<t::utf16le_encoder>(source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(le_expected, target);
+
+            target.clear();
+            error_iter = t::encode<t::utf16be_encoder>(source.begin(), source.end(),
+                    std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(be_expected, target);
+        }
+    }
 };
 
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TextTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(TranscodingTest);

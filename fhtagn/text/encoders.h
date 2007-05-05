@@ -176,6 +176,8 @@ FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(15);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(16);
 
 
+
+
 /**
  * UTF-8 encoder
  **/
@@ -239,6 +241,92 @@ struct utf8_encoder
 
     char    m_buffer[4];
     char *  m_end;
+};
+
+
+
+/**
+ * Base class for UTF-16 encoders. In contrast to decoding, we can't autodetect
+ * the desired endianness of the output by parsing a BOM. The base class
+ * therefore cannot be used on it's own, in contrast to utf16_decoder.
+ **/
+struct utf16_encoder_base
+{
+    typedef char const * const_iterator;
+
+    explicit utf16_encoder_base(byte_order::endian endian)
+        : m_endian(endian)
+        , m_end(reinterpret_cast<char *>(m_buffer))
+    {
+    }
+
+    const_iterator begin() const
+    {
+        return reinterpret_cast<const_iterator>(m_buffer);
+    }
+
+    const_iterator end() const
+    {
+        return m_end;
+    }
+
+    bool encode(utf32_char_t ch)
+    {
+        if (ch <= 0xffff) {
+            // characters in the basic multilingual plane are encoded as a single
+            // word; however, they may not be values in the range indicating
+            // surrogate pairs.
+            if (0xd800 < ch && ch <= 0xdfff) {
+                return false;
+            }
+
+            m_buffer[0] = ch;
+            m_buffer[0] = byte_order::from_host(m_buffer[0], m_endian);
+
+            m_end = reinterpret_cast<char *>(&m_buffer[1]);
+            return true;
+        }
+
+        // characters outside the basic multilingual plane are encoded in two
+        // words, but may still not exceed the maximum legal value for UTF-32
+        // characters.
+        if (ch > 0x0010ffffUL) {
+            return false;
+        }
+
+        ch -= 0x00010000UL;
+        m_buffer[0] = (ch >> 10) + 0xd800;
+        m_buffer[0] = byte_order::from_host(m_buffer[0], m_endian);
+        m_buffer[1] = (ch & 0x03ff) + 0xdc00;
+        m_buffer[1] = byte_order::from_host(m_buffer[1], m_endian);
+
+        m_end = reinterpret_cast<char *>(&m_buffer[2]);
+        return true;
+    }
+
+    byte_order::endian  m_endian;
+    utf16_char_t        m_buffer[2];
+    char *              m_end;
+};
+
+
+struct utf16le_encoder
+    : public utf16_encoder_base
+{
+    utf16le_encoder()
+        : utf16_encoder_base(byte_order::FHTAGN_LITTLE_ENDIAN)
+    {
+    }
+};
+
+
+struct utf16be_encoder
+    : public utf16_encoder_base
+{
+    utf16be_encoder()
+        : utf16_encoder_base(byte_order::FHTAGN_BIG_ENDIAN)
+    {
+    }
 };
 
 

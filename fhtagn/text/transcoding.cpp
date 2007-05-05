@@ -38,6 +38,16 @@
 namespace fhtagn {
 namespace text {
 
+/**
+ * Definitions of the FEFF BOM in various encodings
+ **/
+char const utf32_be_bom[] = { 0x00, 0x00, 0xfe, 0xff };
+char const utf32_le_bom[] = { 0xff, 0xfe, 0x00, 0x00 };
+char const utf16_be_bom[] = { 0xfe, 0xff };
+char const utf16_le_bom[] = { 0xff, 0xfe };
+char const utf8_bom[] = { 0xef, 0xbb, 0xbf };
+
+
 namespace detail {
 /**
  * The mapping table for ISO-8859 decoding is subdivided into the subencodings.
