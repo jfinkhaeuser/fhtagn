@@ -77,6 +77,28 @@
     } // namespace
 
 
+/**
+ * Safe version of fhtagn::variant::check - calls fhtagn::variant::check but
+ * casts the variable passed as the second parameter to a const reference
+ * to ensure that operator[] does not modify the variable at all.
+ *   "unsafe": fhtagn::variant::check<int>(x["foo"])
+ *   safe:     FHTAGN_VARIANT_CHECK(int, x, ["foo"])
+ **/
+#define FHTAGN_VARIANT_CHECK(_value_type, _variable, _index_chain)            \
+    fhtagn::variant::check<_value_type>(                                      \
+        const_cast<fhtagn::variant const &>(_variable)_index_chain)           \
+
+/**
+ * Safe version of fhtagn::variant::safe_get - calls fhtagn::variant::safe_get
+ * but casts the variable passed as the second parameter to a const reference
+ * to ensure that operator[] does not modify the variable at all.
+ *   "unsafe": fhtagn::variant::safe_get<int>(x["foo"])
+ *   safe:     FHTAGN_VARIANT_SAFE_GET(int, x, ["foo"])
+ **/
+#define FHTAGN_VARIANT_SAFE_GET(_value_type, _variable, _index_chain)         \
+    fhtagn::variant::safe_get<_value_type>(                                   \
+        const_cast<fhtagn::variant const &>(_variable)_index_chain)           \
+
 namespace fhtagn {
 
 /**
@@ -249,15 +271,15 @@ public:
     typedef std::map<std::string, variant> map_t;
 
     /**
+     * See class documentation. Specialized array of variants.
+     **/
+    typedef std::vector<variant> array_t;
+
+    /**
      * Variants throw error on some occasion, which is derived from
      * std::logic_error.
      **/
     typedef std::logic_error error;
-
-    /**
-     * See class documentation. Specialized array of variants.
-     **/
-    typedef std::vector<variant> array_t;
 
     variant();
     ~variant() {}
@@ -349,6 +371,13 @@ public:
      * Use ths function to simplify checking of the type of a nested variant:
      *    variant::check<int>(x["foo"]["bar"])
      * returns true if x["foo"]["bar"] exists and contains an int.
+     *
+     * The code only works if (in the example above) x is a const variable or
+     * holds a value other than a map. Because variant maps try to behave as
+     * std::map does, and std::map is expected to silently add keys that don't
+     * yet exists (and we want that, otherwise x["foo"] = 123 would NEVER work),
+     * x may get converted to a map_t with a key "foo"...
+     * In order to be really safe, use the FHTAGN_VARIANT_CHECK() macro above.
      **/
     template <typename T>
     static bool check(variant const & var);
@@ -357,6 +386,9 @@ public:
      * The two static versions of safe_get() below can be used in much the same
      * way as check() above. They either return the specified type, or, if that's
      * not possible, throw an error.
+     *
+     * See the above check() function for a reasoning why using the macro
+     * FHTAGN_VARIANT_SAFE_GET() might be a better idea in a lot of cases.
      **/
     template <typename T>
     static typename specialization_traits<T>::holder_type const &

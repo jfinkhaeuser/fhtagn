@@ -120,7 +120,7 @@ private:
         // to use that variant as a map, which should return an invalid_value.
         fhtagn::variant z = 123;
         CPPUNIT_ASSERT_NO_THROW(z["foo"]);
-        CPPUNIT_ASSERT_THROW(z["foo"]["bar"], fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(z["foo"] = 123, fhtagn::variant::error);
     }
 
 
@@ -150,6 +150,23 @@ private:
 
         x["foo"]["bar"] = 3;
         CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::check<int>(x["foo"]["bar"]));
+
+        // If x is a non-const reference, unfortunately checking for
+        // x["baz"]["quux"] would create ["baz"] as an array_t. Let's test with
+        // a const ref first, because that should just return false.
+        fhtagn::variant const & y = x;
+        CPPUNIT_ASSERT_EQUAL(false, fhtagn::variant::check<int>(y["baz"]["quux"]));
+        CPPUNIT_ASSERT_EQUAL(false, fhtagn::variant::check<fhtagn::variant::array_t>(y["baz"]));
+
+        // x being a non-const reference, "baz" gets added as a map_t
+        CPPUNIT_ASSERT_EQUAL(false, fhtagn::variant::check<int>(x["baz"]["quux"]));
+        CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::check<fhtagn::variant::map_t>(x["baz"]));
+
+        // let's try if passing a non-const variable to the FHTAGN_VARIANT_CHECK
+        // macro is safer:
+        fhtagn::variant z;
+        CPPUNIT_ASSERT_EQUAL(false, FHTAGN_VARIANT_CHECK(int, z, ["baz"]["quux"]));
+        CPPUNIT_ASSERT_EQUAL(false, FHTAGN_VARIANT_CHECK(fhtagn::variant::map_t, z, ["baz"]));
     }
 
     void testSafeGet()
@@ -164,6 +181,11 @@ private:
         x["foo"]["bar"] = 3;
         CPPUNIT_ASSERT_NO_THROW(fhtagn::variant::safe_get<int>(x["foo"]["bar"]));
         CPPUNIT_ASSERT_EQUAL(3, fhtagn::variant::safe_get<int>(x["foo"]["bar"]));
+
+        // similar to the problems with fhtagn::variant::check, test the macros.
+        fhtagn::variant z;
+        CPPUNIT_ASSERT_THROW(FHTAGN_VARIANT_SAFE_GET(int, z, ["baz"]["quux"]), fhtagn::variant::error);
+        CPPUNIT_ASSERT_EQUAL(false, FHTAGN_VARIANT_CHECK(fhtagn::variant::map_t, z, ["baz"]));
     }
 };
 

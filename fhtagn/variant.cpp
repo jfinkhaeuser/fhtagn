@@ -77,6 +77,11 @@ variant::variant(variant const & other)
 variant &
 variant::operator=(variant const & other)
 {
+    // never ever change the state of the invalid value.
+    if (m_state == IS_INVALID) {
+      throw error("Cannot assign to the variant::invalid_value!");
+    }
+
     if (this != &other) {
         m_data = other.m_data;
         m_state = other.m_state;
@@ -90,19 +95,23 @@ variant::operator[](uint32_t index)
 {
     switch (m_state) {
         case IS_INVALID:
-            throw std::logic_error("The variant::invalid_value is not a container!");
-            break;
-
         case IS_EMPTY:
-            throw std::logic_error("Emtpy variants are not a variant::array_t!");
+            // Delay the reaction to this error by handing out the invalid value.
+            // Since we also go to this branch if the [] operator is called on
+            // the invalid value, only the final result of a chain of [] will
+            // throw an error.
+            return *invalid_value.get();
             break;
 
         case IS_VALUE:
-            if (is<array_t>()) {
-                return as<array_t>()[index];
-            } else {
-                return *invalid_value.get();
+            if (!is<array_t>() || index >= as<array_t>().size()) {
+              // we can add a simple check for the validity of the index -
+              // not because we want to fundamentally change how array_t
+              // like containers are provided by the STL, but because we
+              // can again delay reaction to erroneous input.
+              return *invalid_value.get();
             }
+            return as<array_t>()[index];
             break;
 
         default:
@@ -116,19 +125,16 @@ variant::operator[](uint32_t index) const
 {
     switch (m_state) {
         case IS_INVALID:
-            throw std::logic_error("The variant::invalid_value is not a variant::array_t!");
-            break;
-
         case IS_EMPTY:
-            throw std::logic_error("Emtpy variants are not a variant::array_t!");
+            // Delay the reaction to this error ...
+            return *invalid_value.get();
             break;
 
         case IS_VALUE:
-            if (is<array_t>()) {
-                return as<array_t>()[index];
-            } else {
-                return *invalid_value.get();
+            if (!is<array_t>() || index >= as<array_t>().size()) {
+              return *invalid_value.get();
             }
+            return as<array_t>()[index];
             break;
 
         default:
@@ -143,12 +149,15 @@ variant::operator[](std::string const & key)
 {
     switch (m_state) {
         case IS_INVALID:
-            throw std::logic_error("The variant::invalid_value is not a variant::map_t!");
+            // Delay reaction to this error...
+            return *invalid_value.get();
             break;
 
         case IS_EMPTY:
-            // we can convert this variant to a map, and map semantics say that
-            // non-existing keys get added...
+            // In this particular case, let's deviate from the theme of
+            // returning the invalid value - the reason is that on
+            // non-const maps the expected behaviour is to silently add
+            // new kv-pairs. On const maps, that can't work...
             m_data = map_t();
             m_state = IS_VALUE;
             // fall through
@@ -156,9 +165,8 @@ variant::operator[](std::string const & key)
         case IS_VALUE:
             if (is<map_t>()) {
                 return as<map_t>()[key];
-            } else {
-                return *invalid_value.get();
             }
+            return *invalid_value.get();
             break;
 
         default:
@@ -173,15 +181,11 @@ variant::operator[](std::string const & key) const
 {
     switch (m_state) {
         case IS_INVALID:
-            throw std::logic_error("The variant::invalid_value is not a variant::map_t!");
+        case IS_EMPTY:
+            // Delay reaction...
+            return *invalid_value.get();
             break;
 
-        case IS_EMPTY:
-            // technically speaking we could convert this to a map, as in the
-            // non-const operator[](string), but since we can't add elements
-            // to a const map, there's not much point...
-            //
-            // fall through
         case IS_VALUE:
             if (is<map_t>()) {
                 map_t::const_iterator iter = as<map_t>().find(key);
@@ -189,9 +193,8 @@ variant::operator[](std::string const & key) const
                   return *invalid_value.get();
                 }
                 return iter->second;
-            } else {
-                return *invalid_value.get();
             }
+            return *invalid_value.get();
 
         default:
             assert(0);
