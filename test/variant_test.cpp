@@ -48,6 +48,7 @@ public:
       CPPUNIT_TEST(testMap);
       CPPUNIT_TEST(testString);
       CPPUNIT_TEST(testCheck);
+      CPPUNIT_TEST(testExists);
       CPPUNIT_TEST(testSafeGet);
 
     CPPUNIT_TEST_SUITE_END();
@@ -167,6 +168,36 @@ private:
         fhtagn::variant z;
         CPPUNIT_ASSERT_EQUAL(false, FHTAGN_VARIANT_CHECK(int, z, ["baz"]["quux"]));
         CPPUNIT_ASSERT_EQUAL(false, FHTAGN_VARIANT_CHECK(fhtagn::variant::map_t, z, ["baz"]));
+    }
+
+    void testExists()
+    {
+        fhtagn::variant x;
+        CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::exists(x["foo"]["bar"]));
+
+        x["foo"]["bar"] = 3.141592;
+        CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::exists(x["foo"]["bar"]));
+
+        x["foo"]["bar"] = fhtagn::variant::array_t();
+        x["foo"]["bar"].as<fhtagn::variant::array_t>().push_back(123);
+        CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::exists(x["foo"]["bar"][0]));
+
+        // If x is a non-const reference, unfortunately checking for
+        // x["baz"]["quux"] would create ["baz"] as an array_t. Let's test with
+        // a const ref first, because that should just return false.
+        fhtagn::variant const & y = x;
+        CPPUNIT_ASSERT_EQUAL(false, fhtagn::variant::exists(y["baz"]["quux"]));
+        CPPUNIT_ASSERT_EQUAL(false, fhtagn::variant::exists(y["baz"]));
+
+        // x being a non-const reference, "baz" gets added as a map_t
+        CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::exists(x["baz"]["quux"]));
+        CPPUNIT_ASSERT_EQUAL(true, fhtagn::variant::exists(x["baz"]));
+
+        // let's try if passing a non-const variable to the FHTAGN_VARIANT_EXISTS
+        // macro is safer:
+        fhtagn::variant z;
+        CPPUNIT_ASSERT_EQUAL(false, FHTAGN_VARIANT_EXISTS(z, ["baz"]["quux"]));
+        CPPUNIT_ASSERT_EQUAL(false, FHTAGN_VARIANT_EXISTS(z, ["baz"]));
     }
 
     void testSafeGet()

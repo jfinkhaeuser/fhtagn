@@ -89,6 +89,17 @@
         const_cast<fhtagn::variant const &>(_variable)_index_chain)           \
 
 /**
+ * Safe version of fhtagn::variant::exists - calls fhtagn::variant::exists but
+ * casts the variable passed as the second parameter to a const reference
+ * to ensure that operator[] does not modify the variable at all.
+ *   "unsafe": fhtagn::variant::exists(x["foo"])
+ *   safe:     FHTAGN_VARIANT_EXISTS(x, ["foo"])
+ **/
+#define FHTAGN_VARIANT_EXISTS(_variable, _index_chain)                         \
+    fhtagn::variant::exists(                                                  \
+        const_cast<fhtagn::variant const &>(_variable)_index_chain)           \
+
+/**
  * Safe version of fhtagn::variant::safe_get - calls fhtagn::variant::safe_get
  * but casts the variable passed as the second parameter to a const reference
  * to ensure that operator[] does not modify the variable at all.
@@ -368,7 +379,7 @@ public:
     variant const & operator[](std::string const & key) const;
 
     /**
-     * Use ths function to simplify checking of the type of a nested variant:
+     * Use this function to simplify checking of the type of a nested variant:
      *    variant::check<int>(x["foo"]["bar"])
      * returns true if x["foo"]["bar"] exists and contains an int.
      *
@@ -381,6 +392,16 @@ public:
      **/
     template <typename T>
     static bool check(variant const & var);
+
+    /**
+     * Use this function to simplify checking for existence of a key/element in a nested variant:
+     *    variant::exists(x["foo"][1]["bar"][2]))
+     * returns true if x["foo"][1]["bar"][2] exists.
+     *
+     * See the above check() function for a reasoning why using the macro
+     * FHTAGN_VARIANT_EXISTS() might be a better idea in a lot of cases.
+     **/
+    static bool exists(variant const & var);
 
     /**
      * The two static versions of safe_get() below can be used in much the same

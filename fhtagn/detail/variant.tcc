@@ -120,6 +120,13 @@ variant::check(variant const & var)
 }
 
 
+inline bool
+variant::exists(variant const & var)
+{
+    return var.is_valid();
+}
+
+
 template <typename T>
 inline
 typename variant::specialization_traits<T>::holder_type const &
