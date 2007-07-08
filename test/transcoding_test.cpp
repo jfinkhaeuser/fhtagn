@@ -62,6 +62,8 @@ public:
         CPPUNIT_TEST(testEncodeUTF_8);
         CPPUNIT_TEST(testEncodeUTF_16);
 
+        CPPUNIT_TEST(testChunkedTranscoding);
+
     CPPUNIT_TEST_SUITE_END();
 private:
 
@@ -533,6 +535,51 @@ private:
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(be_expected, target);
         }
+    }
+
+
+
+    void testChunkedTranscoding()
+    {
+        namespace t = fhtagn::text;
+
+        // chunked decoding
+        // \xe2\x82\xac is the euro sign in UTF-8
+        std::string source = "Hello, \xe2\x82\xac world!";
+        {
+            t::utf32_string target;
+
+            std::string::iterator iter = source.begin();
+            while (iter != source.end()) {
+                t::utf32_char_t buf[4];
+                ssize_t bufsize = 4;
+                iter = t::decode<t::utf8_decoder>(iter, source.end(), buf, bufsize);
+                target.append(buf, bufsize);
+            }
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(static_cast<std::string::difference_type>(17),
+                    (iter - source.begin()));
+            // ensure that the euro sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
+        }
+
+        {
+            t::utf32_string target;
+
+            std::string::iterator iter = source.begin();
+            while (iter != source.end()) {
+                t::utf32_char_t buf;
+                ssize_t bufsize = 1;
+                iter = t::decode<t::utf8_decoder>(iter, source.end(), &buf, bufsize);
+                target.append(&buf, bufsize);
+            }
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(static_cast<std::string::difference_type>(17),
+                    (iter - source.begin()));
+            // ensure that the euro sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
+        }
+
     }
 };
 

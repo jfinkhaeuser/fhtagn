@@ -219,17 +219,31 @@ struct CharDecoderConcept
  * i.e. a decoder derived from decoder_base<> above. Other than that, the usage
  * of the function is similar to standard algorithms such as std::copy:
  *
- * decode<decoder>(input.begin(), input.end(), output_iterator, {true|false});
+ * decode<decoder>(input.begin(), input.end(), output_iterator);
  *
- * The function accepts a fourth, optional, non-standard parameter specifying
- * whether it should produce replacement characters (0xfffd, see above) when
- * encountering invalid bytes in the input sequence, or stop decoding. The
- * default (true) is to produce replacement characters.
+ * If the output_iterator argument is a pointer to a stack or heap allocated
+ * chunk of memory instead of a smart container, an optional fourth parameter
+ * should be provided, specifying the size of the output buffer. If size
+ * limits are no concern, it should be set to -1 (the default). The output_size
+ * parameter is expected to be in units of the utf-32 characters produced.
+ *
+ * The output_size parameter is also a reference parameter, in which the
+ * actual length of output written to the buffer is stored. As it would be
+ * highly inconvenient to require such a reference parameter for cases where
+ * the size of the output buffer is unlimited, a second decode() function
+ * without the output_size parameter is provided.
+ *
+ * The function accepts a fifth, optional parameter specifying whether it
+ * should produce replacement characters (0xfffd, see above) when encountering
+ * invalid bytes in the input sequence, or stop decoding. The default (true)
+ * is to produce replacement characters.
  *
  * The function returns the iterator one past the last byte in the input
  * sequence it could decode - in normal cases, that'll be the second parameter,
  * but when replacement characters are not meant to be produced, it'll point
- * to the first invalid character encountered.
+ * to the first invalid character encountered. This feature of decode() also
+ * allows taking up decoding at the point decoding was broken off if the
+ * end of the output buffer was reached.
  **/
 template <
     typename decoderT,
@@ -238,8 +252,10 @@ template <
 >
 inline input_iterT
 decode(input_iterT first, input_iterT last, output_iterT result,
-        bool use_replacement_char = true)
+        ssize_t & output_size, bool use_replacement_char = true)
 {
+    ssize_t used_output = 0;
+
     // ensure that decoderT is a valid charcter decoder
     boost::function_requires<concepts::CharDecoderConcept<decoderT> >();
 
@@ -252,6 +268,11 @@ decode(input_iterT first, input_iterT last, output_iterT result,
             // restart.
             *result++ = decoder.to_utf32();
             decoder.reset();
+
+            ++used_output;
+            if (output_size != -1 && used_output >= output_size) {
+                break;
+            }
         }
 
         if (!decoder.append(*iter)) {
@@ -263,6 +284,11 @@ decode(input_iterT first, input_iterT last, output_iterT result,
                 // anything we can't decode, let's do that...
                 *result++ = 0xfffd;
                 decoder.reset();
+
+                ++used_output;
+                if (output_size != -1 && used_output >= output_size) {
+                    break;
+                }
             } else {
                 // ... otherwise we bail out, providing the iterator that
                 // proved troublesome
@@ -271,13 +297,33 @@ decode(input_iterT first, input_iterT last, output_iterT result,
         }
     }
 
-    if (decoder.have_full_sequence()) {
+    if (decoder.have_full_sequence()
+            && (output_size == -1 || used_output < output_size))
+    {
         // the decoder might still have a full sequence
         *result++ = decoder.to_utf32();
+        ++used_output;
     }
 
+    output_size = used_output;
     return iter;
 }
+
+
+template <
+    typename decoderT,
+    typename input_iterT,
+    typename output_iterT
+>
+inline input_iterT
+decode(input_iterT first, input_iterT last, output_iterT result,
+        bool use_replacement_char = true)
+{
+    ssize_t output_size = -1;
+    return decode<decoderT>(first, last, result, output_size,
+            use_replacement_char);
+}
+
 
 
 
