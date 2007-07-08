@@ -563,9 +563,8 @@ private:
             CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
         }
 
+        t::utf32_string target;
         {
-            t::utf32_string target;
-
             std::string::iterator iter = source.begin();
             while (iter != source.end()) {
                 t::utf32_char_t buf;
@@ -580,6 +579,22 @@ private:
             CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
         }
 
+        // chunked encoding
+        {
+            std::string output;
+
+            t::utf32_string::iterator iter = target.begin();
+            while (iter != target.end()) {
+                char buf[4];
+                ssize_t bufsize = 4;
+                iter = t::encode<t::utf8_encoder>(iter, target.end(), buf, bufsize);
+                CPPUNIT_ASSERT(bufsize <= 4);
+                output.append(buf, bufsize);
+            }
+            CPPUNIT_ASSERT(target.end() == iter);
+            CPPUNIT_ASSERT_EQUAL(source.size(), output.size());
+            CPPUNIT_ASSERT_EQUAL(source, output);
+        }
     }
 };
 

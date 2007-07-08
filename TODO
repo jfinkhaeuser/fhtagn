@@ -4,11 +4,7 @@ Source code:
   - make variant accept character string literals and store them as std::string.
     low prio - people can work around it, but it'd be nice.
 - char encoding:
-  - encode various encodings
-  - add output_size parameter to encode/decode, to allow stack-based transcoding.
-    the output iterator gets advanced only output_size times, after which
-    transcoding stops even if there is more input (the returned input iterator
-    indicates where to pick up transcoding again).
+  - support more encodings
   - transcode function in the style of encode/decode
   - universal encoder/decoder (pimpl that hands off to specialized enc/dec).
   - base xparser on universal decoder/encoder
@@ -31,6 +27,8 @@ Source code:
 - move url class from libwool here
   - add composing of URLs (right now URL class can only parse)
 - mime-parser
+- array_list container, i.e. a rope-like approach to representing a random access
+  container, except not a rope.
 
 Other:
 

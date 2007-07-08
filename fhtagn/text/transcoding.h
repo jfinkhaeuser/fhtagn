@@ -391,15 +391,29 @@ struct CharEncoderConcept
 
 
 /**
- * FIXME docs, and need to figure out what to do with chars that the output
- * encoding can't handle.
+ * See the documentation for decode() above, much the same applies.
  *
- * For now, if the use_replacement_char flag is true, illegal UTF-32 characters
+ * If the use_replacement_char flag is true, illegal UTF-32 characters
  * are encoded as the replacement char. That only exists in encodings that
  * allow for more than one byte per character; if encoding the replacement char
  * fails, the illegal character is simply skipped. If the flag is false,
  * encoding breaks off and the iterator pointing to the illegal character is
  * returned.
+ *
+ * As not all encoding support 0xfffd as a replacement char, an optional
+ * sixth parameter can be used to specify the replacement character to use
+ * instead - such as '?', etc. For compatibility with encodings that do
+ * support the full character set, it has to be a utf32_char_t, though.
+ *
+ * One word of warning, that does not apply to decode(): if the output
+ * buffer provided is too small to even accommodate a single character, you
+ * may find it hard to differentiate between situations in which the output
+ * buffer was properly filled, and situations like the above mentioned. Try
+ * to make sure the output buffer can accommodate at least one character.
+ *
+ * That is only a problem if the output encoding uses a multi-byte encoding
+ * for some characters, such as UTF-8. Fortunately, for those encodings a
+ * maximum byte sequence length for a single character can be deduced easily.
  **/
 template <
     typename encoderT,
@@ -408,9 +422,12 @@ template <
 >
 inline input_iterT
 encode(input_iterT first, input_iterT last, output_iterT result,
-        bool use_replacement_char = true, utf32_char_t replacement_char = 0xfffd)
+        ssize_t & output_size, bool use_replacement_char = true,
+        utf32_char_t replacement_char = 0xfffd)
 {
-    // ensure that encoderT is a valid charcter encoder
+    ssize_t used_output = 0;
+
+    // ensure that encoderT is a valid character encoder
     boost::function_requires<concepts::CharEncoderConcept<encoderT> >();
 
     encoderT encoder;
@@ -429,7 +446,16 @@ encode(input_iterT first, input_iterT last, output_iterT result,
           }
         }
 
+        // ensure that there's enough room in the output buffer for the
+        // character we just encoded.
         typename encoderT::const_iterator char_end = encoder.end();
+        if (output_size != -1
+                && (used_output + (char_end - encoder.begin()) >= output_size))
+        {
+            break;
+        }
+        used_output += char_end - encoder.begin();
+
         for (typename encoderT::const_iterator char_iter = encoder.begin()
             ; char_iter != char_end ; ++char_iter)
         {
@@ -437,8 +463,25 @@ encode(input_iterT first, input_iterT last, output_iterT result,
         }
     }
 
+    output_size = used_output;
     return iter;
 }
+
+
+template <
+    typename encoderT,
+    typename input_iterT,
+    typename output_iterT
+>
+inline input_iterT
+encode(input_iterT first, input_iterT last, output_iterT result,
+        bool use_replacement_char = true, utf32_char_t replacement_char = 0xfffd)
+{
+    ssize_t output_size = -1;
+    return encode<encoderT>(first, last, result, output_size,
+            use_replacement_char, replacement_char);
+}
+
 
 
 }} // namespace fhtagn::text
