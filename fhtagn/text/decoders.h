@@ -51,9 +51,11 @@ namespace text {
  * values above 127 are considered invalid.
  **/
 struct ascii_decoder
+    : public transcoder_base
 {
     ascii_decoder()
-        : m_byte(128)
+        : transcoder_base()
+        , m_byte(128)
     {
     }
 
@@ -98,9 +100,11 @@ struct ascii_decoder
  * value between 160 and 255, but the in between block of bytes is left undefined.
  **/
 struct iso8859_decoder_base
+    : public transcoder_base
 {
     iso8859_decoder_base(uint32_t subencoding)
-        : m_subencoding(subencoding)
+        : transcoder_base()
+        , m_subencoding(subencoding)
         , m_byte(128)
     {
     }
@@ -182,6 +186,7 @@ FHTAGN_TEXT_DEFINE_ISO8859_DECODER(6);
 FHTAGN_TEXT_DEFINE_ISO8859_DECODER(7);
 FHTAGN_TEXT_DEFINE_ISO8859_DECODER(8);
 FHTAGN_TEXT_DEFINE_ISO8859_DECODER(9);
+FHTAGN_TEXT_DEFINE_ISO8859_DECODER(10);
 FHTAGN_TEXT_DEFINE_ISO8859_DECODER(11);
 FHTAGN_TEXT_DEFINE_ISO8859_DECODER(13);
 FHTAGN_TEXT_DEFINE_ISO8859_DECODER(14);
@@ -193,9 +198,11 @@ FHTAGN_TEXT_DEFINE_ISO8859_DECODER(16);
  * UTF-8 decoder
  **/
 struct utf8_decoder
+    : public transcoder_base
 {
     utf8_decoder()
-        : m_size(0)
+        : transcoder_base()
+        , m_size(0)
         , m_buffer_used(0)
     {
     }
@@ -292,10 +299,12 @@ struct utf8_decoder
  * UTF-16 decoder
  **/
 struct utf16_decoder
+    : public transcoder_base
 {
     explicit utf16_decoder(byte_order::endian e
             = byte_order::FHTAGN_UNKNOWN_ENDIAN)
-        : m_endian(e)
+        : transcoder_base()
+        , m_endian(e)
         , m_buffer_used(0)
         , m_size(0)
     {
@@ -432,10 +441,12 @@ struct utf16be_decoder
  * UTF-32 decoder
  **/
 struct utf32_decoder
+    : public transcoder_base
 {
     explicit utf32_decoder(byte_order::endian e
             = byte_order::FHTAGN_UNKNOWN_ENDIAN)
-        : m_endian(e)
+        : transcoder_base()
+        , m_endian(e)
         , m_buffer_used(0)
     {
     }
@@ -531,6 +542,34 @@ struct utf32be_decoder
 };
 
 
+/**
+ * FIXME
+ **/
+struct universal_decoder
+    : public transcoder_base
+{
+    universal_decoder();
+    ~universal_decoder();
+
+    void reset();
+
+    bool append(unsigned char byte);
+
+    bool have_full_sequence() const;
+
+    utf32_char_t to_utf32() const;
+
+    char_encoding_type get_encoding() const
+    {
+        return m_encoding;
+    }
+
+    void set_encoding(char_encoding_type new_encoding);
+
+private:
+    char_encoding_type  m_encoding;
+    void *              m_decoder;
+};
 
 
 }} // namespace fhtagn::text

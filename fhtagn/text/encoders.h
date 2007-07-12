@@ -49,8 +49,17 @@ namespace text {
  * values, i.e. all values above 127 are considered invalid.
  **/
 struct ascii_encoder
+    : public transcoder_base
 {
     typedef char const * const_iterator;
+
+    /**
+     * When encoding unknown character, the default is skip these characters.
+     **/
+    ascii_encoder()
+        : transcoder_base(true, '\0')
+    {
+    }
 
     const_iterator begin() const
     {
@@ -88,11 +97,16 @@ struct ascii_encoder
  * value between 160 and 255, but the in between block of bytes is left undefined.
  **/
 struct iso8859_encoder_base
+    : public transcoder_base
 {
     typedef char const * const_iterator;
 
-    iso8859_encoder_base(uint32_t subencoding)
-        : m_subencoding(subencoding)
+    /**
+     * When encoding unknown characters, the default is to skip these characters.
+     **/
+    explicit iso8859_encoder_base(uint32_t subencoding)
+        : transcoder_base(true, '\0')
+        , m_subencoding(subencoding)
         , m_byte(-1)
     {
     }
@@ -169,6 +183,7 @@ FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(6);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(7);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(8);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(9);
+FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(10);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(11);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(13);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(14);
@@ -182,11 +197,13 @@ FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(16);
  * UTF-8 encoder
  **/
 struct utf8_encoder
+    : public transcoder_base
 {
     typedef char const * const_iterator;
 
     utf8_encoder()
-        : m_end(m_buffer)
+        : transcoder_base()
+        , m_end(m_buffer)
     {
     }
 
@@ -251,11 +268,13 @@ struct utf8_encoder
  * therefore cannot be used on it's own, in contrast to utf16_decoder.
  **/
 struct utf16_encoder_base
+    : public transcoder_base
 {
     typedef char const * const_iterator;
 
     explicit utf16_encoder_base(byte_order::endian endian)
-        : m_endian(endian)
+        : transcoder_base()
+        , m_endian(endian)
         , m_end(reinterpret_cast<char *>(m_buffer))
     {
     }

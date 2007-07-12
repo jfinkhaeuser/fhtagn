@@ -46,6 +46,7 @@ AC_CONFIG_FILES([
   fhtagn/restrictions/Makefile
   fhtagn/util/Makefile
   fhtagn/text/Makefile
+  fhtagn/text/detail/Makefile
   fhtagn/xml/Makefile
   test/Makefile
 ])

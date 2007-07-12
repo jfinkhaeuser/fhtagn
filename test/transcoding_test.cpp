@@ -56,6 +56,7 @@ public:
         CPPUNIT_TEST(testDecodeUTF_8);
         CPPUNIT_TEST(testDecodeUTF_16);
         CPPUNIT_TEST(testDecodeUTF_32);
+        CPPUNIT_TEST(testDecodeUniversal);
 
         CPPUNIT_TEST(testEncodeASCII);
         CPPUNIT_TEST(testEncodeISO_8859_15);
@@ -78,7 +79,8 @@ private:
             t::utf32_char_t expected_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
             t::utf32_string expected = expected_array;
             t::utf32_string target;
-            t::decode<t::ascii_decoder>(source.begin(), source.end(),
+            t::ascii_decoder decoder;
+            t::decode(decoder, source.begin(), source.end(),
                     std::back_insert_iterator<t::utf32_string>(target));
             CPPUNIT_ASSERT_EQUAL(expected.size(), target.size());
             // can't use CPPUNIT_ASSERT_EQUAL because no streaming operator is
@@ -91,7 +93,8 @@ private:
         {
             std::string source = "Hello, world!";
             t::utf32_char_t target[source.size()];
-            t::decode<t::ascii_decoder>(source.begin(), source.end(), target);
+            t::ascii_decoder decoder;
+            t::decode(decoder, source.begin(), source.end(), target);
          }
 
         // ensure that an extended ASCII string will be decoded with replacement
@@ -99,7 +102,8 @@ private:
         {
             std::string source = "Hello, \xf3 world!";
             t::utf32_string target;
-            std::string::iterator error_iter = t::decode<t::ascii_decoder>(
+            t::ascii_decoder decoder;
+            std::string::iterator error_iter = t::decode(decoder,
                     source.begin(), source.end(),
                     std::back_insert_iterator<t::utf32_string>(target));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -114,9 +118,11 @@ private:
         {
             std::string source = "Hello, \xf3 world!";
             t::utf32_string target;
-            std::string::iterator error_iter = t::decode<t::ascii_decoder>(
+            t::ascii_decoder decoder;
+            decoder.m_use_replacement_char = false;
+            std::string::iterator error_iter = t::decode(decoder,
                     source.begin(), source.end(),
-                    std::back_insert_iterator<t::utf32_string>(target), false);
+                    std::back_insert_iterator<t::utf32_string>(target));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(7), target.size());
             CPPUNIT_ASSERT_EQUAL(static_cast<std::string::difference_type>(7),
                     (error_iter - source.begin()));
@@ -131,7 +137,8 @@ private:
         // \xa4 is the euro sign in ISO-8859-15
         std::string source = "Hello, \xa4 world!";
         t::utf32_string target;
-        std::string::iterator error_iter = t::decode<t::iso8859_15_decoder>(
+        t::iso8859_15_decoder decoder;
+        std::string::iterator error_iter = t::decode(decoder,
                 source.begin(), source.end(),
                 std::back_insert_iterator<t::utf32_string>(target));
         CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -149,7 +156,8 @@ private:
         // \xe2\x82\xac is the euro sign in UTF-8
         std::string source = "Hello, \xe2\x82\xac world!";
         t::utf32_string target;
-        std::string::iterator error_iter = t::decode<t::utf8_decoder>(
+        t::utf8_decoder decoder;
+        std::string::iterator error_iter = t::decode(decoder,
                 source.begin(), source.end(),
                 std::back_insert_iterator<t::utf32_string>(target));
         CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -183,8 +191,9 @@ private:
         // UTF-16LE decoding, with a specialized utf16le_decoder
         t::utf32_string target1;
         {
+            t::utf16le_decoder decoder;
             // add 2 to start & end to skip BOM
-            char * error_ptr = t::decode<t::utf16le_decoder>(
+            char * error_ptr = t::decode(decoder,
                     le_source + 2, le_source + 34,
                     std::back_insert_iterator<t::utf32_string>(target1));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target1.size());
@@ -196,8 +205,9 @@ private:
         // UTF-16BE decoding, with a specialized utf16be_decoder
         t::utf32_string target2;
         {
+            t::utf16be_decoder decoder;
             // add 2 to start & end to skip BOM
-            char * error_ptr = t::decode<t::utf16be_decoder>(
+            char * error_ptr = t::decode(decoder,
                     be_source + 2, be_source + 34,
                     std::back_insert_iterator<t::utf32_string>(target2));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target2.size());
@@ -212,7 +222,8 @@ private:
         // UTF-16LE decoding based on a BOM
         {
             t::utf32_string target;
-            char * error_ptr = t::decode<t::utf16_decoder>(
+            t::utf16_decoder decoder;
+            char * error_ptr = t::decode(decoder,
                     le_source, le_source + 34,
                     std::back_insert_iterator<t::utf32_string>(target));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -224,7 +235,8 @@ private:
         // UTF-16BE decoding based on a BOM
         {
             t::utf32_string target;
-            char * error_ptr = t::decode<t::utf16_decoder>(
+            t::utf16_decoder decoder;
+            char * error_ptr = t::decode(decoder,
                     be_source, be_source + 34,
                     std::back_insert_iterator<t::utf32_string>(target));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -252,8 +264,9 @@ private:
         // UTF-32LE decoding, with a specialized utf32le_decoder
         t::utf32_string target1;
         {
+            t::utf32le_decoder decoder;
             // add 2 to start & end to skip BOM
-            char * error_ptr = t::decode<t::utf32le_decoder>(
+            char * error_ptr = t::decode(decoder,
                     le_source + 4, le_source + 64,
                     std::back_insert_iterator<t::utf32_string>(target1));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target1.size());
@@ -265,8 +278,9 @@ private:
         // UTF-32BE decoding, with a specialized utf32be_decoder
         t::utf32_string target2;
         {
+            t::utf32be_decoder decoder;
             // add 2 to start & end to skip BOM
-            char * error_ptr = t::decode<t::utf32be_decoder>(
+            char * error_ptr = t::decode(decoder,
                     be_source + 4, be_source + 64,
                     std::back_insert_iterator<t::utf32_string>(target2));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target2.size());
@@ -281,7 +295,8 @@ private:
         // UTF-32LE decoding based on a BOM
         {
             t::utf32_string target;
-            char * error_ptr = t::decode<t::utf32_decoder>(
+            t::utf32_decoder decoder;
+            char * error_ptr = t::decode(decoder,
                     le_source, le_source + 64,
                     std::back_insert_iterator<t::utf32_string>(target));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -293,7 +308,8 @@ private:
         // UTF-32BE decoding based on a BOM
         {
             t::utf32_string target;
-            char * error_ptr = t::decode<t::utf32_decoder>(
+            t::utf32_decoder decoder;
+            char * error_ptr = t::decode(decoder,
                     be_source, be_source + 64,
                     std::back_insert_iterator<t::utf32_string>(target));
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -301,6 +317,26 @@ private:
             // ensure that the G clef sign has been decoded properly
             CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), target[7]);
         }
+    }
+
+
+    void testDecodeUniversal()
+    {
+        namespace t = fhtagn::text;
+
+        // \xe2\x82\xac is the euro sign in UTF-8
+        std::string source = "Hello, \xe2\x82\xac world!";
+        t::utf32_string target;
+        t::universal_decoder decoder;
+        decoder.set_encoding(t::UTF_8);
+        std::string::iterator error_iter = t::decode(decoder,
+                source.begin(), source.end(),
+                std::back_insert_iterator<t::utf32_string>(target));
+        CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+        CPPUNIT_ASSERT_EQUAL(static_cast<std::string::difference_type>(17),
+                (error_iter - source.begin()));
+        // ensure that the euro sign has been decoded properly
+        CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
     }
 
 
@@ -316,7 +352,8 @@ private:
             std::string expected = "Hello, world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
+            t::ascii_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
@@ -332,7 +369,8 @@ private:
             std::string expected = "Hello, world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
+            t::ascii_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
@@ -347,8 +385,10 @@ private:
             std::string expected = "Hello,? world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
-                    source.end(), std::back_insert_iterator<std::string>(target), true, '?');
+            t::ascii_encoder encoder;
+            encoder.m_replacement_char = '?';
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
         }
@@ -362,8 +402,10 @@ private:
             std::string expected = "Hello,";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::ascii_encoder>(source.begin(),
-                    source.end(), std::back_insert_iterator<std::string>(target), false);
+            t::ascii_encoder encoder;
+            encoder.m_use_replacement_char = false;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.begin() + 6 == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
         }
@@ -381,7 +423,8 @@ private:
             std::string expected = "Hello, world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
+            t::iso8859_15_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
@@ -395,7 +438,8 @@ private:
             std::string expected = "Hello,\xe4 world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
+            t::iso8859_15_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
@@ -409,7 +453,8 @@ private:
             std::string expected = "Hello, world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
+            t::iso8859_15_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
@@ -423,8 +468,10 @@ private:
             std::string expected = "Hello,? world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
-                    source.end(), std::back_insert_iterator<std::string>(target), true, '?');
+            t::iso8859_15_encoder encoder;
+            encoder.m_replacement_char = '?';
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
         }
@@ -437,8 +484,10 @@ private:
             std::string expected = "Hello,";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::iso8859_15_encoder>(source.begin(),
-                    source.end(), std::back_insert_iterator<std::string>(target), false);
+            t::iso8859_15_encoder encoder;
+            encoder.m_use_replacement_char = false;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.begin() + 6 == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
         }
@@ -457,7 +506,8 @@ private:
             std::string expected = "Hello, world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::utf8_encoder>(source.begin(),
+            t::utf8_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
@@ -471,7 +521,8 @@ private:
             std::string expected = "Hello,\xc3\xa4 world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::utf8_encoder>(source.begin(),
+            t::utf8_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
@@ -485,7 +536,8 @@ private:
             std::string expected = "Hello,\xe2\x82\xac world!";
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::utf8_encoder>(source.begin(),
+            t::utf8_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(expected, target);
@@ -524,13 +576,15 @@ private:
             std::string be_expected(be_target, sizeof(be_target));
 
             std::string target;
-            t::utf32_string::const_iterator error_iter = t::encode<t::utf16le_encoder>(source.begin(),
+            t::utf16le_encoder encoder1;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder1, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(le_expected, target);
 
             target.clear();
-            error_iter = t::encode<t::utf16be_encoder>(source.begin(), source.end(),
+            t::utf16be_encoder encoder2;
+            error_iter = t::encode(encoder2, source.begin(), source.end(),
                     std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
             CPPUNIT_ASSERT_EQUAL(be_expected, target);
@@ -550,10 +604,11 @@ private:
             t::utf32_string target;
 
             std::string::iterator iter = source.begin();
+            t::utf8_decoder decoder;
             while (iter != source.end()) {
                 t::utf32_char_t buf[4];
                 ssize_t bufsize = 4;
-                iter = t::decode<t::utf8_decoder>(iter, source.end(), buf, bufsize);
+                iter = t::decode(decoder, iter, source.end(), buf, bufsize);
                 target.append(buf, bufsize);
             }
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -566,10 +621,11 @@ private:
         t::utf32_string target;
         {
             std::string::iterator iter = source.begin();
+            t::utf8_decoder decoder;
             while (iter != source.end()) {
                 t::utf32_char_t buf;
                 ssize_t bufsize = 1;
-                iter = t::decode<t::utf8_decoder>(iter, source.end(), &buf, bufsize);
+                iter = t::decode(decoder, iter, source.end(), &buf, bufsize);
                 target.append(&buf, bufsize);
             }
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
@@ -584,10 +640,11 @@ private:
             std::string output;
 
             t::utf32_string::iterator iter = target.begin();
+            t::utf8_encoder encoder;
             while (iter != target.end()) {
                 char buf[4];
                 ssize_t bufsize = 4;
-                iter = t::encode<t::utf8_encoder>(iter, target.end(), buf, bufsize);
+                iter = t::encode(encoder, iter, target.end(), buf, bufsize);
                 CPPUNIT_ASSERT(bufsize <= 4);
                 output.append(buf, bufsize);
             }

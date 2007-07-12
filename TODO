@@ -5,6 +5,8 @@ Source code:
     low prio - people can work around it, but it'd be nice.
 - char encoding:
   - support more encodings
+  - utf32 encoder
+  - make unspecified utf32 and utf16 encoders detect platform byte order
   - transcode function in the style of encode/decode
   - universal encoder/decoder (pimpl that hands off to specialized enc/dec).
   - base xparser on universal decoder/encoder

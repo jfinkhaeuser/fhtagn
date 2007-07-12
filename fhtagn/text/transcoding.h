@@ -148,7 +148,78 @@ namespace detail {
  **/
 extern utf32_char_t iso8859_mapping[];
 
+
 } // namespace detail
+
+
+
+/**
+ * All encoders and decoders should derive from this struct. It's purpose is to
+ *  a) decrease the number of parameters for encode() and decode() below, while
+ *  b) ensuring that specific transcoders can override these settings,
+ *  c) even allowing the caller to override them, and
+ *  d) allow for the universal transcoders to be switched between encodings.
+ **/
+struct transcoder_base
+{
+  transcoder_base(bool use_replacement_char = true,
+          utf32_char_t replacement_char = 0xfffd)
+      : m_use_replacement_char(use_replacement_char)
+      , m_replacement_char(replacement_char)
+  {
+  }
+
+  /**
+   * Determines whether upon encountering an invalid character/byte sequence,
+   * whether encode()/decode() should stop transcoding, or replace the invalid
+   * sequence with the replacement character below.
+   **/
+  bool          m_use_replacement_char;
+
+  /**
+   * The replacement character to use when m_use_replacement_char is consulted.
+   * This value defaults to the Unicode replacemement character 0xfffd. If this
+   * value is set to zero (0, '\0'), the invalid sequence is skipped completely
+   * in the output (affects only encode()).
+   **/
+  utf32_char_t  m_replacement_char;
+};
+
+
+/**
+ * Concept covering the transcoder_base functionality, to be used in the Concepts
+ * for encoders and decoders.
+ **/
+namespace concepts {
+
+template <typename T>
+struct CharTranscoderBaseConcept
+{
+    void constraints()
+    {
+        /**
+         * Must be able to read and write boolean values from the
+         * m_use_replacement_char member
+         **/
+        bool tmp1 = instance.m_use_replacement_char;
+        instance.m_use_replacement_char = tmp1;
+
+        /**
+         * Must be able to read and write utf32_char_t values from the
+         * m_replacement_char member
+         **/
+        utf32_char_t tmp2 = instance.m_replacement_char;
+        instance.m_replacement_char = tmp2;
+    }
+
+    T instance;
+};
+
+} // namespace concepts
+
+
+
+
 
 
 /**
@@ -160,6 +231,8 @@ namespace concepts {
 template <typename T>
 struct CharDecoderConcept
 {
+    BOOST_CLASS_REQUIRE(T, fhtagn::text::concepts, CharTranscoderBaseConcept);
+
     void constraints()
     {
         /**
@@ -212,8 +285,6 @@ struct CharDecoderConcept
 } // namespace concepts
 
 
-
-
 /**
  * The decode() function must be parametrized with a concrete byte decoder,
  * i.e. a decoder derived from decoder_base<> above. Other than that, the usage
@@ -233,11 +304,6 @@ struct CharDecoderConcept
  * the size of the output buffer is unlimited, a second decode() function
  * without the output_size parameter is provided.
  *
- * The function accepts a fifth, optional parameter specifying whether it
- * should produce replacement characters (0xfffd, see above) when encountering
- * invalid bytes in the input sequence, or stop decoding. The default (true)
- * is to produce replacement characters.
- *
  * The function returns the iterator one past the last byte in the input
  * sequence it could decode - in normal cases, that'll be the second parameter,
  * but when replacement characters are not meant to be produced, it'll point
@@ -251,15 +317,15 @@ template <
     typename output_iterT
 >
 inline input_iterT
-decode(input_iterT first, input_iterT last, output_iterT result,
-        ssize_t & output_size, bool use_replacement_char = true)
+decode(decoderT & decoder, input_iterT first, input_iterT last,
+        output_iterT result, ssize_t & output_size)
 {
     ssize_t used_output = 0;
 
     // ensure that decoderT is a valid charcter decoder
     boost::function_requires<concepts::CharDecoderConcept<decoderT> >();
 
-    decoderT decoder;
+    decoder.reset();
 
     input_iterT iter = first;
     for ( ; iter != last ; ++iter) {
@@ -279,10 +345,10 @@ decode(input_iterT first, input_iterT last, output_iterT result,
             // *iter must've been invalid - we checked before whether appending
             // can fail because we have a full sequence, and if that's the case
             // the decoder is reset.
-            if (use_replacement_char) {
+            if (decoder.m_use_replacement_char) {
                 // if the caller wants us to produce replacement chars for
                 // anything we can't decode, let's do that...
-                *result++ = 0xfffd;
+                *result++ = decoder.m_replacement_char;
                 decoder.reset();
 
                 ++used_output;
@@ -316,12 +382,11 @@ template <
     typename output_iterT
 >
 inline input_iterT
-decode(input_iterT first, input_iterT last, output_iterT result,
-        bool use_replacement_char = true)
+decode(decoderT & decoder, input_iterT first, input_iterT last,
+        output_iterT result)
 {
     ssize_t output_size = -1;
-    return decode<decoderT>(first, last, result, output_size,
-            use_replacement_char);
+    return decode(decoder, first, last, result, output_size);
 }
 
 
@@ -336,6 +401,8 @@ namespace concepts {
 template <typename T>
 struct CharEncoderConcept
 {
+    BOOST_CLASS_REQUIRE(T, fhtagn::text::concepts, CharTranscoderBaseConcept);
+
     void constraints()
     {
         /**
@@ -393,18 +460,6 @@ struct CharEncoderConcept
 /**
  * See the documentation for decode() above, much the same applies.
  *
- * If the use_replacement_char flag is true, illegal UTF-32 characters
- * are encoded as the replacement char. That only exists in encodings that
- * allow for more than one byte per character; if encoding the replacement char
- * fails, the illegal character is simply skipped. If the flag is false,
- * encoding breaks off and the iterator pointing to the illegal character is
- * returned.
- *
- * As not all encoding support 0xfffd as a replacement char, an optional
- * sixth parameter can be used to specify the replacement character to use
- * instead - such as '?', etc. For compatibility with encodings that do
- * support the full character set, it has to be a utf32_char_t, though.
- *
  * One word of warning, that does not apply to decode(): if the output
  * buffer provided is too small to even accommodate a single character, you
  * may find it hard to differentiate between situations in which the output
@@ -421,27 +476,25 @@ template <
     typename output_iterT
 >
 inline input_iterT
-encode(input_iterT first, input_iterT last, output_iterT result,
-        ssize_t & output_size, bool use_replacement_char = true,
-        utf32_char_t replacement_char = 0xfffd)
+encode(encoderT & encoder, input_iterT first, input_iterT last,
+        output_iterT result, ssize_t & output_size)
 {
     ssize_t used_output = 0;
 
     // ensure that encoderT is a valid character encoder
     boost::function_requires<concepts::CharEncoderConcept<encoderT> >();
 
-    encoderT encoder;
-
     input_iterT iter = first;
     for ( ; iter != last ; ++iter) {
         if (!encoder.encode(*iter)) {
-          if (!use_replacement_char) {
+          if (!encoder.m_use_replacement_char) {
             break;
           }
           // try encoding the replacement character. if that works, copy that
           // to the output (happens below). If it doesn't work, simply skip to
           // the next input character.
-          if (!encoder.encode(replacement_char)) {
+          if (encoder.m_replacement_char &&
+              !encoder.encode(encoder.m_replacement_char)) {
             continue;
           }
         }
@@ -474,12 +527,11 @@ template <
     typename output_iterT
 >
 inline input_iterT
-encode(input_iterT first, input_iterT last, output_iterT result,
-        bool use_replacement_char = true, utf32_char_t replacement_char = 0xfffd)
+encode(encoderT & encoder, input_iterT first, input_iterT last,
+        output_iterT result)
 {
     ssize_t output_size = -1;
-    return encode<encoderT>(first, last, result, output_size,
-            use_replacement_char, replacement_char);
+    return encode(encoder, first, last, result, output_size);
 }
 
 

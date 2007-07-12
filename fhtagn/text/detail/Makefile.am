@@ -4,18 +4,8 @@
 # the following license terms and conditions as set forth in the COPYING file
 # included in this source distribution.
 
-SUBDIRS = detail
-
 include $(top_srcdir)/Makefile.common
-textincludedir=$(pkgincludedir)/text
+textdetailincludedir=$(pkgincludedir)/text/detail
 
-lib_LTLIBRARIES = libfhtagn_text.la
-
-libfhtagn_text_la_SOURCES = \
-	transcoding.cpp \
-	decoders.cpp
-
-libfhtagn_text_la_LDFLAGS = $(LIB_VERSION)
-
-textinclude_HEADERS = \
-	transcoding.h decoders.h encoders.h xparser.h
+textdetailinclude_HEADERS = \
+	universal.h
