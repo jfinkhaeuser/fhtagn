@@ -62,6 +62,7 @@ public:
         CPPUNIT_TEST(testEncodeISO_8859_15);
         CPPUNIT_TEST(testEncodeUTF_8);
         CPPUNIT_TEST(testEncodeUTF_16);
+        CPPUNIT_TEST(testEncodeUTF_32);
 
         CPPUNIT_TEST(testChunkedTranscoding);
 
@@ -119,7 +120,7 @@ private:
             std::string source = "Hello, \xf3 world!";
             t::utf32_string target;
             t::ascii_decoder decoder;
-            decoder.m_use_replacement_char = false;
+            decoder.use_replacement_char(false);
             std::string::iterator error_iter = t::decode(decoder,
                     source.begin(), source.end(),
                     std::back_insert_iterator<t::utf32_string>(target));
@@ -324,19 +325,37 @@ private:
     {
         namespace t = fhtagn::text;
 
-        // \xe2\x82\xac is the euro sign in UTF-8
-        std::string source = "Hello, \xe2\x82\xac world!";
-        t::utf32_string target;
-        t::universal_decoder decoder;
-        decoder.set_encoding(t::UTF_8);
-        std::string::iterator error_iter = t::decode(decoder,
-                source.begin(), source.end(),
-                std::back_insert_iterator<t::utf32_string>(target));
-        CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
-        CPPUNIT_ASSERT_EQUAL(static_cast<std::string::difference_type>(17),
-                (error_iter - source.begin()));
-        // ensure that the euro sign has been decoded properly
-        CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
+        {
+            // \xe2\x82\xac is the euro sign in UTF-8
+            std::string source = "Hello, \xe2\x82\xac world!";
+            t::utf32_string target;
+            t::universal_decoder decoder;
+            decoder.set_encoding(t::UTF_8);
+            std::string::iterator error_iter = t::decode(decoder,
+                    source.begin(), source.end(),
+                    std::back_insert_iterator<t::utf32_string>(target));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(static_cast<std::string::difference_type>(17),
+                    (error_iter - source.begin()));
+            // ensure that the euro sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
+        }
+
+        {
+            // \xf3 is illegal in ASCII
+            std::string source = "Hello, \xf3 world!";
+            t::utf32_string target;
+            t::universal_decoder decoder;
+            std::string::iterator error_iter = t::decode(decoder,
+                    source.begin(), source.end(),
+                    std::back_insert_iterator<t::utf32_string>(target));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(static_cast<std::string::difference_type>(15),
+                    (error_iter - source.begin()));
+            // ensure that the euro sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0xfffd), target[7]);
+        }
+
     }
 
 
@@ -386,7 +405,7 @@ private:
 
             std::string target;
             t::ascii_encoder encoder;
-            encoder.m_replacement_char = '?';
+            encoder.replacement_char('?');
             t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
@@ -403,7 +422,7 @@ private:
 
             std::string target;
             t::ascii_encoder encoder;
-            encoder.m_use_replacement_char = false;
+            encoder.use_replacement_char(false);
             t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.begin() + 6 == error_iter);
@@ -469,7 +488,7 @@ private:
 
             std::string target;
             t::iso8859_15_encoder encoder;
-            encoder.m_replacement_char = '?';
+            encoder.replacement_char('?');
             t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.end() == error_iter);
@@ -485,7 +504,7 @@ private:
 
             std::string target;
             t::iso8859_15_encoder encoder;
-            encoder.m_use_replacement_char = false;
+            encoder.use_replacement_char(false);
             t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));
             CPPUNIT_ASSERT(source.begin() + 6 == error_iter);
@@ -592,6 +611,79 @@ private:
     }
 
 
+    void testEncodeUTF_32()
+    {
+        namespace t = fhtagn::text;
+        namespace b = fhtagn::byte_order;
+
+        // unicode code point 119070 (hex 1D11E) is musical G clef, which
+        // is an example of code points encoded in four bytes in UTF-32:
+        char le_source[] = "\xff\xfe\0\0H\0\0\0e\0\0\0l\0\0\0l\0\0\0o\0\0\0"
+                           ",\0\0\0 \0\0\0\x1e\xd1\x01\0 \0\0\0w\0\0\0o\0\0\0"
+                           "r\0\0\0l\0\0\0d\0\0\0!\0\0\0";
+        char be_source[] = "\0\0\xfe\xff\0\0\0H\0\0\0e\0\0\0l\0\0\0l\0\0\0o"
+                           "\0\0\0,\0\0\0 \0\x01\xd1\x1e\0\0\0 \0\0\0w\0\0\0o"
+                           "\0\0\0r\0\0\0l\0\0\0d\0\0\0!";
+
+        // UTF-32LE decoding, with a specialized utf32le_decoder
+        t::utf32_string source_string;
+        {
+            t::utf32le_decoder decoder;
+            // add 2 to start & end to skip BOM
+            char * error_ptr = t::decode(decoder,
+                    le_source + 4, le_source + 64,
+                    std::back_insert_iterator<t::utf32_string>(source_string));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), source_string.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, le_source + 64);
+            // ensure that the G clef sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), source_string[7]);
+        }
+
+        // Encode as UTF-32BE and compare
+        {
+            t::utf32be_encoder encoder;
+            char buf[sizeof(be_source)];
+            t::encode(encoder, source_string.begin(), source_string.end(), buf);
+
+            for (uint32_t i = 0 ; i < sizeof(be_source) - 4 ; ++i) {
+                CPPUNIT_ASSERT_EQUAL(be_source[i + 4], buf[i]);
+            }
+        }
+
+        // Encode as UTF-32LE and compare
+        {
+            t::utf32le_encoder encoder;
+            char buf[sizeof(be_source)];
+            t::encode(encoder, source_string.begin(), source_string.end(), buf);
+
+            for (uint32_t i = 0 ; i < sizeof(le_source) - 4 ; ++i) {
+                CPPUNIT_ASSERT_EQUAL(le_source[i + 4], buf[i]);
+            }
+        }
+
+
+        // Now we can encode this with a utf32_encoder, and depending on platform,
+        // it should come out identical to le_source or be_source (without bom).
+        {
+            t::utf32_encoder encoder;
+            char buf[sizeof(be_source)];
+            t::encode(encoder, source_string.begin(), source_string.end(), buf);
+
+            char * expected = NULL;
+            if (b::FHTAGN_BYTE_ORDER == b::FHTAGN_BIG_ENDIAN) {
+                expected = be_source + 4;
+            } else {
+                expected = le_source + 4;
+            }
+
+            for (uint32_t i = 0 ; i < sizeof(be_source) - 4 ; ++i) {
+                CPPUNIT_ASSERT_EQUAL(expected[i], buf[i]);
+            }
+        }
+    }
+
+
+
 
     void testChunkedTranscoding()
     {
@@ -653,6 +745,8 @@ private:
             CPPUNIT_ASSERT_EQUAL(source, output);
         }
     }
+
+
 };
 
 

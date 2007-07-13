@@ -264,15 +264,16 @@ struct utf8_encoder
 
 /**
  * Base class for UTF-16 encoders. In contrast to decoding, we can't autodetect
- * the desired endianness of the output by parsing a BOM. The base class
- * therefore cannot be used on it's own, in contrast to utf16_decoder.
+ * the desired endianness of the output by parsing a BOM. Instead, we use the
+ * host byte order by default.
  **/
-struct utf16_encoder_base
+struct utf16_encoder
     : public transcoder_base
 {
     typedef char const * const_iterator;
 
-    explicit utf16_encoder_base(byte_order::endian endian)
+    explicit utf16_encoder(byte_order::endian endian
+            = static_cast<byte_order::endian>(byte_order::FHTAGN_BYTE_ORDER))
         : transcoder_base()
         , m_endian(endian)
         , m_end(reinterpret_cast<char *>(m_buffer))
@@ -330,23 +331,83 @@ struct utf16_encoder_base
 
 
 struct utf16le_encoder
-    : public utf16_encoder_base
+    : public utf16_encoder
 {
     utf16le_encoder()
-        : utf16_encoder_base(byte_order::FHTAGN_LITTLE_ENDIAN)
+        : utf16_encoder(byte_order::FHTAGN_LITTLE_ENDIAN)
     {
     }
 };
 
 
 struct utf16be_encoder
-    : public utf16_encoder_base
+    : public utf16_encoder
 {
     utf16be_encoder()
-        : utf16_encoder_base(byte_order::FHTAGN_BIG_ENDIAN)
+        : utf16_encoder(byte_order::FHTAGN_BIG_ENDIAN)
     {
     }
 };
+
+
+/**
+ * Base class for UTF-32 encoders. In contrast to decoding, we can't autodetect
+ * the desired endianness of the output by parsing a BOM. Instead, we use the
+ * host byte order by default.
+ **/
+struct utf32_encoder
+    : public transcoder_base
+{
+    typedef char const * const_iterator;
+
+    explicit utf32_encoder(byte_order::endian endian
+            = static_cast<byte_order::endian>(byte_order::FHTAGN_BYTE_ORDER))
+        : transcoder_base()
+        , m_endian(endian)
+    {
+    }
+
+    const_iterator begin() const
+    {
+        return reinterpret_cast<const_iterator>(&m_buffer);
+    }
+
+    const_iterator end() const
+    {
+        return reinterpret_cast<const_iterator>(&m_buffer) + 4;
+    }
+
+    bool encode(utf32_char_t ch)
+    {
+        m_buffer = byte_order::from_host(ch, m_endian);
+        return true;
+    }
+
+    byte_order::endian  m_endian;
+    utf32_char_t        m_buffer;
+};
+
+
+struct utf32le_encoder
+    : public utf32_encoder
+{
+    utf32le_encoder()
+        : utf32_encoder(byte_order::FHTAGN_LITTLE_ENDIAN)
+    {
+    }
+};
+
+
+struct utf32be_encoder
+    : public utf32_encoder
+{
+    utf32be_encoder()
+        : utf32_encoder(byte_order::FHTAGN_BIG_ENDIAN)
+    {
+    }
+};
+
+
 
 
 }} // namespace fhtagn::text

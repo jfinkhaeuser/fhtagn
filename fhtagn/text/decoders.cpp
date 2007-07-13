@@ -41,12 +41,11 @@ namespace fhtagn {
 namespace text {
 
 
-universal_decoder::universal_decoder()
-    : transcoder_base()
-    , m_encoding(ASCII)
+universal_decoder::universal_decoder(char_encoding_type encoding /* = ASCII */)
+    : m_encoding(encoding)
     , m_decoder(0)
 {
-    set_encoding(ASCII);
+    set_encoding(encoding);
 }
 
 
@@ -93,6 +92,35 @@ universal_decoder::to_utf32() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_decoder, to_utf32, ());
 }
+
+
+bool
+universal_decoder::use_replacement_char() const
+{
+    FHTAGN_TEXT_CALL(m_encoding, m_decoder, use_replacement_char, ());
+}
+
+
+void
+universal_decoder::use_replacement_char(bool new_value)
+{
+    FHTAGN_TEXT_CALL(m_encoding, m_decoder, use_replacement_char, (new_value));
+}
+
+
+utf32_char_t
+universal_decoder::replacement_char() const
+{
+    FHTAGN_TEXT_CALL(m_encoding, m_decoder, replacement_char, ());
+}
+
+
+void
+universal_decoder::replacement_char(utf32_char_t new_value)
+{
+    FHTAGN_TEXT_CALL(m_encoding, m_decoder, replacement_char, (new_value));
+}
+
 
 
 }} // namespace fhtagn::text

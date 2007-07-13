@@ -162,27 +162,48 @@ extern utf32_char_t iso8859_mapping[];
  **/
 struct transcoder_base
 {
-  transcoder_base(bool use_replacement_char = true,
-          utf32_char_t replacement_char = 0xfffd)
-      : m_use_replacement_char(use_replacement_char)
-      , m_replacement_char(replacement_char)
-  {
-  }
+    transcoder_base(bool use_replacement_char = true,
+            utf32_char_t replacement_char = 0xfffd)
+        : m_use_replacement_char(use_replacement_char)
+        , m_replacement_char(replacement_char)
+    {
+    }
 
-  /**
-   * Determines whether upon encountering an invalid character/byte sequence,
-   * whether encode()/decode() should stop transcoding, or replace the invalid
-   * sequence with the replacement character below.
-   **/
-  bool          m_use_replacement_char;
+    bool use_replacement_char() const
+    {
+        return m_use_replacement_char;
+    }
 
-  /**
-   * The replacement character to use when m_use_replacement_char is consulted.
-   * This value defaults to the Unicode replacemement character 0xfffd. If this
-   * value is set to zero (0, '\0'), the invalid sequence is skipped completely
-   * in the output (affects only encode()).
-   **/
-  utf32_char_t  m_replacement_char;
+    void use_replacement_char(bool new_value)
+    {
+        m_use_replacement_char = new_value;
+    }
+
+    utf32_char_t replacement_char() const
+    {
+        return m_replacement_char;
+    }
+
+    void replacement_char(utf32_char_t new_value)
+    {
+        m_replacement_char = new_value;
+    }
+
+private:
+    /**
+     * Determines whether upon encountering an invalid character/byte sequence,
+     * whether encode()/decode() should stop transcoding, or replace the invalid
+     * sequence with the replacement character below.
+     **/
+    bool          m_use_replacement_char;
+
+    /**
+     * The replacement character to use when m_use_replacement_char is consulted.
+     * This value defaults to the Unicode replacemement character 0xfffd. If this
+     * value is set to zero (0, '\0'), the invalid sequence is skipped completely
+     * in the output (affects only encode()).
+     **/
+    utf32_char_t  m_replacement_char;
 };
 
 
@@ -198,18 +219,16 @@ struct CharTranscoderBaseConcept
     void constraints()
     {
         /**
-         * Must be able to read and write boolean values from the
-         * m_use_replacement_char member
+         * Must be able to get and set the use_replacement_char flag
          **/
-        bool tmp1 = instance.m_use_replacement_char;
-        instance.m_use_replacement_char = tmp1;
+        bool tmp1 = instance.use_replacement_char();
+        instance.use_replacement_char(tmp1);
 
         /**
-         * Must be able to read and write utf32_char_t values from the
-         * m_replacement_char member
+         * Must be able to get and set the replacement_char charater
          **/
-        utf32_char_t tmp2 = instance.m_replacement_char;
-        instance.m_replacement_char = tmp2;
+        utf32_char_t tmp2 = instance.replacement_char();
+        instance.replacement_char(tmp2);
     }
 
     T instance;
@@ -345,10 +364,10 @@ decode(decoderT & decoder, input_iterT first, input_iterT last,
             // *iter must've been invalid - we checked before whether appending
             // can fail because we have a full sequence, and if that's the case
             // the decoder is reset.
-            if (decoder.m_use_replacement_char) {
+            if (decoder.use_replacement_char()) {
                 // if the caller wants us to produce replacement chars for
                 // anything we can't decode, let's do that...
-                *result++ = decoder.m_replacement_char;
+                *result++ = decoder.replacement_char();
                 decoder.reset();
 
                 ++used_output;
@@ -487,14 +506,14 @@ encode(encoderT & encoder, input_iterT first, input_iterT last,
     input_iterT iter = first;
     for ( ; iter != last ; ++iter) {
         if (!encoder.encode(*iter)) {
-          if (!encoder.m_use_replacement_char) {
+          if (!encoder.use_replacement_char()) {
             break;
           }
           // try encoding the replacement character. if that works, copy that
           // to the output (happens below). If it doesn't work, simply skip to
           // the next input character.
-          if (encoder.m_replacement_char &&
-              !encoder.encode(encoder.m_replacement_char)) {
+          if (encoder.replacement_char() &&
+              !encoder.encode(encoder.replacement_char())) {
             continue;
           }
         }

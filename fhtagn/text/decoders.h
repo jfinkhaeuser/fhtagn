@@ -543,12 +543,26 @@ struct utf32be_decoder
 
 
 /**
- * FIXME
+ * The universal_decoder follows the same Concept as other decoders, but does
+ * not decode one specific encoding. Instead, you can switch the encoding it is
+ * meant to decode at run-time. Internally, the universal_decoder delegates to
+ * a pimpl'd decoder instance of the required type.
  **/
 struct universal_decoder
-    : public transcoder_base
 {
-    universal_decoder();
+    /** transcoder_base interface **/
+    bool use_replacement_char() const;
+    void use_replacement_char(bool new_value);
+
+    utf32_char_t replacement_char() const;
+    void replacement_char(utf32_char_t new_value);
+
+
+    /** Standard decoder interface **/
+    /**
+     * By default, decode ASCII encoding.
+     **/
+    universal_decoder(char_encoding_type encoding = ASCII);
     ~universal_decoder();
 
     void reset();
@@ -559,11 +573,17 @@ struct universal_decoder
 
     utf32_char_t to_utf32() const;
 
+    /**
+     * Return the encoding the decoder instance is currently set to decode.
+     **/
     char_encoding_type get_encoding() const
     {
         return m_encoding;
     }
 
+    /**
+     * Set a new encoding to decoder. This will reset() the decoder.
+     **/
     void set_encoding(char_encoding_type new_encoding);
 
 private:
