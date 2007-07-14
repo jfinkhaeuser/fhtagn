@@ -53,12 +53,12 @@
  * instance is deduced from the static mapping (see below). This macro
  * is used to implement the FHTAGN_TEXT_CALL macro below.
  **/
-#define FHTAGN_TEXT_CALL_CASE(ENCODING, TRANSCODER, FUNC, ARGLIST)    \
+#define FHTAGN_TEXT_CALL_CASE(ENCODING, TRANSCODER, SUBTYPE, FUNC, ARGLIST) \
     case ENCODING:                                                    \
       return static_cast<                                             \
               detail::universal_transcoding_static_mapping<           \
                   ENCODING                                            \
-              >::types::decoder_type *>(TRANSCODER)->FUNC ARGLIST;    \
+              >::types:: SUBTYPE##_type *>(TRANSCODER)->FUNC ARGLIST; \
       break;
 
 /**
@@ -67,34 +67,34 @@
  * encoder/decoder instance. What type to cast to is determined at run-time
  * via the first parameter.
  **/
-#define FHTAGN_TEXT_CALL(SWITCHVAR, OBJECT, FUNC, ARGLIST)            \
-    switch (SWITCHVAR) {                                              \
-        FHTAGN_TEXT_CALL_CASE(ASCII,       OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(UTF_8,       OBJECT, FUNC, ARGLIST)     \
-        /* FHTAGN_TEXT_CALL_CASE(UTF_16,      OBJECT, FUNC, ARGLIST)     */\
-        FHTAGN_TEXT_CALL_CASE(UTF_16LE,    OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(UTF_16BE,    OBJECT, FUNC, ARGLIST)     \
-        /* FHTAGN_TEXT_CALL_CASE(UTF_32,      OBJECT, FUNC, ARGLIST)     */\
-        /* FHTAGN_TEXT_CALL_CASE(UTF_32LE,    OBJECT, FUNC, ARGLIST)     */\
-        /* FHTAGN_TEXT_CALL_CASE(UTF_32BE,    OBJECT, FUNC, ARGLIST)     */\
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_1,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_2,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_3,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_4,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_5,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_6,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_7,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_8,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_9,  OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_10, OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_11, OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_13, OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_14, OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_15, OBJECT, FUNC, ARGLIST)     \
-        FHTAGN_TEXT_CALL_CASE(ISO_8859_16, OBJECT, FUNC, ARGLIST)     \
-        default:                                                      \
-            assert(0);                                                \
-            break;                                                    \
+#define FHTAGN_TEXT_CALL(SWITCHVAR, OBJECT, SUBTYPE, FUNC, ARGLIST)         \
+    switch (SWITCHVAR) {                                                    \
+        FHTAGN_TEXT_CALL_CASE(ASCII,       OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(UTF_8,       OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(UTF_16,      OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(UTF_16LE,    OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(UTF_16BE,    OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(UTF_32,      OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(UTF_32LE,    OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(UTF_32BE,    OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_1,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_2,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_3,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_4,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_5,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_6,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_7,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_8,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_9,  OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_10, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_11, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_13, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_14, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_15, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(ISO_8859_16, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        default:                                                            \
+            assert(0);                                                      \
+            break;                                                          \
     }
 
 
@@ -115,29 +115,29 @@
  **/
 #define FHTAGN_TEXT_CREATE(SWITCHVAR, OBJECT, SUBTYPE)                \
     switch (SWITCHVAR) {                                              \
-        FHTAGN_TEXT_CREATE_TYPE(ASCII, OBJECT, SUBTYPE)               \
-        FHTAGN_TEXT_CREATE_TYPE(UTF_8, OBJECT, SUBTYPE)               \
-        /* FHTAGN_TEXT_CREATE_TYPE(UTF_16,      OBJECT, SUBTYPE)     */\
-        FHTAGN_TEXT_CREATE_TYPE(UTF_16LE, OBJECT, SUBTYPE)            \
-        FHTAGN_TEXT_CREATE_TYPE(UTF_16BE, OBJECT, SUBTYPE)            \
-        /* FHTAGN_TEXT_CREATE_TYPE(UTF_32,      OBJECT, SUBTYPE)     */\
-        /* FHTAGN_TEXT_CREATE_TYPE(UTF_32LE,    OBJECT, SUBTYPE)     */\
-        /* FHTAGN_TEXT_CREATE_TYPE(UTF_32BE,    OBJECT, SUBTYPE)     */\
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_1,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_2,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_3,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_4,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_5,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_6,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_7,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_8,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_9,  OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_10, OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_11, OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_13, OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_14, OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_15, OBJECT, SUBTYPE)         \
-        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_16, OBJECT, SUBTYPE)         \
+        FHTAGN_TEXT_CREATE_TYPE(ASCII,        OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(UTF_8,        OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(UTF_16,       OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(UTF_16LE,     OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(UTF_16BE,     OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(UTF_32,       OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(UTF_32LE,     OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(UTF_32BE,     OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_1,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_2,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_3,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_4,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_5,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_6,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_7,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_8,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_9,   OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_10,  OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_11,  OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_13,  OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_14,  OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_15,  OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(ISO_8859_16,  OBJECT, SUBTYPE)        \
         default:                                                      \
             assert(0);                                                \
             break;                                                    \
@@ -162,14 +162,14 @@
  **/
 #define FHTAGN_TEXT_DESTROY(SWITCHVAR, OBJECT, SUBTYPE)               \
     switch (SWITCHVAR) {                                              \
-        FHTAGN_TEXT_DESTROY_TYPE(ASCII, OBJECT, SUBTYPE)              \
-        FHTAGN_TEXT_DESTROY_TYPE(UTF_8, OBJECT, SUBTYPE)              \
-        /* FHTAGN_TEXT_DESTROY_TYPE(UTF_16,      OBJECT, SUBTYPE)     */\
-        FHTAGN_TEXT_DESTROY_TYPE(UTF_16LE, OBJECT, SUBTYPE)           \
-        FHTAGN_TEXT_DESTROY_TYPE(UTF_16BE, OBJECT, SUBTYPE)           \
-        /* FHTAGN_TEXT_DESTROY_TYPE(UTF_32,      OBJECT, SUBTYPE)     */\
-        /* FHTAGN_TEXT_DESTROY_TYPE(UTF_32LE,    OBJECT, SUBTYPE)     */\
-        /* FHTAGN_TEXT_DESTROY_TYPE(UTF_32BE,    OBJECT, SUBTYPE)     */\
+        FHTAGN_TEXT_DESTROY_TYPE(ASCII,       OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_DESTROY_TYPE(UTF_8,       OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_DESTROY_TYPE(UTF_16,      OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_DESTROY_TYPE(UTF_16LE,    OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_DESTROY_TYPE(UTF_16BE,    OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_DESTROY_TYPE(UTF_32,      OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_DESTROY_TYPE(UTF_32LE,    OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_DESTROY_TYPE(UTF_32BE,    OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_DESTROY_TYPE(ISO_8859_1,  OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_DESTROY_TYPE(ISO_8859_2,  OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_DESTROY_TYPE(ISO_8859_3,  OBJECT, SUBTYPE)        \
@@ -211,7 +211,11 @@ namespace fhtagn {
 namespace text {
 namespace detail {
 
-// FIXME
+/**
+ * "Value" type for a compile-time mapping of encoding types to appropriate
+ * encoder and decoder types. For each enum value of possible encodings, we want
+ * one decoder_type and on encoder_type.
+ **/
 template <
     typename decoderT,
     typename encoderT
@@ -223,7 +227,11 @@ struct universal_transcoding_mapping_type
 };
 
 
-// FIXME
+/**
+ * Implements the mapping of encoding type to the above decoder + encoder type.
+ * The default is to not define those types; however, using the
+ * FHTAGN_TEXT_STATIC_MAP macro below, one can create such mappings.
+ **/
 template <
     unsigned int MAPPING_INDEX
 >
@@ -234,12 +242,12 @@ struct universal_transcoding_static_mapping
 
 FHTAGN_TEXT_STATIC_MAP(ASCII,       ascii_decoder,      ascii_encoder);
 FHTAGN_TEXT_STATIC_MAP(UTF_8,       utf8_decoder,       utf8_encoder);
-//FHTAGN_TEXT_STATIC_MAP(UTF_16,      utf16_decoder,      utf16_encoder);
+FHTAGN_TEXT_STATIC_MAP(UTF_16,      utf16_decoder,      utf16_encoder);
 FHTAGN_TEXT_STATIC_MAP(UTF_16LE,    utf16le_decoder,    utf16le_encoder);
 FHTAGN_TEXT_STATIC_MAP(UTF_16BE,    utf16be_decoder,    utf16be_encoder);
-//FHTAGN_TEXT_STATIC_MAP(UTF_32,      utf32_decoder,      utf32_encoder);
-//FHTAGN_TEXT_STATIC_MAP(UTF_32LE,    utf32le_decoder,    utf32le_encoder);
-//FHTAGN_TEXT_STATIC_MAP(UTF_32BE,    utf32be_decoder,    utf32be_encoder);
+FHTAGN_TEXT_STATIC_MAP(UTF_32,      utf32_decoder,      utf32_encoder);
+FHTAGN_TEXT_STATIC_MAP(UTF_32LE,    utf32le_decoder,    utf32le_encoder);
+FHTAGN_TEXT_STATIC_MAP(UTF_32BE,    utf32be_decoder,    utf32be_encoder);
 FHTAGN_TEXT_STATIC_MAP(ISO_8859_1,  iso8859_1_decoder,  iso8859_1_encoder);
 FHTAGN_TEXT_STATIC_MAP(ISO_8859_2,  iso8859_2_decoder,  iso8859_2_encoder);
 FHTAGN_TEXT_STATIC_MAP(ISO_8859_3,  iso8859_3_decoder,  iso8859_3_encoder);

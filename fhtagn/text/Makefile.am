@@ -13,7 +13,8 @@ lib_LTLIBRARIES = libfhtagn_text.la
 
 libfhtagn_text_la_SOURCES = \
 	transcoding.cpp \
-	decoders.cpp
+	decoders.cpp \
+	encoders.cpp
 
 libfhtagn_text_la_LDFLAGS = $(LIB_VERSION)
 

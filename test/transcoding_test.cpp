@@ -63,6 +63,7 @@ public:
         CPPUNIT_TEST(testEncodeUTF_8);
         CPPUNIT_TEST(testEncodeUTF_16);
         CPPUNIT_TEST(testEncodeUTF_32);
+        CPPUNIT_TEST(testEncodeUniversal);
 
         CPPUNIT_TEST(testChunkedTranscoding);
 
@@ -682,6 +683,56 @@ private:
         }
     }
 
+
+    void testEncodeUniversal()
+    {
+        namespace t = fhtagn::text;
+
+        // unicode code point 119070 (hex 1D11E) is musical G clef, which
+        // is an example of code points encoded in four bytes in UTF-32:
+        char le_source[] = "\xff\xfe\0\0H\0\0\0e\0\0\0l\0\0\0l\0\0\0o\0\0\0"
+                           ",\0\0\0 \0\0\0\x1e\xd1\x01\0 \0\0\0w\0\0\0o\0\0\0"
+                           "r\0\0\0l\0\0\0d\0\0\0!\0\0\0";
+
+        // UTF-32LE decoding, with a specialized utf32le_decoder
+        t::utf32_string source_string;
+        {
+            t::utf32le_decoder decoder;
+            // add 2 to start & end to skip BOM
+            char * error_ptr = t::decode(decoder,
+                    le_source + 4, le_source + 64,
+                    std::back_insert_iterator<t::utf32_string>(source_string));
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), source_string.size());
+            CPPUNIT_ASSERT_EQUAL(error_ptr, le_source + 64);
+            // ensure that the G clef sign has been decoded properly
+            CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x1d11e), source_string[7]);
+        }
+
+        // Now we can encode the utf32-string in source_string into UTF-8...
+        {
+            std::string target;
+            t::universal_encoder encoder;
+            encoder.set_encoding(t::UTF_8);
+            t::utf32_string::iterator error_iter = t::encode(encoder,
+                    source_string.begin(), source_string.end(),
+                    std::back_insert_iterator<std::string>(target));
+            // G clef becomes several bytes.
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(18), target.size());
+        }
+
+        // ... and try the same with ASCII
+        {
+            std::string target;
+            t::universal_encoder encoder;
+            encoder.replacement_char('?');
+            t::utf32_string::iterator error_iter = t::encode(encoder,
+                    source_string.begin(), source_string.end(),
+                    std::back_insert_iterator<std::string>(target));
+            // G clef will be replaced by '?'
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL('?', target[7]);
+        }
+    }
 
 
 

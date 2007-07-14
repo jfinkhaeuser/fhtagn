@@ -408,6 +408,49 @@ struct utf32be_encoder
 };
 
 
+/**
+ * The universal_encoder follows the same Concept as other encoders, but does
+ * not encode one specific encoding. Instead, you can switch the encoding it is
+ * meant to encode at run-time. Internally, the universal_encoder delegates to
+ * a pimpl'd encoder instance of the required type.
+ **/
+struct universal_encoder
+{
+    /** transcoder_base interface **/
+    bool use_replacement_char() const;
+    void use_replacement_char(bool new_value);
+
+    utf32_char_t replacement_char() const;
+    void replacement_char(utf32_char_t new_value);
+
+    /** Standard encoder interface **/
+    typedef char const * const_iterator;
+
+    explicit universal_encoder(char_encoding_type encoding = ASCII);
+    ~universal_encoder();
+
+    const_iterator begin() const;
+    const_iterator end() const;
+
+    bool encode(utf32_char_t ch);
+
+    /**
+     * Return the encoding the decoder instance is currently set to decode.
+     **/
+    char_encoding_type get_encoding() const
+    {
+        return m_encoding;
+    }
+
+    /**
+     * Set a new encoding to decoder. This will reset() the decoder.
+     **/
+    void set_encoding(char_encoding_type new_encoding);
+
+private:
+    char_encoding_type  m_encoding;
+    void *              m_encoder;
+};
 
 
 }} // namespace fhtagn::text

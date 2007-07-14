@@ -41,85 +41,78 @@ namespace fhtagn {
 namespace text {
 
 
-universal_decoder::universal_decoder(char_encoding_type encoding /* = ASCII */)
+universal_encoder::universal_encoder(char_encoding_type encoding /* = ASCII */)
     : m_encoding(encoding)
-    , m_decoder(0)
+    , m_encoder(0)
 {
     set_encoding(encoding);
 }
 
 
-universal_decoder::~universal_decoder()
+universal_encoder::~universal_encoder()
 {
-    FHTAGN_TEXT_DESTROY(m_encoding, m_decoder, decoder);
+    FHTAGN_TEXT_DESTROY(m_encoding, m_encoder, encoder);
 }
 
 
 
 void
-universal_decoder::set_encoding(char_encoding_type new_encoding)
+universal_encoder::set_encoding(char_encoding_type new_encoding)
 {
-    FHTAGN_TEXT_DESTROY(m_encoding, m_decoder, decoder);
+    FHTAGN_TEXT_DESTROY(m_encoding, m_encoder, encoder);
     m_encoding = new_encoding;
-    FHTAGN_TEXT_CREATE(m_encoding, m_decoder, decoder);
+    FHTAGN_TEXT_CREATE(m_encoding, m_encoder, encoder);
 }
 
 
 
-void
-universal_decoder::reset()
+universal_encoder::const_iterator
+universal_encoder::begin() const
 {
-    FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, reset, ());
+    FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, begin, ());
 }
 
 
-bool
-universal_decoder::append(unsigned char byte)
+universal_encoder::const_iterator
+universal_encoder::end() const
 {
-    FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, append, (byte));
-}
-
-
-bool
-universal_decoder::have_full_sequence() const
-{
-    FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, have_full_sequence, ());
-}
-
-
-utf32_char_t
-universal_decoder::to_utf32() const
-{
-    FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, to_utf32, ());
+    FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, end, ());
 }
 
 
 bool
-universal_decoder::use_replacement_char() const
+universal_encoder::encode(utf32_char_t ch)
 {
-    FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, use_replacement_char, ());
+    FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, encode, (ch));
+}
+
+
+bool
+universal_encoder::use_replacement_char() const
+{
+    FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, use_replacement_char, ());
 }
 
 
 void
-universal_decoder::use_replacement_char(bool new_value)
+universal_encoder::use_replacement_char(bool new_value)
 {
-    FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, use_replacement_char,
+    FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, use_replacement_char,
             (new_value));
 }
 
 
 utf32_char_t
-universal_decoder::replacement_char() const
+universal_encoder::replacement_char() const
 {
-    FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, replacement_char, ());
+    FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, replacement_char, ());
 }
 
 
 void
-universal_decoder::replacement_char(utf32_char_t new_value)
+universal_encoder::replacement_char(utf32_char_t new_value)
 {
-    FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, replacement_char,
+    FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, replacement_char,
             (new_value));
 }
 

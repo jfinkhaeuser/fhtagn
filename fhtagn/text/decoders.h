@@ -562,7 +562,7 @@ struct universal_decoder
     /**
      * By default, decode ASCII encoding.
      **/
-    universal_decoder(char_encoding_type encoding = ASCII);
+    explicit universal_decoder(char_encoding_type encoding = ASCII);
     ~universal_decoder();
 
     void reset();
