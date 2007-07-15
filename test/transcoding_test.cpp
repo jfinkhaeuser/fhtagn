@@ -54,6 +54,7 @@ public:
         CPPUNIT_TEST(testDecodeRaw);
         CPPUNIT_TEST(testDecodeASCII);
         CPPUNIT_TEST(testDecodeISO_8859_15);
+        CPPUNIT_TEST(testDecodeCP_1252);
         CPPUNIT_TEST(testDecodeUTF_8);
         CPPUNIT_TEST(testDecodeUTF_16);
         CPPUNIT_TEST(testDecodeUTF_32);
@@ -62,6 +63,7 @@ public:
         CPPUNIT_TEST(testEncodeRaw);
         CPPUNIT_TEST(testEncodeASCII);
         CPPUNIT_TEST(testEncodeISO_8859_15);
+        //CPPUNIT_TEST(testEncodeCP_1252);
         CPPUNIT_TEST(testEncodeUTF_8);
         CPPUNIT_TEST(testEncodeUTF_16);
         CPPUNIT_TEST(testEncodeUTF_32);
@@ -165,6 +167,24 @@ private:
         std::string source = "Hello, \xa4 world!";
         t::utf32_string target;
         t::iso8859_15_decoder decoder;
+        std::string::iterator error_iter = t::decode(decoder,
+                source.begin(), source.end(),
+                std::back_insert_iterator<t::utf32_string>(target));
+        CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+        CPPUNIT_ASSERT_EQUAL(static_cast<std::string::difference_type>(15),
+                (error_iter - source.begin()));
+        // ensure that the euro sign has been decoded properly
+        CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0x20ac), target[7]);
+    }
+
+    void testDecodeCP_1252()
+    {
+        namespace t = fhtagn::text;
+
+        // \x80 is the euro sign in CP-1252
+        std::string source = "Hello, \x80 world!";
+        t::utf32_string target;
+        t::cp1252_decoder decoder;
         std::string::iterator error_iter = t::decode(decoder,
                 source.begin(), source.end(),
                 std::back_insert_iterator<t::utf32_string>(target));
@@ -554,6 +574,90 @@ private:
 
             std::string target;
             t::iso8859_15_encoder encoder;
+            encoder.use_replacement_char(false);
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.begin() + 6 == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+    }
+
+
+
+    void testEncodeCP_1252()
+    {
+        namespace t = fhtagn::text;
+
+        // simple test, expected to succeed.
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello, world!";
+
+            std::string target;
+            t::cp1252_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // test with non-ASCII character (a umlaut). This must be valid in CP-1252
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0xe4, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,\xe4 world!";
+
+            std::string target;
+            t::cp1252_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // test with non-CP-1252 character (G clef) - that's expected to be ignored ...
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0x1d11e, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello, world!";
+
+            std::string target;
+            t::cp1252_encoder encoder;
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // ... or optionally encoded as a ? ...
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0x1d11e, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,? world!";
+
+            std::string target;
+            t::cp1252_encoder encoder;
+            encoder.replacement_char('?');
+            t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
+                    source.end(), std::back_insert_iterator<std::string>(target));
+            CPPUNIT_ASSERT(source.end() == error_iter);
+            CPPUNIT_ASSERT_EQUAL(expected, target);
+        }
+
+        // ... or encoding breaks off at that point
+        {
+            t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', 0x1d11e, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string source = source_array;
+
+            std::string expected = "Hello,";
+
+            std::string target;
+            t::cp1252_encoder encoder;
             encoder.use_replacement_char(false);
             t::utf32_string::const_iterator error_iter = t::encode(encoder, source.begin(),
                     source.end(), std::back_insert_iterator<std::string>(target));

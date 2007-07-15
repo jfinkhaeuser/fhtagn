@@ -244,6 +244,65 @@ FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(15);
 FHTAGN_TEXT_DEFINE_ISO8859_ENCODER(16);
 
 
+/**
+ * Encoder for CP 1252. That windows encoding is basically identical to
+ * ISO-8859-1, except that the unused range of bytes between 0x80 and 0x9f
+ * is mapped to characters, some of which are included in ISO-8859-15.
+ **/
+struct cp1252_encoder
+    : public transcoder_base
+{
+    typedef char const * const_iterator;
+
+    /**
+     * When encoding unknown characters, the default is to skip these characters.
+     **/
+    explicit cp1252_encoder()
+        : transcoder_base(true, '\0')
+        , m_flag(false)
+        , m_byte(0)
+    {
+    }
+
+    const_iterator begin() const
+    {
+        if (m_flag) {
+            return &m_byte;
+        }
+        return end();
+    }
+
+    const_iterator end() const
+    {
+        return &m_byte + 1;
+    }
+
+    bool encode(utf32_char_t ch)
+    {
+        // Characters with certain value ranges can be encoded in just like in
+        // ASCII
+        if ((0 <= ch && ch <= 127) || (160 <= ch && ch <= 255)) {
+            m_byte = static_cast<char>(ch);
+            m_flag = true;
+            return true;
+        }
+
+        for (uint32_t i = 0 ; i < 32 ; ++i) {
+            if (detail::iso8859_mapping[i] == ch) {
+                m_byte = i + 0x80;
+                m_flag = true;
+                return true;
+            }
+        }
+
+        // other bytes can't be encoded in any of the iso8859 encodings.
+        m_flag = false;
+        return false;
+    }
+
+    bool  m_flag;
+    char  m_byte;
+};
 
 
 /**

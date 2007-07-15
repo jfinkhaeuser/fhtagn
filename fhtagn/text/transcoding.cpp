@@ -311,6 +311,22 @@ utf32_char_t iso8859_mapping[1344] = {
 /* fa */ 0x000000fa, 0x000000fb, 0x000000fc, 0x00000119, 0x0000021b, 0x000000ff,
 };
 
+
+/**
+ * The mapping table for CP-1252 - only values between 0x80 and 0x9f need to be
+ * interpreted specially.
+ * Byte values not covered by ISO-8859 subencodings are defined as the
+ * replacement character here (0xfffd).
+ **/
+utf32_char_t cp1252_mapping[32] = {
+/* 80 */ 0x000020ac, 0x0000fffd, 0x0000201a, 0x00000192, 0x0000201e, 0x00002026,
+/* 86 */ 0x00002020, 0x00002021, 0x000002c6, 0x00002030, 0x00000160, 0x00002039,
+/* 8c */ 0x00000152, 0x0000fffd, 0x0000017d, 0x0000fffd, 0x0000fffd, 0x00002018,
+/* 92 */ 0x00002019, 0x0000201c, 0x0000201d, 0x00002022, 0x00002013, 0x00002014,
+/* 98 */ 0x000002dc, 0x00002122, 0x00000161, 0x0000203a, 0x00000153, 0x0000fffd,
+/* 9e */ 0x0000017e, 0x00000178
+};
+
 } // namespace detail
 
 

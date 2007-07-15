@@ -91,8 +91,6 @@ typedef std::basic_string<utf32_char_t> utf32_string;
  * Supported character encoding types by fhtagn's text processing utilities. Not
  * all encoding types must be supported by all parts of the code, but this is
  * enumeration lists the maximum number of supported encodings.
- *
- * TODO CP1252
  **/
 enum char_encoding_type
 {
@@ -107,37 +105,54 @@ enum char_encoding_type
     UTF_32LE              =  6,
     UTF_32BE              =  7,
     UCS_4                 =  UTF_32,
-    ISO_8859_1            =  8,
-    ISO_LATIN_1           =  ISO_8859_1,
-    ISO_8859_2            =  9,
-    ISO_LATIN_2           =  ISO_8859_2,
-    ISO_8859_3            = 10,
-    ISO_LATIN_3           = ISO_8859_3,
-    ISO_8859_4            = 11,
-    ISO_LATIN_4           = ISO_8859_4,
-    ISO_8859_5            = 12,
-    ISO_LATIN_CYRILLIC    = ISO_8859_5,
-    ISO_8859_6            = 13,
-    ISO_LATIN_ARABIC      = ISO_8859_6,
-    ISO_8859_7            = 14,
-    ISO_LATIN_GREEK       = ISO_8859_7,
-    ISO_8859_8            = 15,
-    ISO_LATIN_HEBREW      = ISO_8859_8,
-    ISO_8859_9            = 16,
-    ISO_LATIN_5           = ISO_8859_9,
-    ISO_8859_10           = 17,
-    ISO_LATIN_6           = ISO_8859_10,
-    ISO_8859_11           = 18,
-    ISO_LATIN_THAI        = ISO_8859_11,
+    IEC_8859_1            =  8,
+    ISO_8859_1            =  IEC_8859_1,
+    ISO_LATIN_1           =  IEC_8859_1,
+    IEC_8859_2            =  9,
+    ISO_8859_2            =  IEC_8859_2,
+    ISO_LATIN_2           =  IEC_8859_2,
+    IEC_8859_3            = 10,
+    ISO_8859_3            = IEC_8859_3,
+    ISO_LATIN_3           = IEC_8859_3,
+    IEC_8859_4            = 11,
+    ISO_8859_4            = IEC_8859_4,
+    ISO_LATIN_4           = IEC_8859_4,
+    IEC_8859_5            = 12,
+    ISO_8859_5            = IEC_8859_5,
+    ISO_LATIN_CYRILLIC    = IEC_8859_5,
+    IEC_8859_6            = 13,
+    ISO_8859_6            = IEC_8859_6,
+    ISO_LATIN_ARABIC      = IEC_8859_6,
+    IEC_8859_7            = 14,
+    ISO_8859_7            = IEC_8859_7,
+    ISO_LATIN_GREEK       = IEC_8859_7,
+    IEC_8859_8            = 15,
+    ISO_8859_8            = IEC_8859_8,
+    ISO_LATIN_HEBREW      = IEC_8859_8,
+    IEC_8859_9            = 16,
+    ISO_8859_9            = IEC_8859_9,
+    ISO_LATIN_5           = IEC_8859_9,
+    IEC_8859_10           = 17,
+    ISO_8859_10           = IEC_8859_10,
+    ISO_LATIN_6           = IEC_8859_10,
+    IEC_8859_11           = 18,
+    ISO_8859_11           = IEC_8859_11,
+    ISO_LATIN_THAI        = IEC_8859_11,
     // Note that work on ISO-5589-12 was started, but never completed.
-    ISO_8859_13           = 20,
-    ISO_LATIN_7           = ISO_8859_13,
-    ISO_8859_14           = 21,
-    ISO_LATIN_8           = ISO_8859_14,
-    ISO_8859_15           = 22,
-    ISO_LATIN_9           = ISO_8859_15,
-    ISO_8859_16           = 23,
-    ISO_LATIN_10          = ISO_8859_16,
+    IEC_8859_13           = 20,
+    ISO_8859_13           = IEC_8859_13,
+    ISO_LATIN_7           = IEC_8859_13,
+    IEC_8859_14           = 21,
+    ISO_8859_14           = IEC_8859_14,
+    ISO_LATIN_8           = IEC_8859_14,
+    IEC_8859_15           = 22,
+    ISO_8859_15           = IEC_8859_15,
+    ISO_LATIN_9           = IEC_8859_15,
+    IEC_8859_16           = 23,
+    ISO_8859_16           = IEC_8859_16,
+    ISO_LATIN_10          = IEC_8859_16,
+    WINDOWS_1252          = 24,
+    CP_1252               = WINDOWS_1252,
 };
 
 
@@ -148,6 +163,11 @@ namespace detail {
  * code points to byte values between 160 and 255.
  **/
 extern utf32_char_t iso8859_mapping[];
+
+/**
+ * Similar mapping for Windows-1252.
+ **/
+extern utf32_char_t cp1252_mapping[];
 
 
 } // namespace detail

@@ -248,6 +248,61 @@ FHTAGN_TEXT_DEFINE_ISO8859_DECODER(16);
 
 
 /**
+ * Decoder for CP 1252. That windows encoding is basically identical to
+ * ISO-8859-1, except that the unused range of bytes between 0x80 and 0x9f
+ * is mapped to characters, some of which are included in ISO-8859-15.
+ **/
+struct cp1252_decoder
+    : public transcoder_base
+{
+    cp1252_decoder()
+        : transcoder_base()
+        , m_byte(0x81) // unused character
+    {
+    }
+
+
+    bool append(unsigned char byte)
+    {
+        if (have_full_sequence()) {
+            return false;
+        }
+
+        m_byte = byte;
+        return true;
+    }
+
+
+    bool have_full_sequence() const
+    {
+        // 0x81 is an invalid byte value, we use it to signal that the buffer
+        // is unused.
+        return (m_byte != 0x81);
+    }
+
+
+    void reset()
+    {
+        // signal empty buffer
+        m_byte = 0x81;
+    }
+
+
+    utf32_char_t to_utf32() const
+    {
+        unsigned char tmp = m_byte;
+        if (tmp <= 127 || tmp >= 160) {
+            return tmp;
+        }
+        return detail::cp1252_mapping[tmp - 0x80];
+    }
+
+    unsigned char       m_byte;
+};
+
+
+
+/**
  * UTF-8 decoder
  **/
 struct utf8_decoder

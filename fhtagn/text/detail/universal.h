@@ -93,6 +93,7 @@
         FHTAGN_TEXT_CALL_CASE(ISO_8859_14, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
         FHTAGN_TEXT_CALL_CASE(ISO_8859_15, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
         FHTAGN_TEXT_CALL_CASE(ISO_8859_16, OBJECT, SUBTYPE, FUNC, ARGLIST)  \
+        FHTAGN_TEXT_CALL_CASE(CP_1252,     OBJECT, SUBTYPE, FUNC, ARGLIST)  \
         default:                                                            \
             assert(0);                                                      \
             break;                                                          \
@@ -140,6 +141,7 @@
         FHTAGN_TEXT_CREATE_TYPE(ISO_8859_14,  OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_CREATE_TYPE(ISO_8859_15,  OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_CREATE_TYPE(ISO_8859_16,  OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_CREATE_TYPE(CP_1252,      OBJECT, SUBTYPE)        \
         default:                                                      \
             assert(0);                                                \
             break;                                                    \
@@ -188,6 +190,7 @@
         FHTAGN_TEXT_DESTROY_TYPE(ISO_8859_14, OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_DESTROY_TYPE(ISO_8859_15, OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_DESTROY_TYPE(ISO_8859_16, OBJECT, SUBTYPE)        \
+        FHTAGN_TEXT_DESTROY_TYPE(CP_1252, OBJECT, SUBTYPE)            \
         default:                                                      \
             assert(0);                                                \
             break;                                                    \
@@ -267,6 +270,7 @@ FHTAGN_TEXT_STATIC_MAP(ISO_8859_13, iso8859_13_decoder, iso8859_13_encoder);
 FHTAGN_TEXT_STATIC_MAP(ISO_8859_14, iso8859_14_decoder, iso8859_14_encoder);
 FHTAGN_TEXT_STATIC_MAP(ISO_8859_15, iso8859_15_decoder, iso8859_15_encoder);
 FHTAGN_TEXT_STATIC_MAP(ISO_8859_16, iso8859_16_decoder, iso8859_16_encoder);
+FHTAGN_TEXT_STATIC_MAP(CP_1252,     cp1252_decoder,     cp1252_encoder);
 //FHTAGN_TEXT_STATIC_MAP(,     _decoder,    _encoder);
 
 
