@@ -96,6 +96,7 @@ typedef std::basic_string<utf32_char_t> utf32_string;
  **/
 enum char_encoding_type
 {
+    RAW                   = -1,
     ASCII                 =  0,
     US_ASCII              =  ASCII,
     UTF_8                 =  1,

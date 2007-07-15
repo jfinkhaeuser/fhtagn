@@ -69,6 +69,7 @@
  **/
 #define FHTAGN_TEXT_CALL(SWITCHVAR, OBJECT, SUBTYPE, FUNC, ARGLIST)         \
     switch (SWITCHVAR) {                                                    \
+        FHTAGN_TEXT_CALL_CASE(RAW,         OBJECT, SUBTYPE, FUNC, ARGLIST)  \
         FHTAGN_TEXT_CALL_CASE(ASCII,       OBJECT, SUBTYPE, FUNC, ARGLIST)  \
         FHTAGN_TEXT_CALL_CASE(UTF_8,       OBJECT, SUBTYPE, FUNC, ARGLIST)  \
         FHTAGN_TEXT_CALL_CASE(UTF_16,      OBJECT, SUBTYPE, FUNC, ARGLIST)  \
@@ -115,6 +116,7 @@
  **/
 #define FHTAGN_TEXT_CREATE(SWITCHVAR, OBJECT, SUBTYPE)                \
     switch (SWITCHVAR) {                                              \
+        FHTAGN_TEXT_CREATE_TYPE(RAW,          OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_CREATE_TYPE(ASCII,        OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_CREATE_TYPE(UTF_8,        OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_CREATE_TYPE(UTF_16,       OBJECT, SUBTYPE)        \
@@ -162,6 +164,7 @@
  **/
 #define FHTAGN_TEXT_DESTROY(SWITCHVAR, OBJECT, SUBTYPE)               \
     switch (SWITCHVAR) {                                              \
+        FHTAGN_TEXT_DESTROY_TYPE(RAW,         OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_DESTROY_TYPE(ASCII,       OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_DESTROY_TYPE(UTF_8,       OBJECT, SUBTYPE)        \
         FHTAGN_TEXT_DESTROY_TYPE(UTF_16,      OBJECT, SUBTYPE)        \
@@ -240,6 +243,7 @@ struct universal_transcoding_static_mapping
 };
 
 
+FHTAGN_TEXT_STATIC_MAP(RAW,         raw_decoder,        raw_encoder);
 FHTAGN_TEXT_STATIC_MAP(ASCII,       ascii_decoder,      ascii_encoder);
 FHTAGN_TEXT_STATIC_MAP(UTF_8,       utf8_decoder,       utf8_encoder);
 FHTAGN_TEXT_STATIC_MAP(UTF_16,      utf16_decoder,      utf16_encoder);

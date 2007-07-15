@@ -47,6 +47,59 @@ namespace fhtagn {
 namespace text {
 
 /**
+ * The raw_decoder merely transforms 8-bit values to 32-bit values, without
+ * placing any restrictions on the representable set of values. As such, it
+ * may not produce legal UTF-32 characters.
+ *
+ * The reason to include a raw decoder is just to allow data to be read
+ * verbatim, without being handled any differently from specific character
+ * encodings, paving the way for generic programming techniques.
+ *
+ * If you can avoid using the raw_decoder, though, please do so. As far as
+ * space efficiency goes, it's pretty insane.
+ **/
+struct raw_decoder
+    : public transcoder_base
+{
+    raw_decoder()
+        : transcoder_base()
+        , m_value(0)
+        , m_full(false)
+    {
+    }
+
+    bool append(unsigned char byte)
+    {
+        if (have_full_sequence()) {
+            return false;
+        }
+
+        m_value = byte;
+        m_full = true;
+        return true;
+    }
+
+    bool have_full_sequence() const
+    {
+        return m_full;
+    }
+
+    void reset()
+    {
+        m_full = false;
+    }
+
+    utf32_char_t to_utf32() const
+    {
+        return m_value;
+    }
+
+    utf32_char_t m_value;
+    bool         m_full;
+};
+
+
+/**
  * Decodes a byte sequence as ASCII. ASCII only allows 7 bit values, i.e. all
  * values above 127 are considered invalid.
  **/

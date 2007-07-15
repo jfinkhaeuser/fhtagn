@@ -45,6 +45,59 @@ namespace fhtagn {
 namespace text {
 
 /**
+ * Encodes UTF-32 values to characters, without checking on whether the UTF-32
+ * is valid or not. The encoder produces a 1:1 mapping, so any UTF-32 value
+ * above 255 is treated as non-representable. This encoder defaults to not
+ * producing replacement characters.
+ *
+ * This encoder may or may not be useful - but it provides a counterpart to the
+ * raw_decoder.
+ **/
+struct raw_encoder
+    : public transcoder_base
+{
+    typedef char const * const_iterator;
+
+    /**
+     * When encoding unknown character, the default is skip these characters.
+     **/
+    raw_encoder()
+        : transcoder_base(true, '\0')
+        , m_flag(false)
+        , m_byte(0)
+    {
+    }
+
+    const_iterator begin() const
+    {
+        if (m_flag) {
+            return &m_byte;
+        }
+        return end();
+    }
+
+    const_iterator end() const
+    {
+        return &m_byte + 1;
+    }
+
+    bool encode(utf32_char_t ch)
+    {
+        if (0 <= ch && ch <= 255) {
+            m_byte = static_cast<char>(ch);
+            m_flag = true;
+        } else {
+            m_flag = false;
+        }
+        return m_flag;
+    }
+
+    bool m_flag;
+    char m_byte;
+};
+
+
+/**
  * Encodes a UTF-32 character into a single ASCII byte. ASCII allows only 7 bit
  * values, i.e. all values above 127 are considered invalid.
  **/

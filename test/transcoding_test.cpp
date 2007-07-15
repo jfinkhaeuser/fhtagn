@@ -51,6 +51,7 @@ class TranscodingTest
 public:
     CPPUNIT_TEST_SUITE(TranscodingTest);
 
+        CPPUNIT_TEST(testDecodeRaw);
         CPPUNIT_TEST(testDecodeASCII);
         CPPUNIT_TEST(testDecodeISO_8859_15);
         CPPUNIT_TEST(testDecodeUTF_8);
@@ -58,6 +59,7 @@ public:
         CPPUNIT_TEST(testDecodeUTF_32);
         CPPUNIT_TEST(testDecodeUniversal);
 
+        CPPUNIT_TEST(testEncodeRaw);
         CPPUNIT_TEST(testEncodeASCII);
         CPPUNIT_TEST(testEncodeISO_8859_15);
         CPPUNIT_TEST(testEncodeUTF_8);
@@ -69,6 +71,29 @@ public:
 
     CPPUNIT_TEST_SUITE_END();
 private:
+
+
+    void testDecodeRaw()
+    {
+        namespace t = fhtagn::text;
+
+        std::string source = "Hello, \xf3 world!";
+        t::utf32_string target;
+
+        t::raw_decoder decoder;
+        t::decode(decoder, source.begin(), source.end(),
+                std::back_insert_iterator<t::utf32_string>(target));
+
+        CPPUNIT_ASSERT_EQUAL(source.size(), target.size());
+        for (uint32_t i = 0 ; i < source.size() ; ++i) {
+            // assign to uint32_t to ensure that comparison is fair, without
+            // the same signedness, etc.
+            uint32_t expected = static_cast<unsigned char>(source[i]);
+            uint32_t got = target[i];
+            CPPUNIT_ASSERT_EQUAL(expected, got);
+        }
+    }
+
 
     void testDecodeASCII()
     {
@@ -357,6 +382,30 @@ private:
             CPPUNIT_ASSERT_EQUAL(static_cast<t::utf32_char_t>(0xfffd), target[7]);
         }
 
+    }
+
+
+    void testEncodeRaw()
+    {
+        namespace t = fhtagn::text;
+
+        t::utf32_char_t source_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 0xf3, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+        t::utf32_string source = source_array;
+
+        std::string target;
+
+        t::raw_encoder encoder;
+        t::encode(encoder, source.begin(), source.end(),
+                std::back_insert_iterator<std::string>(target));
+
+        CPPUNIT_ASSERT_EQUAL(source.size(), target.size());
+        for (uint32_t i = 0 ; i < source.size() ; ++i) {
+            // assign to uint32_t to ensure that comparison is fair, without
+            // the same signedness, etc.
+            uint32_t expected = source[i];
+            uint32_t got = static_cast<unsigned char>(target[i]);
+            CPPUNIT_ASSERT_EQUAL(expected, got);
+        }
     }
 
 
