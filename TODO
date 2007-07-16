@@ -4,9 +4,6 @@ Source code:
   - make variant accept character string literals and store them as std::string.
     low prio - people can work around it, but it'd be nice.
 - char encoding:
-  - support more encodings
-  - transcode function in the style of encode/decode
-  - base xparser on universal decoder/encoder
   - stream transcoder - accepts istream ref in it's ctor, and has an ostream<<
     operator.
 - xml:

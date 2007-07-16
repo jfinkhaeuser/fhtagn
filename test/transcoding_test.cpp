@@ -33,14 +33,63 @@
  * DEALINGS IN THE SOFTWARE.
  **/
 
+#include <boost/bind.hpp>
+
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <fhtagn/text/transcoding.h>
 #include <fhtagn/text/decoders.h>
 #include <fhtagn/text/encoders.h>
-// #include <fhtagn/text/xparser.h>
+#include <fhtagn/text/xparser.h>
 
 namespace {
+
+
+struct test_grammar
+    : public boost::spirit::grammar<test_grammar>
+{
+    inline void append(fhtagn::text::utf32_char_t ch) const
+    {
+        result.push_back(ch);
+    }
+
+    inline void check_set_encoding(fhtagn::text::utf32_char_t ch) const
+    {
+        // Very primitive syntax for setting an encoding. If the character value
+        // corresponds to one of the defined encodings <= 24 (max at the time of
+        // writing), we'll set the encoding accordingly. If not, we'll treat ch
+        // as regular input.
+        if (ch <= 24) {
+            factory.set_encoding(static_cast<fhtagn::text::char_encoding_type>(ch));
+            return;
+        }
+        append(ch);
+    }
+
+
+    template <typename ScannerT>
+    struct definition
+    {
+        definition(test_grammar const & self)
+        {
+            test_rule = self.factory.anychar_p[
+                    boost::bind(&test_grammar::check_set_encoding, boost::ref(self), _1)
+                ]
+                >> +self.factory.anychar_p[
+                    boost::bind(&test_grammar::append, boost::ref(self), _1)
+                ];
+            BOOST_SPIRIT_DEBUG_NODE(test_rule);
+        }
+
+        boost::spirit::rule<ScannerT> test_rule;
+
+        boost::spirit::rule<ScannerT> const & start() const { return test_rule; }
+    };
+
+
+    mutable fhtagn::text::char_parser_factory factory;
+    mutable fhtagn::text::utf32_string        result;
+};
 
 
 } // anonymous namespace
@@ -63,13 +112,18 @@ public:
         CPPUNIT_TEST(testEncodeRaw);
         CPPUNIT_TEST(testEncodeASCII);
         CPPUNIT_TEST(testEncodeISO_8859_15);
-        //CPPUNIT_TEST(testEncodeCP_1252);
+        CPPUNIT_TEST(testEncodeCP_1252);
         CPPUNIT_TEST(testEncodeUTF_8);
         CPPUNIT_TEST(testEncodeUTF_16);
         CPPUNIT_TEST(testEncodeUTF_32);
         CPPUNIT_TEST(testEncodeUniversal);
 
         CPPUNIT_TEST(testChunkedTranscoding);
+
+        CPPUNIT_TEST(testTranscode);
+
+        CPPUNIT_TEST(testXParser);
+        CPPUNIT_TEST(testBOMParser);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -951,6 +1005,132 @@ private:
     }
 
 
+    void testTranscode()
+    {
+        namespace t = fhtagn::text;
+
+        // transcode euro sign, mostly
+        {
+            std::string source = "Hello, \xe2\x82\xac world!";
+            std::string target;
+
+            // the call gets more confusing because we want to specify a weird and
+            // small temporary buffer size.
+            t::utf8_decoder decoder;
+            t::iso8859_15_encoder encoder;
+            t::transcode(decoder, source.begin(), source.end(), encoder,
+                    std::back_insert_iterator<std::string>(target));
+
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
+            CPPUNIT_ASSERT_EQUAL(static_cast<std::string::value_type>(0xa4), target[7]);
+        }
+
+        // transcode with an illegal input character
+        {
+            std::string source = "Hello, \xf3 world!";
+            std::string target;
+
+            // the call gets more confusing because we want to specify a weird and
+            // small temporary buffer size.
+            t::ascii_decoder decoder;
+            t::iso8859_15_encoder encoder;
+            std::string::iterator iter = t::transcode(decoder, source.begin(),
+                    source.end(), encoder,
+                    std::back_insert_iterator<std::string>(target));
+
+            CPPUNIT_ASSERT_EQUAL(static_cast<ptrdiff_t>(7), iter - source.begin());
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(7), target.size());
+        }
+
+        // transcode with an illegal output character
+        {
+            std::string source = "Hello, \xe2\x82\xac world!";
+            std::string target;
+
+            // the call gets more confusing because we want to specify a weird and
+            // small temporary buffer size.
+            t::utf8_decoder decoder;
+            t::ascii_encoder encoder;
+            std::string::iterator iter = t::transcode(decoder, source.begin(),
+                    source.end(), encoder,
+                    std::back_insert_iterator<std::string>(target));
+
+            CPPUNIT_ASSERT_EQUAL(static_cast<ptrdiff_t>(7), iter - source.begin());
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(7), target.size());
+        }
+    }
+
+
+
+    void testXParser()
+    {
+        namespace t = fhtagn::text;
+
+        // default parse
+        {
+            test_grammar grammar;
+            BOOST_SPIRIT_DEBUG_NODE(grammar);
+
+            t::utf32_char_t expected_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string expected = expected_array;
+            CPPUNIT_ASSERT_EQUAL(true, boost::spirit::parse("Hello, world!", grammar).full);
+            CPPUNIT_ASSERT(expected == grammar.result);
+        }
+
+        // parse UTF-8
+        {
+            test_grammar grammar;
+            BOOST_SPIRIT_DEBUG_NODE(grammar);
+            grammar.factory.set_encoding(t::UTF_8);
+
+            t::utf32_char_t expected_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 0x20ac, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string expected = expected_array;
+            CPPUNIT_ASSERT_EQUAL(true, boost::spirit::parse("Hello, \xe2\x82\xac world!", grammar).full);
+            CPPUNIT_ASSERT(expected == grammar.result);
+        }
+
+        // parse determining the encoding from the input #1
+        {
+            test_grammar grammar;
+            BOOST_SPIRIT_DEBUG_NODE(grammar);
+
+            t::utf32_char_t expected_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 0x20ac, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string expected = expected_array;
+            CPPUNIT_ASSERT_EQUAL(true, boost::spirit::parse("\x01Hello, \xe2\x82\xac world!", grammar).full);
+            CPPUNIT_ASSERT(expected == grammar.result);
+        }
+
+        // parse determining the encoding from the input #2
+        {
+            test_grammar grammar;
+            BOOST_SPIRIT_DEBUG_NODE(grammar);
+
+            t::utf32_char_t expected_array[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 0x20ac, ' ', 'w', 'o', 'r', 'l', 'd', '!', '\0' };
+            t::utf32_string expected = expected_array;
+            CPPUNIT_ASSERT_EQUAL(true, boost::spirit::parse("\x18Hello, \x80 world!", grammar).full);
+            CPPUNIT_ASSERT(expected == grammar.result);
+        }
+    }
+
+    void testBOMParser()
+    {
+        namespace t = fhtagn::text;
+
+        // parse bom - test whether utf-8 bom is detected properly
+        {
+            t::bom_parser parser;
+            CPPUNIT_ASSERT_EQUAL(true, boost::spirit::parse("\xef\xbb\xbf", parser).full);
+            CPPUNIT_ASSERT_EQUAL((int) t::UTF_8, (int) parser.encoding);
+        }
+
+        // parse bom - invalid bom must result in RAW encoding
+        {
+            t::bom_parser parser;
+            CPPUNIT_ASSERT_EQUAL(false, boost::spirit::parse("\xef\xbb", parser).full);
+            CPPUNIT_ASSERT_EQUAL((int) t::RAW, (int) parser.encoding);
+        }
+
+    }
 };
 
 

@@ -575,6 +575,72 @@ encode(encoderT & encoder, input_iterT first, input_iterT last,
 }
 
 
+/**
+ * Same as encode() and decode() above, except transcode() accepts both a
+ * decoder and an encoder reference. The input range is first decoded using
+ * the decoder, then encoded using the encoder.
+ **/
+template <
+    typename decoderT,
+    typename input_iterT,
+    typename encoderT,
+    typename output_iterT
+>
+inline input_iterT
+transcode(decoderT & decoder, input_iterT first, input_iterT last,
+        encoderT & encoder, output_iterT result, ssize_t & output_size)
+{
+    ssize_t used_output = 0;
+
+    input_iterT input_iter = first;
+    output_iterT output_iter = result;
+    while (input_iter != last
+            && (output_size == -1 || used_output <= output_size))
+    {
+        utf32_char_t buffer;
+        ssize_t bufsize = 1;
+
+        // first, decode a chunk of the input.
+        input_iterT tmp_iter = decode(decoder, input_iter, last, &buffer, bufsize);
+        if (!bufsize) {
+            // No output has been produced - that means, some sort of error in
+            // the input was encountered, and we probably should exit now.
+            break;
+        }
+
+        // now encode the chunk using the output encoding.
+        ssize_t remaining = output_size == -1 ? -1 : output_size - used_output;
+        encode(encoder, &buffer, &buffer + 1, output_iter, remaining);
+        if (!remaining) {
+            // Again, no output has been produced
+            break;
+        }
+
+        input_iter = tmp_iter;
+        ++output_iter;
+        ++used_output;
+    }
+
+    output_size = used_output;
+    return input_iter;
+}
+
+
+template <
+    typename decoderT,
+    typename input_iterT,
+    typename encoderT,
+    typename output_iterT
+>
+inline input_iterT
+transcode(decoderT & decoder, input_iterT first, input_iterT last,
+        encoderT & encoder, output_iterT result)
+{
+    ssize_t output_size = -1;
+    return transcode<decoderT, input_iterT, encoderT, output_iterT>(
+            decoder, first, last, encoder, result, output_size);
+}
+
 
 }} // namespace fhtagn::text
 

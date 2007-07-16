@@ -41,7 +41,7 @@
 
 #include <boost/spirit/core.hpp>
 
-#include <fhtagn/text/transcoding.h>
+#include <fhtagn/text/decoders.h>
 
 
 namespace fhtagn {
@@ -49,10 +49,81 @@ namespace text {
 
 
 /**
- * Simple predefined boost::spirit parsers matching byte order marks (BOMs) for
+ * Simple predefined boost::spirit parser matching byte order marks (BOMs) for
  * various character encodings.
+ *
+ * If the bom_parser matches any known BOM sequence, it's encoding member is set
+ * to reflect the associated encoding - e.g. UTF-32LE, etc.
+ *
+ * If the bom_parser does not match any known BOM sequence, matching fails, and
+ * the encoding member is set to the RAW char_encoding_type.
  **/
-// TODO
+struct bom_parser
+    : public boost::spirit::grammar<bom_parser>
+{
+    bom_parser()
+        : encoding(RAW)
+    {
+    }
+
+    inline void set_encoding(char_encoding_type enc) const
+    {
+        encoding = enc;
+    }
+
+    template <typename ScannerT>
+    struct definition
+    {
+        definition(bom_parser const & self)
+        {
+            utf32_be_rule = boost::spirit::ch_p(utf32_be_bom[0])
+                    >> boost::spirit::ch_p(utf32_be_bom[1])
+                    >> boost::spirit::ch_p(utf32_be_bom[2])
+                    >> boost::spirit::ch_p(utf32_be_bom[3]);
+            utf32_le_rule = boost::spirit::ch_p(utf32_le_bom[0])
+                    >> boost::spirit::ch_p(utf32_le_bom[1])
+                    >> boost::spirit::ch_p(utf32_le_bom[2])
+                    >> boost::spirit::ch_p(utf32_le_bom[3]);
+            utf16_be_rule = boost::spirit::ch_p(utf16_be_bom[0])
+                    >> boost::spirit::ch_p(utf16_be_bom[1]);
+            utf16_le_rule = boost::spirit::ch_p(utf16_le_bom[0])
+                    >> boost::spirit::ch_p(utf16_le_bom[1]);
+            utf8_rule = boost::spirit::ch_p(utf8_bom[0])
+                    >> boost::spirit::ch_p(utf8_bom[1])
+                    >> boost::spirit::ch_p(utf8_bom[2]);
+
+            main_rule = utf32_be_rule[boost::bind(&bom_parser::set_encoding,
+                        boost::ref(self), UTF_32BE)]
+                    | utf32_le_rule[boost::bind(&bom_parser::set_encoding,
+                        boost::ref(self), UTF_32LE)]
+                    | utf16_be_rule[boost::bind(&bom_parser::set_encoding,
+                        boost::ref(self), UTF_16BE)]
+                    | utf16_le_rule[boost::bind(&bom_parser::set_encoding,
+                        boost::ref(self), UTF_16LE)]
+                    | utf8_rule[boost::bind(&bom_parser::set_encoding,
+                        boost::ref(self), UTF_8)];
+
+            BOOST_SPIRIT_DEBUG_NODE(utf32_be_rule);
+            BOOST_SPIRIT_DEBUG_NODE(utf32_le_rule);
+            BOOST_SPIRIT_DEBUG_NODE(utf16_be_rule);
+            BOOST_SPIRIT_DEBUG_NODE(utf16_le_rule);
+            BOOST_SPIRIT_DEBUG_NODE(utf8_rule);
+            BOOST_SPIRIT_DEBUG_NODE(main_rule);
+        }
+
+        boost::spirit::rule<ScannerT> utf32_be_rule;
+        boost::spirit::rule<ScannerT> utf32_le_rule;
+        boost::spirit::rule<ScannerT> utf16_be_rule;
+        boost::spirit::rule<ScannerT> utf16_le_rule;
+        boost::spirit::rule<ScannerT> utf8_rule;
+        boost::spirit::rule<ScannerT> main_rule;
+
+        boost::spirit::rule<ScannerT> const & start() const { return main_rule; }
+    };
+
+    mutable char_encoding_type encoding;
+};
+
 
 
 /**
@@ -96,7 +167,10 @@ class char_parser_factory;
  * character encoding, and the choice of encoding to match is defined via
  * a member of my_factory_instance.
  *
- * FIXME see if the above really works.
+ * One note of warning: for this to work, my_factory_instance must have an
+ * equal or longer lifetime than my_rule - if you create a full-blown grammar,
+ * it's recommended that the factory instance becomes a member of said grammar
+ * class.
  **/
 template <
     typename derived_parserT
@@ -120,54 +194,17 @@ struct char_parser
 
     template <typename ScannerT>
     typename boost::spirit::parser_result<self_t, ScannerT>::type
-    parse(ScannerT const & scan) const
-    {
-        typedef typename boost::spirit::parser_result<self_t, ScannerT>::type result_t;
-        typedef typename ScannerT::value_t value_t;
-        // TODO assert that value_t == char
-        typedef typename ScannerT::iterator_t iterator_t;
+    parse(ScannerT const & scan) const;
 
-        m_factory->decoder.reset();
-        iterator_t save(scan.first);
-
-        while (!scan.at_end() && m_factory->decoder.feed_byte(*scan)) {
-            ++scan.first;
-        }
-
-        if (m_factory->decoder.have_sequence()) {
-            utf32_char_t utf32_ch = m_factory->decoder.to_utf32();
-            if (!this->derived().test(utf32_ch)) {
-                return scan.no_match();
-            }
-            return scan.create_match(1, utf32_ch, save, scan.first);
-        }
-#if 0
-        // FIXME delegate to decoder
-
-        if (!scan.at_end()) {
-            iterator_t save(scan.first);
-
-            value_t ch = *scan;
-            utf32_char_t utf32_ch = ch;
-            if (!this->derived().test(utf32_ch)) {
-                return scan.no_match();
-            }
-            ++scan.first;
-            return scan.create_match(1, utf32_ch, save, scan.first);
-        }
-#endif
-        return scan.no_match();
-    }
-
-private:
-    friend class char_parser_factory;
-
-    char_parser(char_parser_factory const * factory)
+    char_parser(char_parser_factory * factory)
         : m_factory(factory)
     {
     }
+private:
+    friend class char_parser_factory;
 
-    char_parser_factory const * m_factory;
+
+    char_parser_factory * m_factory;
 };
 
 
@@ -177,21 +214,38 @@ private:
  * To use the char_parser template above, simply place a char_parser_factory
  * instance into your grammar class. Then, instead of using boost::spirit's
  * anychar_p or ch_p, use the factory functions below.
+ *
+ * All parsers created by one factory share the same decoder, and thus the
+ * same expected encoding.
+ *
+ * If you wish to create a grammar that contains several encodings, but don't
+ * want to switch the encoding back and forth at runtime, you need to create
+ * several char_parser_factories.
  **/
 struct char_parser_factory
 {
     char_parser_factory(char_encoding_type input_encoding = ISO_8859_1)
-        : m_input_encoding(input_encoding)
-        , anychar_p(this)
+        : anychar_p(this)
+        , decoder(input_encoding)
     {
     }
 
+    /**
+     * Delegate to the decoder instance.
+     **/
+    char_encoding_type get_encoding() const
+    {
+        return decoder.get_encoding();
+    }
 
     /**
-     * Toggle this switch to force all parsers instanciated via this factory to
-     * expect characters in the encoding specified here.
+     * Delegate to the decoder instance. Can be used to switch the expected
+     * encoding at any time.
      **/
-    char_encoding_type m_input_encoding;
+    void set_encoding(char_encoding_type new_encoding)
+    {
+        decoder.set_encoding(new_encoding);
+    }
 
 
     /**
@@ -211,7 +265,7 @@ struct char_parser_factory
     private:
         friend class char_parser_factory;
 
-        anychar_parser(char_parser_factory const * factory)
+        anychar_parser(char_parser_factory * factory)
             : char_parser<anychar_parser>(factory)
         {
         }
@@ -244,7 +298,7 @@ struct char_parser_factory
     private:
         friend class char_parser_factory;
 
-        chlit(char_parser_factory const * factory, utf32_char_t ch)
+        chlit(char_parser_factory * factory, utf32_char_t ch)
             : char_parser<chlit>(factory)
             , m_ch(ch)
         {
@@ -262,7 +316,49 @@ struct char_parser_factory
     {
         return chlit(this, ch);
     }
+
+    /**
+     * The universal_decoder instance's encoding determines how parsers created
+     * by this instance parse character data.
+     **/
+    universal_decoder decoder;
 };
+
+
+
+/**
+ * Implementation of char_parser<>::parse - now that the factory class above is
+ * defined, this will not choke compilers.
+ **/
+template <typename derived_parserT>
+template <typename ScannerT>
+typename boost::spirit::parser_result<
+    typename char_parser<derived_parserT>::self_t,
+    ScannerT
+>::type
+char_parser<derived_parserT>::parse(ScannerT const & scan) const
+{
+    typedef typename boost::spirit::parser_result<self_t, ScannerT>::type result_t;
+    // XXX value_t == char
+    typedef typename ScannerT::value_t value_t;
+    typedef typename ScannerT::iterator_t iterator_t;
+
+    m_factory->decoder.reset();
+    iterator_t save(scan.first);
+
+    while (!scan.at_end() && m_factory->decoder.append(*scan)) {
+        ++scan.first;
+    }
+
+    if (m_factory->decoder.have_full_sequence()) {
+        utf32_char_t utf32_ch = m_factory->decoder.to_utf32();
+        if (!this->derived().test(utf32_ch)) {
+            return scan.no_match();
+        }
+        return scan.create_match(1, utf32_ch, save, scan.first);
+    }
+    return scan.no_match();
+}
 
 
 
