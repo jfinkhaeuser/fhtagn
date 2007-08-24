@@ -297,7 +297,7 @@ struct CharDecoderConcept
          * the byte was successfully appended to the internal buffer, the
          * function returns true, else false.
          **/
-        unsigned char byte;
+        unsigned char byte = 0;
         bool ret = decoder.append(byte);
 
         boost::ignore_unused_variable_warning(ret);
@@ -469,7 +469,7 @@ struct CharEncoderConcept
          * Must accepts a UTF-32 character, and return true if the encoding was
          * successful, else false.
          **/
-        utf32_char_t character;
+        utf32_char_t character = 0;
         bool ret = encoder.encode(character);
 
         boost::ignore_unused_variable_warning(iter);

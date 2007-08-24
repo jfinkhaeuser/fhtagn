@@ -878,7 +878,7 @@ private:
             t::encode(encoder, source_string.begin(), source_string.end(), buf);
 
             char * expected = NULL;
-            if (b::FHTAGN_BYTE_ORDER == b::FHTAGN_BIG_ENDIAN) {
+            if (b::host_byte_order() == b::FHTAGN_BIG_ENDIAN) {
                 expected = be_source + 4;
             } else {
                 expected = le_source + 4;

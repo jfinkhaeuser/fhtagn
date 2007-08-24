@@ -38,6 +38,57 @@
 #error You are trying to include a C++ only header file
 #endif
 
+namespace {
+
+/**
+ * This slightly deranged construct allows us to avoid copying a value into
+ * it's holder twice when the value's type and the holder's type are
+ * identical (which should be the case most of the time). We do so by
+ * explicitly specializing the holder_assigner for cases where valueT is
+ * identical to holderT.
+ **/
+template <typename valueT, typename holderT>
+struct holder_assigner
+{
+  holder_assigner(valueT const & v)
+    : m_v(v)
+  {
+  }
+
+  inline void assign(boost::any & data)
+  {
+    // In the generic case, i.e. where valueT != holderT, we need to
+    // instanciate a holder_type temporary (creating one copy) which we then
+    // assign to the boost::any (creating another copy).
+    data = holderT(m_v);
+  }
+
+  valueT const & m_v;
+};
+
+template <typename valueT>
+struct holder_assigner<valueT, valueT>
+{
+  holder_assigner(valueT const & v)
+    : m_v(v)
+  {
+  }
+
+  inline void assign(boost::any & data)
+  {
+    // In the special case where valueT == holderT, we can skip the temporary
+    // holder_type, and immediately assign to the boost::any (creating just
+    // one copy).
+    data = m_v;
+  }
+
+  valueT const & m_v;
+};
+
+} // anonymous namespace
+
+
+
 template <typename T>
 variant::variant(T const & other)
     : m_state(IS_VALUE)
@@ -60,7 +111,11 @@ variant::operator=(T const & other)
         case IS_EMPTY:
         case IS_VALUE:
             if (this != reinterpret_cast<variant const *>(&other)) {
-                m_data = typename specialization_traits<T>::holder_type(other);
+                holder_assigner<
+                    T,
+                    typename specialization_traits<T>::holder_type
+                > assigner(other);
+                assigner.assign(m_data);
                 // we don't actually know if other is a value, but we hope it is.
                 m_state = IS_VALUE;
             }

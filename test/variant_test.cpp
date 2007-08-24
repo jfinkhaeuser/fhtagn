@@ -37,6 +37,44 @@
 
 #include <fhtagn/stdvariant.h>
 
+namespace {
+
+struct test_type
+{
+  test_type(int x = 0)
+    : m_x(x)
+  {}
+  ~test_type() {}
+
+  test_type(test_type const & other)
+    : m_x(0)
+  {
+    // Copying may occur exactly once, that is, during the first assignment
+    // to the variant.
+    CPPUNIT_ASSERT_MESSAGE("Copying shouldn't occur!", ++sm_copy_count <= 1);
+    m_x = other.m_x;
+  }
+
+  test_type & operator=(test_type const &)
+  {
+    CPPUNIT_ASSERT_MESSAGE("Assignment shouldn't occur!", false);
+    return *this;
+  }
+
+  int m_x;
+  static int sm_copy_count;
+
+  bool operator==(test_type const & other)
+  {
+    return m_x == other.m_x;
+  }
+};
+
+int test_type::sm_copy_count = 0;
+
+} // anonymous namespace
+FHTAGN_VARIANT_SPECIALIZE(test_type);
+
 class VariantTest
     : public CppUnit::TestFixture
 {
@@ -44,6 +82,7 @@ public:
     CPPUNIT_TEST_SUITE(VariantTest);
 
       CPPUNIT_TEST(testSimple);
+      CPPUNIT_TEST(testNoCopy);
       CPPUNIT_TEST(testArray);
       CPPUNIT_TEST(testMap);
       CPPUNIT_TEST(testString);
@@ -72,6 +111,20 @@ private:
         y = x;
         CPPUNIT_ASSERT(y.is<double>());
         CPPUNIT_ASSERT(!y.is<int>());
+    }
+
+    void testNoCopy()
+    {
+        // Ensures that no (technically: only one) copy of a value is made
+        // when assigning to a variant, in cases where the value's type is
+        // identical to it's holder's type (see variant::specialization_traits).
+        test_type x = 42;
+        fhtagn::variant b = x;
+        CPPUNIT_ASSERT(b.is<test_type>());
+        CPPUNIT_ASSERT(x == b.as<test_type>());
+
+        b.as<test_type>().m_x = 666;
+        CPPUNIT_ASSERT(666 == b.as<test_type>().m_x);
     }
 
     void testArray()
@@ -132,7 +185,7 @@ private:
         CPPUNIT_ASSERT(x.is<std::string>());
 
         // different holder type from value type
-        char * foo = "world";
+        char const * foo = "world";
         CPPUNIT_ASSERT_NO_THROW(x = foo);
         CPPUNIT_ASSERT(x.is<std::string>());
 

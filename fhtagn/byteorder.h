@@ -80,11 +80,26 @@ struct host_helper<1234>
 
 
 /**
- * In the end, FHTAGN_BYTE_ORDER does not add anything to BOOST_BYTE_ORDER -
+ * In the end, host_byte_order does not add anything to BOOST_BYTE_ORDER -
  * except that it's either -1, 0 or 1, i.e. values that are more easily used
  * as array indices (see decision matrix in to_host() below).
+ *
+ * If you want to avoid warnings and manual casts, compare against the
+ * return value of host_byte_order() below instead of FHTAGN_BYTE_ORDER
+ * directly.
  **/
 enum { FHTAGN_BYTE_ORDER = detail::host_helper<BOOST_BYTE_ORDER>::value };
+
+
+/**
+ * Simple function returning the value of FHTAGN_BYTE_ORDER cast to endian,
+ * to be able to compare it against endian values without warnings (or
+ * manually casting yourself).
+ **/
+inline endian host_byte_order()
+{
+  return static_cast<endian>(FHTAGN_BYTE_ORDER);
+}
 
 
 /**

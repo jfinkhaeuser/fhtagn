@@ -7,10 +7,6 @@
 INCLUDES_FHTAGN = \
 	-I $(top_srcdir)
 
-# disable user-provided CXXFLAGS, because they default to "-O2 -g"
-# that really sucks - there might be a better way.
-CXXFLAGS=
-
 CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb
 LDFLAGS_FHTAGN =
 

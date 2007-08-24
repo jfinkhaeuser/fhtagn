@@ -118,11 +118,12 @@ private:
 
     void testMandatory()
     {
+        int ret = 0;
         CPPUNIT_ASSERT_THROW(mandatory_function(), std::logic_error);
         CPPUNIT_ASSERT_NO_THROW(fhtagn::ignore_return_value(mandatory_function()));
-        CPPUNIT_ASSERT_NO_THROW(int ret = mandatory_function());
+        CPPUNIT_ASSERT_NO_THROW(ret = mandatory_function());
 
-        int ret = mandatory_function();
+        ret = mandatory_function();
         CPPUNIT_ASSERT_EQUAL(ret, 42);
     }
 
@@ -140,8 +141,8 @@ private:
 
         // test a special numeric restriction, i.e. that a pointer is non-zero:
         typedef fhtagn::restricted<
-            char *,
-            fhtagn::restrictions::numeric::non_default_value<char *>
+            char const *,
+            fhtagn::restrictions::numeric::non_default_value<char const *>
         > non_zero_char_pointer;
         CPPUNIT_ASSERT_THROW(non_zero_char_pointer p, fhtagn::restrictions::violation_error);
         CPPUNIT_ASSERT_NO_THROW(non_zero_char_pointer p = "Hello, world!");

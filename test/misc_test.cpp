@@ -59,7 +59,7 @@ private:
         uint64_t z = 1234;
         CPPUNIT_ASSERT_EQUAL(z, b::convert<>::ntoh(b::convert<>::hton(z)));
 
-        if (b::FHTAGN_BYTE_ORDER == b::FHTAGN_BIG_ENDIAN) {
+        if (b::host_byte_order() == b::FHTAGN_BIG_ENDIAN) {
             CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(1234), b::to_host(x, b::FHTAGN_BIG_ENDIAN));
             CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(53764), b::to_host(x, b::FHTAGN_LITTLE_ENDIAN));
         } else {
