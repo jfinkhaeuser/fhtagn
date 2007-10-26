@@ -4,8 +4,60 @@ dnl This file is part of the Fhtagn! C++ Library, and may be distributed under
 dnl the following license terms and conditions as set forth in the COPYING file
 dnl included in this source distribution.
 
+dnl
+dnl Defines and exports PACKAGE_MAJOR and PACKAGE_MINOR
+dnl
+AC_DEFUN([AM_FHTAGN_VERSION],
+[
+  AC_DEFINE(PACKAGE_MAJOR,$1,[Define to the major version number of this package.])
+  AC_DEFINE(PACKAGE_MINOR,$2,[Define to the minor version number of this package.])
+  PACKAGE_MAJOR="$1"
+  PACKAGE_MINOR="$2"
+  AC_SUBST([PACKAGE_MAJOR])
+  AC_SUBST([PACKAGE_MINOR])
+])
+
+
+dnl
+dnl Two macros to collect information on optional parts of the build, and
+dnl to display it later on.
+dnl
+AC_DEFUN([AM_FHTAGN_HAVE],
+[
+  if echo "$1" | grep -q ':,' ; then
+    AC_MSG_ERROR([Cannot use the characters ':' and ',' in parameters passed to
+      the FHTAGN_HAVE macro])
+  fi
+  if eval $2 ; then
+    am_fhtagn_have_res=yes
+  else
+    am_fhtagn_have_res=no
+  fi
+  am_fhtagn_have_string="$am_fhtagn_have_string $1:$am_fhtagn_have_res"
+])
+
+AC_DEFUN([AM_FHTAGN_HAVE_DISPLAY],
+[
+  echo "**************************************************"
+  echo ""
+  echo "  Building optional components dependent on the"
+  echo "  following external libraries:"
+  echo ""
+  for am_fhtagn_have_lib in $am_fhtagn_have_string ; do
+    am_fhtagn_libname=$(echo $am_fhtagn_have_lib | cut -d: -f1)
+    am_fhtagn_have=$(echo $am_fhtagn_have_lib | cut -d: -f2)
+
+    echo -e "  $am_fhtagn_libname: $am_fhtagn_have"
+  done
+  echo ""
+  echo "**************************************************"
+])
+
 
 dnl AX_BOOST_BASE Copyright (c) 2006 Thomas Porschberg <thomas@randspringer.de>
+dnl               Copyright (c) 2007 Jens Finkhaeuser <unwesen@users.sourceforge.net>
+dnl Modified to not abort if boost is not found by Jens Finkhaeuser. Also makes
+dnl HAVE_BOOST an automake conditional, in order to perform conditional builds.
 AC_DEFUN([AX_BOOST_BASE],
 [
 AC_ARG_WITH([boost],
@@ -144,7 +196,7 @@ if test "x$want_boost" = "xyes"; then
                 #  error Boost version is too old
                 #endif
                 ]])],[
-                AC_MSG_RESULT(yes)
+                AC_MSG_RESULT([$_version])
                 succeeded=yes
                 found_system=yes
                 ],[
@@ -154,15 +206,19 @@ if test "x$want_boost" = "xyes"; then
 
         if test "$succeeded" != "yes" ; then
                 if test "$_version" = "0" ; then
-                        AC_MSG_ERROR([[We could not detect the boost libraries (version $boost_lib_version_req_shorten or higher). If you have a staged boost library (still not installed) please specify \$BOOST_ROOT in your environment and do not give a PATH to --with-boost option.  If you are sure you have boost installed, then check your version number looking in <boost/version.hpp>. See http://randspringer.de/boost for more documentation.]])
+                        AC_MSG_RESULT([no])
                 else
-                        AC_MSG_NOTICE([Your boost libraries seems to old (version $_version).])
+                        AC_MSG_RESULT([no (found version $_version)])
                 fi
+                BOOST_CPPFLAGS=""
+                BOOST_LDFLAGS=""
         else
                 AC_SUBST(BOOST_CPPFLAGS)
                 AC_SUBST(BOOST_LDFLAGS)
                 AC_DEFINE(HAVE_BOOST,,[define if the Boost library is available])
         fi
+        AM_CONDITIONAL([HAVE_BOOST], [test x$succeeded = xyes])
+        AM_FHTAGN_HAVE([boost], [test x$succeeded = xyes])
 
         CPPFLAGS="$CPPFLAGS_SAVED"
         LDFLAGS="$LDFLAGS_SAVED"
@@ -200,7 +256,11 @@ AC_ARG_WITH(cppunit-exec-prefix,[  --with-cppunit-exec-prefix=PFX  Exec prefix w
   AC_PATH_PROG(CPPUNIT_CONFIG, cppunit-config, no)
   cppunit_version_min=$1
 
-  AC_MSG_CHECKING(for Cppunit - version >= $cppunit_version_min)
+  if test x$cppunit_version_min = x ; then
+    AC_MSG_CHECKING(for Cppunit)
+  else
+    AC_MSG_CHECKING(for Cppunit - version >= $cppunit_version_min)
+  fi
   no_cppunit=""
   if test "$CPPUNIT_CONFIG" = "no" ; then
     AC_MSG_RESULT(no)
@@ -245,6 +305,7 @@ AC_ARG_WITH(cppunit-exec-prefix,[  --with-cppunit-exec-prefix=PFX  Exec prefix w
 
     if test "$cppunit_version_proper" = "1" ; then
       AC_MSG_RESULT([$cppunit_major_version.$cppunit_minor_version.$cppunit_micro_version])
+      AC_DEFINE(HAVE_CPPUNIT,,[define if the cppunit library is available])
     else
       AC_MSG_RESULT(no)
       no_cppunit=yes
@@ -260,6 +321,7 @@ AC_ARG_WITH(cppunit-exec-prefix,[  --with-cppunit-exec-prefix=PFX  Exec prefix w
   fi
 
   AM_CONDITIONAL([HAVE_CPPUNIT], [test x$no_cppunit = x])
+  AM_FHTAGN_HAVE([cppunit], [test x$no_cppunit = x])
 
   AC_SUBST(CPPUNIT_CFLAGS)
   AC_SUBST(CPPUNIT_LIBS)
@@ -344,3 +406,5 @@ AC_ARG_ENABLE([coverage],
 AM_CONDITIONAL([ENABLE_COVERAGE], [test x$enable_coverage = xtrue])
 AC_MSG_RESULT([${result_coverage}])
 ])
+
+

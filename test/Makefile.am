@@ -11,13 +11,18 @@ if HAVE_CPPUNIT
 check_PROGRAMS = \
 	testsuite
 
-testsuite_SOURCES = \
-	variant_test.cpp \
+TEST_SRC = \
 	pointers_test.cpp \
 	enhanced_types_test.cpp \
 	transcoding_test.cpp \
 	misc_test.cpp \
 	testdriver.cpp
+
+if HAVE_BOOST
+TEST_SRC += variant_test.cpp
+endif
+
+testsuite_SOURCES = $(TEST_SRC)
 
 testsuite_CXXFLAGS = \
 	$(AM_CXXFLAGS) $(CPPUNIT_CFLAGS)

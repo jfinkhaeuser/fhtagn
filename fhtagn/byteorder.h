@@ -37,7 +37,31 @@
 
 #include <stdint.h>
 
-#include <boost/detail/endian.hpp>
+/**
+ * If we can grab the byte order from the compiler, do that - if not, try to
+ * use boost's facilities.
+ **/
+#if defined(__GNUC__)
+   // We have GCC, which should define __LITTLE_ENDIAN__
+#  if defined(__LITTLE_ENDIAN__)
+#    define FHTAGN_BYTE_ORDER_TMP 1234
+#  else // __LITTLE_ENDIAN__
+#    define FHTAGN_BYTE_ORDER_TMP 4321
+#  endif // __LITTLE_ENDIAN__
+#else // __GNUC__
+   // We don't have GCC... so far we're not explicitly supporting other compilers,
+   // so we try to fall back on what boost provides. However, we need boost for
+   // that purpose.
+#  include <fhtagn/config.h>
+
+#  if defined(HAVE_BOOST)
+#    include <boost/detail/endian.hpp>
+#    define FHTAGN_BYTE_ORDER_TMP BOOST_BYTE_ORDER
+#  else // HAVE_BOOST
+#    error "Could not determine byte order either from the compiler or from boost."
+#  endif // HAVE_BOOST
+#endif // __GNUC__
+
 
 namespace fhtagn {
 namespace byte_order {
@@ -80,7 +104,7 @@ struct host_helper<1234>
 
 
 /**
- * In the end, host_byte_order does not add anything to BOOST_BYTE_ORDER -
+ * In the end, host_byte_order does not add anything to FHTAGN_BYTE_ORDER_TMP -
  * except that it's either -1, 0 or 1, i.e. values that are more easily used
  * as array indices (see decision matrix in to_host() below).
  *
@@ -88,7 +112,11 @@ struct host_helper<1234>
  * return value of host_byte_order() below instead of FHTAGN_BYTE_ORDER
  * directly.
  **/
-enum { FHTAGN_BYTE_ORDER = detail::host_helper<BOOST_BYTE_ORDER>::value };
+enum { FHTAGN_BYTE_ORDER = detail::host_helper<FHTAGN_BYTE_ORDER_TMP>::value };
+
+#if defined(FHTAGN_BYTE_ORDER_TMP)
+#  undef FHTAGN_BYTE_ORDER_TMP
+#endif
 
 
 /**

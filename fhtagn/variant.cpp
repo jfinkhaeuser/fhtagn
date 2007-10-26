@@ -34,7 +34,7 @@
  * DEALINGS IN THE SOFTWARE.
  **/
 
-#include <variant.h>
+#include <fhtagn/variant.h>
 
 namespace fhtagn {
 

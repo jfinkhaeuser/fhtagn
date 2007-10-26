@@ -41,7 +41,9 @@
 
 #include <string>
 
+#if defined(HAVE_BOOST)
 #include <boost/concept_check.hpp>
+#endif // HAVE_BOOST
 
 namespace fhtagn {
 namespace text {
@@ -228,12 +230,13 @@ private:
 };
 
 
+#if defined(HAVE_BOOST)
+namespace concepts {
+
 /**
  * Concept covering the transcoder_base functionality, to be used in the Concepts
  * for encoders and decoders.
  **/
-namespace concepts {
-
 template <typename T>
 struct CharTranscoderBaseConcept
 {
@@ -255,19 +258,12 @@ struct CharTranscoderBaseConcept
     T instance;
 };
 
-} // namespace concepts
-
-
-
-
 
 
 /**
  * Concept for decoders decoding byte sequences into a single UTF-32 character.
  * The decoders are intended to be used with the decode() function below.
  **/
-namespace concepts {
-
 template <typename T>
 struct CharDecoderConcept
 {
@@ -323,6 +319,7 @@ struct CharDecoderConcept
 };
 
 } // namespace concepts
+#endif // HAVE_BOOST
 
 
 /**
@@ -362,8 +359,10 @@ decode(decoderT & decoder, input_iterT first, input_iterT last,
 {
     ssize_t used_output = 0;
 
+#if defined(HAVE_BOOST)
     // ensure that decoderT is a valid charcter decoder
     boost::function_requires<concepts::CharDecoderConcept<decoderT> >();
+#endif // HAVE_BOOST
 
     decoder.reset();
 
@@ -432,12 +431,13 @@ decode(decoderT & decoder, input_iterT first, input_iterT last,
 
 
 
+#if defined(HAVE_BOOST)
+namespace concepts {
+
 /**
  * Concept for encoders, encoding a UTF-32 character into a byte sequence. The
  * encoders are intended to be used with the encode() function below.
  **/
-namespace concepts {
-
 template <typename T>
 struct CharEncoderConcept
 {
@@ -493,6 +493,7 @@ struct CharEncoderConcept
 };
 
 } // namespace concepts
+#endif // HAVE_BOOST
 
 
 
@@ -521,8 +522,10 @@ encode(encoderT & encoder, input_iterT first, input_iterT last,
 {
     ssize_t used_output = 0;
 
+#if defined(HAVE_BOOST)
     // ensure that encoderT is a valid character encoder
     boost::function_requires<concepts::CharEncoderConcept<encoderT> >();
+#endif // HAVE_BOOST
 
     input_iterT iter = first;
     for ( ; iter != last ; ++iter) {

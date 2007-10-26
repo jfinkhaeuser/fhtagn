@@ -32,56 +32,48 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
+#ifndef FHTAGN_VERSION_H
+#define FHTAGN_VERSION_H
 
-#include <iostream>
-#include <stdexcept>
+#ifndef __cplusplus
+#error You are trying to include a C++ only header file
+#endif
 
-#include <fhtagn/version.h>
-#include <fhtagn/util/cppunit_output.h>
+#include <stdint.h>
 
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/TestResult.h>
-#include <cppunit/TestResultCollector.h>
-#include <cppunit/TestRunner.h>
-#include <cppunit/CompilerOutputter.h>
+#include <utility>
 
+namespace fhtagn {
 
-int main(int argc, char **argv)
-{
-    std::cout << fhtagn::copyright_string << std::endl;
+/**
+ * XXX Note to developers (and users): consider the following definitions to be
+ *     frozen. That is, you may add new definitions, or modify their values,
+ *     but may not modify the definitions themselves (i.e. types, parameters).
+ *
+ *     That way users of this library can always rely, especially, on the
+ *     version() function's prototype, and perform compatibility checks at
+ *     runtime.
+ **/
 
-    std::string testPath = (argc > 1) ? std::string(argv[1]) : "";
-
-    // Create the event manager and test controller
-    CppUnit::TestResult controller;
-
-    // Listener printing verbose test information
-    fhtagn::util::VerboseOutput verbose(std::cout);
-    controller.addListener(&verbose);
-
-    // Add a listener that colllects test result
-    CppUnit::TestResultCollector result;
-    controller.addListener(&result);
+/**
+ * Return the library version as a pair of two integer values. The return
+ * value's "first" member contains the major version number, the "second"
+ * member the minor version number.
+ **/
+std::pair<uint16_t, uint16_t> version();
 
 
-    // Add the top suite to the test runner
-    CppUnit::TestRunner runner;
-    runner.addTest(CppUnit::TestFactoryRegistry::getRegistry().makeTest());
-    try {
-        if (testPath.empty()) {
-            runner.run(controller);
-        } else {
-            runner.run(controller, testPath);
-        }
+/**
+ * Return the library version as a string, with appropriate copyright notice.
+ **/
+extern char const * const copyright_string;
 
-        // Print test in a compiler compatible format.
-        CppUnit::CompilerOutputter outputter(&result,std::cerr);
-        outputter.write();
-    } catch (std::invalid_argument const & e) {
-        // Test path not resolved
-        std::cerr << std::endl <<  "ERROR: " << e.what() << std::endl;
-        return 2;
-    }
 
-    return result.wasSuccessful() ? 0 : 1;
-}
+/**
+ * Returns a short string with licensing information.
+ **/
+extern char const * const license_string;
+
+} // namespace fhtagn
+
+#endif // guard

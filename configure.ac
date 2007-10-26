@@ -9,11 +9,18 @@ AC_PREREQ(2.58)
 AC_COPYRIGHT([Copyright (C) 2007 the authors. - see COPYING for licensing terms])
 AC_REVISION([$Revision$])
 
+# It may be a bit annoying, but we have to repeat the version number here
+# again further down...
 AC_INIT(fhtagn, 0.1, fhtagn-devel@lists.sourceforge.net)
-AC_CONFIG_SRCDIR([fhtagn/variant.cpp])
+AC_CONFIG_SRCDIR([fhtagn/version.cpp])
 AM_INIT_AUTOMAKE
 
-AM_CONFIG_HEADER([config.h])
+AM_CONFIG_HEADER([fhtagn/config.h])
+
+# ... repeat of the version number above. At the point where AC_INIT is
+# called, there's so little known about autoconf's macros, that this macro
+# wouldn't execute.
+AM_FHTAGN_VERSION([0], [1])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -50,4 +57,6 @@ AC_CONFIG_FILES([
   fhtagn/xml/Makefile
   test/Makefile
 ])
+
 AC_OUTPUT
+AM_FHTAGN_HAVE_DISPLAY
