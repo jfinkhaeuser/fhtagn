@@ -1,4 +1,5 @@
 Source code:
+
 - variant:
   - make variant accept character string literals and store them as std::string.
     low prio - people can work around it, but it'd be nice.
