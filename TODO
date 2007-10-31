@@ -25,8 +25,3 @@ Source code:
 - mime-parser
 - array_list container, i.e. a rope-like approach to representing a random access
   container, except not a rope.
-
-Other:
-
-- doxygen template?
-- MoinMoin (?) on the website
