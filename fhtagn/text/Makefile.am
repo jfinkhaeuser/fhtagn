@@ -9,7 +9,7 @@ SUBDIRS = detail
 include $(top_srcdir)/Makefile.common
 textincludedir=$(pkgincludedir)/text
 
-lib_LTLIBRARIES = libfhtagn_text.la
+noinst_LTLIBRARIES = libfhtagn_text.la
 
 libfhtagn_text_la_SOURCES = \
 	transcoding.cpp \
