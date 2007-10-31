@@ -38,6 +38,7 @@ AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_UINT32_T
+AC_C_BIGENDIAN
 
 # Checks for library functions.
 

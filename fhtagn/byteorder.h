@@ -37,23 +37,24 @@
 
 #include <stdint.h>
 
+#include <fhtagn/config.h>
+
 /**
  * If we can grab the byte order from the compiler, do that - if not, try to
  * use boost's facilities.
  **/
 #if defined(__GNUC__)
-   // We have GCC, which should define __LITTLE_ENDIAN__
-#  if defined(__LITTLE_ENDIAN__)
-#    define FHTAGN_BYTE_ORDER_TMP 1234
-#  else // __LITTLE_ENDIAN__
+   // We have GCC, which means we get our endianness via autoconf's
+   // WORDS_BIGENDIAN define.
+#  if defined(WORDS_BIGENDIAN)
 #    define FHTAGN_BYTE_ORDER_TMP 4321
-#  endif // __LITTLE_ENDIAN__
+#  else // WORDS_BIGENDIAN
+#    define FHTAGN_BYTE_ORDER_TMP 1234
+#  endif // WORDS_BIGENDIAN
 #else // __GNUC__
    // We don't have GCC... so far we're not explicitly supporting other compilers,
    // so we try to fall back on what boost provides. However, we need boost for
    // that purpose.
-#  include <fhtagn/config.h>
-
 #  if defined(HAVE_BOOST)
 #    include <boost/detail/endian.hpp>
 #    define FHTAGN_BYTE_ORDER_TMP BOOST_BYTE_ORDER
