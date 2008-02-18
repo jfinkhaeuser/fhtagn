@@ -75,7 +75,7 @@ enum endian
 {
     FHTAGN_UNKNOWN_ENDIAN = -1,
     FHTAGN_BIG_ENDIAN     = 0,
-    FHTAGN_LITTLE_ENDIAN  = 1,
+    FHTAGN_LITTLE_ENDIAN  = 1
 };
 
 

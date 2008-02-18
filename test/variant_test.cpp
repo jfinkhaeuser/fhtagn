@@ -73,7 +73,7 @@ struct test_type
 int test_type::sm_copy_count = 0;
 
 } // anonymous namespace
-FHTAGN_VARIANT_SPECIALIZE(test_type);
+FHTAGN_VARIANT_SPECIALIZE(test_type)
 
 class VariantTest
     : public CppUnit::TestFixture

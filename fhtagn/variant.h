@@ -438,7 +438,7 @@ private:
     {
         IS_EMPTY   = 0,
         IS_VALUE   = 1,
-        IS_INVALID = 2,
+        IS_INVALID = 2
     };
 
     /**

@@ -47,26 +47,26 @@
 #include <fhtagn/variant.h>
 
 // specialization for builtin bool type
-FHTAGN_VARIANT_SPECIALIZE(bool);
+FHTAGN_VARIANT_SPECIALIZE(bool)
 
 // specializations for builtin integer types
-FHTAGN_VARIANT_SPECIALIZE(int8_t);
-FHTAGN_VARIANT_SPECIALIZE(uint8_t);
-FHTAGN_VARIANT_SPECIALIZE(int16_t);
-FHTAGN_VARIANT_SPECIALIZE(uint16_t);
-FHTAGN_VARIANT_SPECIALIZE(int32_t);
-FHTAGN_VARIANT_SPECIALIZE(uint32_t);
-FHTAGN_VARIANT_SPECIALIZE(int64_t);
-FHTAGN_VARIANT_SPECIALIZE(uint64_t);
+FHTAGN_VARIANT_SPECIALIZE(int8_t)
+FHTAGN_VARIANT_SPECIALIZE(uint8_t)
+FHTAGN_VARIANT_SPECIALIZE(int16_t)
+FHTAGN_VARIANT_SPECIALIZE(uint16_t)
+FHTAGN_VARIANT_SPECIALIZE(int32_t)
+FHTAGN_VARIANT_SPECIALIZE(uint32_t)
+FHTAGN_VARIANT_SPECIALIZE(int64_t)
+FHTAGN_VARIANT_SPECIALIZE(uint64_t)
 
 // floating point types
-FHTAGN_VARIANT_SPECIALIZE(float);
-FHTAGN_VARIANT_SPECIALIZE(double);
+FHTAGN_VARIANT_SPECIALIZE(float)
+FHTAGN_VARIANT_SPECIALIZE(double)
 
 // std::string may not be a builtin type, but it's often used
-FHTAGN_VARIANT_SPECIALIZE(std::string);
-FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type *, std::string);
-FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type const *, std::string);
-FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type const * const, std::string);
+FHTAGN_VARIANT_SPECIALIZE(std::string)
+FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type *, std::string)
+FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type const *, std::string)
+FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type const * const, std::string)
 
 #endif // guard

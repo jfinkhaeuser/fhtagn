@@ -83,7 +83,7 @@ private:
     {
         OK,
         FAILURE,
-        ERROR,
+        ERROR
     };
 
 

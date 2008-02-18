@@ -7,7 +7,7 @@
 INCLUDES_FHTAGN = \
 	-I $(top_srcdir) -I $(top_builddir)
 
-CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb
+CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb -std=c++98 -ansi -pedantic
 LDFLAGS_FHTAGN =
 
 if ENABLE_EXTRA_CHECKS
@@ -27,7 +27,8 @@ endif
 
 AM_CXXFLAGS = \
 	$(BOOST_CPPFLAGS) $(CPPUNIT_CFLAGS) \
-	$(CXXFLAGS_FHTAGN) $(INCLUDES_FHTAGN)
+	$(CXXFLAGS_FHTAGN) $(INCLUDES_FHTAGN) \
+	$(CXXFLAGS)
 
 LIB_MAJOR = $$(echo $(PACKAGE_VERSION) | sed 's/\..*//g')
 LIB_MINOR = $$(echo $(PACKAGE_VERSION) | sed 's/[^.]*\.//g')

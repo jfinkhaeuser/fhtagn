@@ -154,7 +154,7 @@ enum char_encoding_type
     ISO_8859_16           = IEC_8859_16,
     ISO_LATIN_10          = IEC_8859_16,
     WINDOWS_1252          = 24,
-    CP_1252               = WINDOWS_1252,
+    CP_1252               = WINDOWS_1252
 };
 
 
@@ -185,10 +185,10 @@ extern utf32_char_t cp1252_mapping[];
  **/
 struct transcoder_base
 {
-    transcoder_base(bool use_replacement_char = true,
-            utf32_char_t replacement_char = 0xfffd)
-        : m_use_replacement_char(use_replacement_char)
-        , m_replacement_char(replacement_char)
+    transcoder_base(bool _use_replacement_char = true,
+            utf32_char_t _replacement_char = 0xfffd)
+        : m_use_replacement_char(_use_replacement_char)
+        , m_replacement_char(_replacement_char)
     {
     }
 

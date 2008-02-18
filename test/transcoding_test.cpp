@@ -175,7 +175,7 @@ private:
         // targets
         {
             std::string source = "Hello, world!";
-            t::utf32_char_t target[source.size()];
+            t::utf32_char_t target[sizeof("Hello, world!")];
             t::ascii_decoder decoder;
             t::decode(decoder, source.begin(), source.end(), target);
          }

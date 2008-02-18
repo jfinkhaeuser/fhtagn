@@ -210,7 +210,7 @@ variant::safe_get(variant & var)
 } // namespace fhtagn
 
 // internal specialization for variant special types
-FHTAGN_VARIANT_SPECIALIZE(fhtagn::variant::map_t);
-FHTAGN_VARIANT_SPECIALIZE(fhtagn::variant::array_t);
+FHTAGN_VARIANT_SPECIALIZE(fhtagn::variant::map_t)
+FHTAGN_VARIANT_SPECIALIZE(fhtagn::variant::array_t)
 
 #endif // guard

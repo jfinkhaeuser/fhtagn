@@ -247,32 +247,32 @@ struct universal_transcoding_static_mapping
 };
 
 
-FHTAGN_TEXT_STATIC_MAP(RAW,         raw_decoder,        raw_encoder);
-FHTAGN_TEXT_STATIC_MAP(ASCII,       ascii_decoder,      ascii_encoder);
-FHTAGN_TEXT_STATIC_MAP(UTF_8,       utf8_decoder,       utf8_encoder);
-FHTAGN_TEXT_STATIC_MAP(UTF_16,      utf16_decoder,      utf16_encoder);
-FHTAGN_TEXT_STATIC_MAP(UTF_16LE,    utf16le_decoder,    utf16le_encoder);
-FHTAGN_TEXT_STATIC_MAP(UTF_16BE,    utf16be_decoder,    utf16be_encoder);
-FHTAGN_TEXT_STATIC_MAP(UTF_32,      utf32_decoder,      utf32_encoder);
-FHTAGN_TEXT_STATIC_MAP(UTF_32LE,    utf32le_decoder,    utf32le_encoder);
-FHTAGN_TEXT_STATIC_MAP(UTF_32BE,    utf32be_decoder,    utf32be_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_1,  iso8859_1_decoder,  iso8859_1_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_2,  iso8859_2_decoder,  iso8859_2_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_3,  iso8859_3_decoder,  iso8859_3_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_4,  iso8859_4_decoder,  iso8859_4_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_5,  iso8859_5_decoder,  iso8859_5_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_6,  iso8859_6_decoder,  iso8859_6_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_7,  iso8859_7_decoder,  iso8859_7_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_8,  iso8859_8_decoder,  iso8859_8_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_9,  iso8859_9_decoder,  iso8859_9_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_10, iso8859_10_decoder, iso8859_10_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_11, iso8859_11_decoder, iso8859_11_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_13, iso8859_13_decoder, iso8859_13_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_14, iso8859_14_decoder, iso8859_14_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_15, iso8859_15_decoder, iso8859_15_encoder);
-FHTAGN_TEXT_STATIC_MAP(ISO_8859_16, iso8859_16_decoder, iso8859_16_encoder);
-FHTAGN_TEXT_STATIC_MAP(CP_1252,     cp1252_decoder,     cp1252_encoder);
-//FHTAGN_TEXT_STATIC_MAP(,     _decoder,    _encoder);
+FHTAGN_TEXT_STATIC_MAP(RAW,         raw_decoder,        raw_encoder)
+FHTAGN_TEXT_STATIC_MAP(ASCII,       ascii_decoder,      ascii_encoder)
+FHTAGN_TEXT_STATIC_MAP(UTF_8,       utf8_decoder,       utf8_encoder)
+FHTAGN_TEXT_STATIC_MAP(UTF_16,      utf16_decoder,      utf16_encoder)
+FHTAGN_TEXT_STATIC_MAP(UTF_16LE,    utf16le_decoder,    utf16le_encoder)
+FHTAGN_TEXT_STATIC_MAP(UTF_16BE,    utf16be_decoder,    utf16be_encoder)
+FHTAGN_TEXT_STATIC_MAP(UTF_32,      utf32_decoder,      utf32_encoder)
+FHTAGN_TEXT_STATIC_MAP(UTF_32LE,    utf32le_decoder,    utf32le_encoder)
+FHTAGN_TEXT_STATIC_MAP(UTF_32BE,    utf32be_decoder,    utf32be_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_1,  iso8859_1_decoder,  iso8859_1_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_2,  iso8859_2_decoder,  iso8859_2_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_3,  iso8859_3_decoder,  iso8859_3_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_4,  iso8859_4_decoder,  iso8859_4_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_5,  iso8859_5_decoder,  iso8859_5_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_6,  iso8859_6_decoder,  iso8859_6_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_7,  iso8859_7_decoder,  iso8859_7_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_8,  iso8859_8_decoder,  iso8859_8_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_9,  iso8859_9_decoder,  iso8859_9_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_10, iso8859_10_decoder, iso8859_10_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_11, iso8859_11_decoder, iso8859_11_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_13, iso8859_13_decoder, iso8859_13_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_14, iso8859_14_decoder, iso8859_14_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_15, iso8859_15_decoder, iso8859_15_encoder)
+FHTAGN_TEXT_STATIC_MAP(ISO_8859_16, iso8859_16_decoder, iso8859_16_encoder)
+FHTAGN_TEXT_STATIC_MAP(CP_1252,     cp1252_decoder,     cp1252_encoder)
+//FHTAGN_TEXT_STATIC_MAP(,     _decoder,    _encoder)
 
 
 }}} // namespace fhtagn::text::detail
