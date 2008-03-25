@@ -49,6 +49,7 @@ AM_FHTAGN_ENABLE_DEBUG
 
 AC_CONFIG_FILES([
   Makefile
+  libfhtagn.pc
   fhtagn/Makefile
   fhtagn/detail/Makefile
   fhtagn/restrictions/Makefile
