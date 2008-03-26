@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -231,6 +231,51 @@ struct non_default_value
     }
 };
 
+
+/**
+ * Check whether the value is positive. The check relies on the assumption that
+ * a default-constructed valueT is semantically equivalent to zero, which is the
+ * case for all built in numeric types.
+ **/
+template <
+    typename valueT,
+    typename next_restrictionT = none<valueT>
+>
+struct positive
+{
+    static inline valueT const & check(valueT const & value)
+    {
+        boost::function_requires<concepts::RestrictionConcept<valueT, next_restrictionT> >();
+
+        if (value <= valueT()) {
+            throw violation_error("fhtagn::restrictions::positive failed!");
+        }
+        return next_restrictionT::check(value);
+    }
+};
+
+
+/**
+ * Check whether the value is negative. The check relies on the assumption that
+ * a default-constructed valueT is semantically equivalent to zero, which is the
+ * case for all built in numeric types.
+ **/
+template <
+    typename valueT,
+    typename next_restrictionT = none<valueT>
+>
+struct negative
+{
+    static inline valueT const & check(valueT const & value)
+    {
+        boost::function_requires<concepts::RestrictionConcept<valueT, next_restrictionT> >();
+
+        if (value >= valueT()) {
+            throw violation_error("fhtagn::restrictions::negative failed!");
+        }
+        return next_restrictionT::check(value);
+    }
+};
 
 
 }}} // namespace fthagn::restrictions::numeric

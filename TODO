@@ -3,6 +3,9 @@ Source code:
 - variant:
   - make variant accept character string literals and store them as std::string.
     low prio - people can work around it, but it'd be nice.
+- restricted:
+  - Add an or_ combination for chaining restrictions; maybe do and_ as well,
+    change how the restrictions are chained, and make and_ the default?
 - char encoding:
   - stream transcoder - accepts istream ref in it's ctor, and has an ostream<<
     operator.

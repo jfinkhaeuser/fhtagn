@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -32,6 +32,12 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
+
+#include <cstdlib>
+
+#include <vector>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -93,6 +99,7 @@ public:
         CPPUNIT_TEST(testProperty);
         CPPUNIT_TEST(testMandatory);
         CPPUNIT_TEST(testRestricted);
+        CPPUNIT_TEST(testRestrictedSpeed);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -146,6 +153,83 @@ private:
         > non_zero_char_pointer;
         CPPUNIT_ASSERT_THROW(non_zero_char_pointer p, fhtagn::restrictions::violation_error);
         CPPUNIT_ASSERT_NO_THROW(non_zero_char_pointer p = "Hello, world!");
+    }
+
+
+    void testRestrictedSpeed()
+    {
+      // Test the overhead of a restricted int without restrictions. People
+      // sometimes ask whether or not the overhead is worth adding such checks.
+
+      namespace bpt = boost::posix_time;
+
+      typedef fhtagn::restricted<int,
+              fhtagn::restrictions::none<int> > no_restrict_int;
+
+      // Takes ~0.1 sec on my machine
+      const int amount = 10000000;
+
+      // First, fill a vector of N regular ints.
+      std::vector<int> vec1;
+      vec1.reserve(amount);
+
+      bpt::ptime plain_start = bpt::microsec_clock::universal_time();
+      for (int i = 1 ; i <= amount ; ++i) {
+        vec1.push_back(i);
+      }
+      bpt::ptime plain_end = bpt::microsec_clock::universal_time();
+
+      // Then, do the same with a restricted int (with no restrictions, i.e.
+      // no_restrict_int)
+      std::vector<no_restrict_int> vec2;
+      vec2.reserve(amount);
+
+      bpt::ptime no_restrict_start = bpt::microsec_clock::universal_time();
+      for (int i = 1 ; i <= amount ; ++i) {
+        vec2.push_back(i);
+      }
+      bpt::ptime no_restrict_end = bpt::microsec_clock::universal_time();
+
+
+      bpt::time_duration plain_time = plain_end - plain_start;
+      bpt::time_duration no_restrict_time = no_restrict_end - no_restrict_start;
+
+      // Because wall time sucks as a performance/overhead measurement, we'll
+      // just make the simplifying assumption that a 20% difference between
+      // both durations is a failure - there should be close to no overhead
+      // after all.
+      const double percentage = 0.2;
+
+      long ms = std::max(plain_time, no_restrict_time).total_microseconds();
+      long diff_ms = std::labs(
+          (plain_time - no_restrict_time).total_microseconds());
+      CPPUNIT_ASSERT(diff_ms < (ms * percentage));
+
+      // Just for the hell of it, add another test where the int is restricted
+      // to be positive.
+
+      typedef fhtagn::restricted<int,
+              fhtagn::restrictions::numeric::positive<int,
+              fhtagn::restrictions::none<int> > > restrict_int;
+
+      CPPUNIT_ASSERT_THROW(restrict_int(-1),
+          fhtagn::restrictions::violation_error);
+
+      std::vector<restrict_int> vec3;
+      vec3.reserve(amount);
+
+      bpt::ptime restrict_start = bpt::microsec_clock::universal_time();
+      for (int i = 1 ; i <= amount ; ++i) {
+        vec3.push_back(i);
+      }
+      bpt::ptime restrict_end = bpt::microsec_clock::universal_time();
+
+      bpt::time_duration restrict_time = restrict_end - restrict_start;
+
+      // These checks can't be expensive.
+      ms = std::max(plain_time, restrict_time).total_microseconds();
+      diff_ms = std::labs((plain_time - restrict_time).total_microseconds());
+      CPPUNIT_ASSERT(diff_ms < (ms * percentage));
     }
 };
 
