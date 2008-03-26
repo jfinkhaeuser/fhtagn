@@ -11,7 +11,7 @@ AC_REVISION([$Revision$])
 
 # It may be a bit annoying, but we have to repeat the version number here
 # again further down...
-AC_INIT(fhtagn, 0.1, fhtagn-devel@lists.sourceforge.net)
+AC_INIT(fhtagn, 0.1.0, fhtagn-devel@lists.sourceforge.net)
 AC_CONFIG_SRCDIR([fhtagn/version.cpp])
 AM_INIT_AUTOMAKE
 
@@ -20,7 +20,7 @@ AM_CONFIG_HEADER([fhtagn/config.h])
 # ... repeat of the version number above. At the point where AC_INIT is
 # called, there's so little known about autoconf's macros, that this macro
 # wouldn't execute.
-AM_FHTAGN_VERSION([0], [1])
+AM_FHTAGN_VERSION([0], [1], [0])
 
 # Checks for programs.
 AC_PROG_CXX
