@@ -1,6 +1,9 @@
 Source code:
 
 - char encoding:
+  - http://en.wikipedia.org/wiki/ISO/IEC_8859-1#ISO-8859-1
+    difference between ISO 8859-1 and ISO-8859-1 ?
+  - add mac-roman? http://en.wikipedia.org/wiki/Mac-Roman
   - stream transcoder - accepts istream ref in it's ctor, and has an ostream<<
     operator.
 - xml:
