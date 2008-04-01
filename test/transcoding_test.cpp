@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -175,7 +175,7 @@ private:
         // targets
         {
             std::string source = "Hello, world!";
-            t::utf32_char_t target[sizeof("Hello, world!")];
+            t::utf32_char_t target[sizeof("Hello, world!")] = { 0 };
             t::ascii_decoder decoder;
             t::decode(decoder, source.begin(), source.end(), target);
          }
@@ -366,7 +366,7 @@ private:
         t::utf32_string target1;
         {
             t::utf32le_decoder decoder;
-            // add 2 to start & end to skip BOM
+            // add 4 to start & end to skip BOM
             char * error_ptr = t::decode(decoder,
                     le_source + 4, le_source + 64,
                     std::back_insert_iterator<t::utf32_string>(target1));
@@ -850,7 +850,7 @@ private:
         // Encode as UTF-32BE and compare
         {
             t::utf32be_encoder encoder;
-            char buf[sizeof(be_source)];
+            char buf[sizeof(be_source)] = { 0 };
             t::encode(encoder, source_string.begin(), source_string.end(), buf);
 
             for (uint32_t i = 0 ; i < sizeof(be_source) - 4 ; ++i) {
@@ -861,7 +861,7 @@ private:
         // Encode as UTF-32LE and compare
         {
             t::utf32le_encoder encoder;
-            char buf[sizeof(be_source)];
+            char buf[sizeof(be_source)] = { 0 };
             t::encode(encoder, source_string.begin(), source_string.end(), buf);
 
             for (uint32_t i = 0 ; i < sizeof(le_source) - 4 ; ++i) {
@@ -874,7 +874,7 @@ private:
         // it should come out identical to le_source or be_source (without bom).
         {
             t::utf32_encoder encoder;
-            char buf[sizeof(be_source)];
+            char buf[sizeof(be_source)] = { 0 };
             t::encode(encoder, source_string.begin(), source_string.end(), buf);
 
             char * expected = NULL;
@@ -956,7 +956,7 @@ private:
             std::string::iterator iter = source.begin();
             t::utf8_decoder decoder;
             while (iter != source.end()) {
-                t::utf32_char_t buf[4];
+                t::utf32_char_t buf[4] = { 0 };
                 ssize_t bufsize = 4;
                 iter = t::decode(decoder, iter, source.end(), buf, bufsize);
                 target.append(buf, bufsize);
@@ -992,7 +992,7 @@ private:
             t::utf32_string::iterator iter = target.begin();
             t::utf8_encoder encoder;
             while (iter != target.end()) {
-                char buf[4];
+                char buf[4] = { 0 };
                 ssize_t bufsize = 4;
                 iter = t::encode(encoder, iter, target.end(), buf, bufsize);
                 CPPUNIT_ASSERT(bufsize <= 4);
