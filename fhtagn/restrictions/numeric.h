@@ -278,6 +278,49 @@ struct negative
 };
 
 
+/**
+ * Combines the default_value restriction with the positive restriction such
+ * that either must be satisfied to satisfy null_or_positive.
+ **/
+template <
+    typename valueT,
+    typename next_restrictionT = none<valueT>
+>
+struct null_or_positive
+{
+    static inline valueT const & check(valueT const & value)
+    {
+        boost::function_requires<concepts::RestrictionConcept<valueT, next_restrictionT> >();
+        return next_restrictionT::check(one_of<
+                valueT,
+                default_value<valueT>,
+                positive<valueT>
+            >::check(value));
+    }
+};
+
+
+/**
+ * Combines the default_value restriction with the negative restriction such
+ * that either must be satisfied to satisfy null_or_negative.
+ **/
+template <
+    typename valueT,
+    typename next_restrictionT = none<valueT>
+>
+struct null_or_negative
+{
+    static inline valueT const & check(valueT const & value)
+    {
+        boost::function_requires<concepts::RestrictionConcept<valueT, next_restrictionT> >();
+        return next_restrictionT::check(one_of<valueT,
+                default_value<valueT>,
+                negative<valueT>
+            >::check(value));
+    }
+};
+
+
 }}} // namespace fthagn::restrictions::numeric
 
 #endif // guard

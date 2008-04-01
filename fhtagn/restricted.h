@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -88,6 +88,108 @@ struct none
         return value;
     }
 };
+
+
+/**
+ * The opposite of none<>, no value every passes the never<> restriction.
+ **/
+template <typename T>
+struct never
+{
+    static inline T const & check(T const & value)
+    {
+        throw violation_error("No restriction was satisfied!");
+        return value;
+    }
+};
+
+
+/**
+ * By writing restrictions such that their next restriction is invoked when the
+ * passed value passes the current restriction, one effectively creates a chain
+ * of ANDed restrictions - all of them must succeed.
+ *
+ * There may be situations in which ORing restrictions is more desirable, which
+ * is what you can achieve using one_of<>. The template accepts up to 10
+ * restrictions, which are checked in order, and if one of them is passed, the
+ * whole chain is passed.
+ *
+ * The run-time equivalent would probably be that of a switch-statement. The
+ * numeric restriction null_or_negative<> uses a one_of<> chain of
+ * default_value<> and negative<>.
+ */
+template <
+    typename valueT,
+    typename restrict0T,
+    typename restrict1T = never<valueT>,
+    typename restrict2T = never<valueT>,
+    typename restrict3T = never<valueT>,
+    typename restrict4T = never<valueT>,
+    typename restrict5T = never<valueT>,
+    typename restrict6T = never<valueT>,
+    typename restrict7T = never<valueT>,
+    typename restrict8T = never<valueT>,
+    typename restrict9T = never<valueT>
+>
+struct one_of
+{
+    static inline valueT const & check(valueT const & value)
+    {
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict0T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict1T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict2T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict3T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict4T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict5T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict6T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict7T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict8T> >();
+        boost::function_requires<concepts::RestrictionConcept<valueT, restrict9T> >();
+
+        try {
+            return restrict0T::check(value);
+        } catch (violation_error const & ex) {
+            try {
+                return restrict1T::check(value);
+            } catch (violation_error const & ex) {
+                try {
+                    return restrict2T::check(value);
+                } catch (violation_error const & ex) {
+                    try {
+                        return restrict3T::check(value);
+                    } catch (violation_error const & ex) {
+                        try {
+                            return restrict4T::check(value);
+                        } catch (violation_error const & ex) {
+                            try {
+                                return restrict5T::check(value);
+                            } catch (violation_error const & ex) {
+                                try {
+                                    return restrict6T::check(value);
+                                } catch (violation_error const & ex) {
+                                    try {
+                                        return restrict7T::check(value);
+                                    } catch (violation_error const & ex) {
+                                        try {
+                                            return restrict8T::check(value);
+                                        } catch (violation_error const & ex) {
+                                            try {
+                                                return restrict9T::check(value);
+                                            } catch (violation_error const & ex) {
+                                                return never<valueT>::check(value);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
 
 } // namespace restrictions
 

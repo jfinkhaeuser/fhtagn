@@ -100,6 +100,7 @@ public:
         CPPUNIT_TEST(testMandatory);
         CPPUNIT_TEST(testRestricted);
         CPPUNIT_TEST(testRestrictedSpeed);
+        CPPUNIT_TEST(testRestrictedORChain);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -163,8 +164,7 @@ private:
 
       namespace bpt = boost::posix_time;
 
-      typedef fhtagn::restricted<int,
-              fhtagn::restrictions::none<int> > no_restrict_int;
+      typedef fhtagn::restricted<int> no_restrict_int;
 
       // Takes ~0.1 sec on my machine
       const int amount = 10000000;
@@ -209,8 +209,7 @@ private:
       // to be positive.
 
       typedef fhtagn::restricted<int,
-              fhtagn::restrictions::numeric::positive<int,
-              fhtagn::restrictions::none<int> > > restrict_int;
+              fhtagn::restrictions::numeric::positive<int> > restrict_int;
 
       CPPUNIT_ASSERT_THROW(restrict_int(-1),
           fhtagn::restrictions::violation_error);
@@ -230,6 +229,21 @@ private:
       ms = std::max(plain_time, restrict_time).total_microseconds();
       diff_ms = std::labs((plain_time - restrict_time).total_microseconds());
       CPPUNIT_ASSERT(diff_ms < (ms * percentage));
+    }
+
+
+
+    void testRestrictedORChain()
+    {
+      // Test whether OR-chaining of restrictions works as intended.
+      typedef fhtagn::restricted<int,
+              fhtagn::restrictions::numeric::null_or_positive<int> > restrict_int;
+
+      CPPUNIT_ASSERT_THROW(restrict_int(-1),
+          fhtagn::restrictions::violation_error);
+
+      CPPUNIT_ASSERT_NO_THROW(restrict_int(0));
+      CPPUNIT_ASSERT_NO_THROW(restrict_int(1));
     }
 };
 
