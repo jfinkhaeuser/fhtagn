@@ -41,11 +41,11 @@ namespace text {
 /**
  * Definitions of the FEFF BOM in various encodings
  **/
-char const utf32_be_bom[] = { 0x00, 0x00, 0xfe, 0xff };
-char const utf32_le_bom[] = { 0xff, 0xfe, 0x00, 0x00 };
-char const utf16_be_bom[] = { 0xfe, 0xff };
-char const utf16_le_bom[] = { 0xff, 0xfe };
-char const utf8_bom[] = { 0xef, 0xbb, 0xbf };
+char const utf32_be_bom[] = { (char) 0x00, (char) 0x00, (char) 0xfe, (char) 0xff };
+char const utf32_le_bom[] = { (char) 0xff, (char) 0xfe, (char) 0x00, (char) 0x00 };
+char const utf16_be_bom[] = { (char) 0xfe, (char) 0xff };
+char const utf16_le_bom[] = { (char) 0xff, (char) 0xfe };
+char const utf8_bom[] = { (char) 0xef, (char) 0xbb, (char) 0xbf };
 
 
 namespace detail {
