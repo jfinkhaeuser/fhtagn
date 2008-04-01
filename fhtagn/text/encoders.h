@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -40,6 +40,12 @@
 #endif
 
 #include <fhtagn/text/transcoding.h>
+
+/**
+ * The character value 159 is not a valid character in ASCII or ISO-8859-*
+ * encodings.
+ **/
+#define FHTAGN_TEXT_INVALID_CHAR static_cast<char>(159)
 
 namespace fhtagn {
 namespace text {
@@ -118,7 +124,7 @@ struct ascii_encoder
     {
         // If m_byte has a valid value, return m_byte's address. Else return
         // end()
-        return &m_byte + (m_byte == -1 ? 1 : 0);
+        return &m_byte + (m_byte == FHTAGN_TEXT_INVALID_CHAR ? 1 : 0);
     }
 
     const_iterator end() const
@@ -136,7 +142,7 @@ struct ascii_encoder
             m_byte = static_cast<char>(ch);
             return true;
         }
-        m_byte = -1; // signal empty buffer
+        m_byte = FHTAGN_TEXT_INVALID_CHAR; // signal empty buffer
         return false;
     }
 
@@ -160,7 +166,7 @@ struct iso8859_encoder_base
     explicit iso8859_encoder_base(uint32_t subencoding)
         : transcoder_base(true, '\0')
         , m_subencoding(subencoding)
-        , m_byte(-1)
+        , m_byte(FHTAGN_TEXT_INVALID_CHAR)
     {
     }
 
@@ -168,7 +174,7 @@ struct iso8859_encoder_base
     {
         // If m_byte has a valid value, return m_byte's address. Else return
         // end()
-        return &m_byte + (m_byte == -1 ? 1 : 0);
+        return &m_byte + (m_byte == FHTAGN_TEXT_INVALID_CHAR ? 1 : 0);
     }
 
     const_iterator end() const
@@ -208,7 +214,7 @@ struct iso8859_encoder_base
         }
 
         // other bytes can't be encoded in any of the iso8859 encodings.
-        m_byte = -1; // signal empty buffer
+        m_byte = FHTAGN_TEXT_INVALID_CHAR; // signal empty buffer
         return false;
     }
 
