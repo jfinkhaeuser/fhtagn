@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -132,6 +132,41 @@ inline endian host_byte_order()
 
 
 /**
+ * Simple function to return a string representation of the passed endian value,
+ * that is "LE", "BE" or "--" for unknown endianness.
+ **/
+inline char const * const to_string(int source_endian)
+{
+    return (source_endian == FHTAGN_UNKNOWN_ENDIAN
+            ? "--"
+            : (source_endian == FHTAGN_BIG_ENDIAN
+                ? "BE"
+                : "LE"
+              )
+            );
+}
+
+
+/**
+ * Simple function to return the opposite of the byte order passed to it,
+ * i.e. returns FHTAGN_LITTLE_ENDIAN if FHTAGN_BIG_ENDIAN is passed and
+ * vice versa.
+ *
+ * If FHTAGN_UNKNOWN_ENDIAN is passed, the same is returned.
+ **/
+inline endian opposite(int arg)
+{
+    return (arg == FHTAGN_UNKNOWN_ENDIAN
+            ? FHTAGN_UNKNOWN_ENDIAN
+            : (arg == FHTAGN_BIG_ENDIAN
+                ? FHTAGN_LITTLE_ENDIAN
+                : FHTAGN_BIG_ENDIAN
+              )
+            );
+}
+
+
+/**
  * Swap byte order of various integer sizes.
  **/
 inline uint16_t swap(uint16_t const & orig)
@@ -160,14 +195,15 @@ inline int32_t swap(int32_t const & orig)
 
 inline uint64_t swap(uint64_t const & orig)
 {
-    return ((orig & 0xff00000000000000ULL) >> 56) |
-           ((orig & 0x00ff000000000000ULL) >> 40) |
-           ((orig & 0x0000ff0000000000ULL) >> 24) |
-           ((orig & 0x000000ff00000000ULL) >> 8)  |
-           ((orig & 0x00000000ff000000ULL) >> 8)  |
-           ((orig & 0x0000000000ff0000ULL) >> 24) |
-           ((orig & 0x000000000000ff00ULL) << 40) |
-           ((orig & 0x00000000000000ffULL) << 56);
+    return ((orig & ((uint64_t) 0xff << 56)) >> 56) |
+           ((orig & ((uint64_t) 0xff << 48)) >> 40) |
+           ((orig & ((uint64_t) 0xff << 40)) >> 24) |
+           ((orig & ((uint64_t) 0xff << 32)) >> 8)  |
+           ((orig & ((uint64_t) 0xff << 24)) >> 8)  |
+           ((orig & ((uint64_t) 0xff << 16)) >> 24) |
+           ((orig & ((uint64_t) 0xff <<  8)) << 40) |
+           ((orig &  (uint64_t) 0xff       ) << 56);
+
 }
 
 inline int64_t swap(int64_t const & orig)
