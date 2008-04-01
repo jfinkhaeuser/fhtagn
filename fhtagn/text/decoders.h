@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -437,28 +437,29 @@ struct utf16_decoder
         // if we're reading the first byte of either word that can make up a
         // UTF-16 sequence we /always/ need another byte.
         if (m_buffer_used == 0 || m_buffer_used == 2) {
-            next_word = byte;
+            next_word = (static_cast<uint16_t>(byte) << 8);
             ++m_buffer_used;
             return true;
         }
 
-        next_word += (byte << 8);
+        // We're building up the next_word contents in a BE fashion; the first
+        // byte to come is considered the most significant. That way we can
+        // correctly detect the BOM.
+        next_word |= byte;
         ++m_buffer_used;
 
         if (m_endian == byte_order::FHTAGN_UNKNOWN_ENDIAN) {
             switch (next_word) {
                 case 0xfffe:
-                    // LE BOM, but due to the way we assemble words it means the
-                    // input is BE.
-                    m_endian = byte_order::FHTAGN_BIG_ENDIAN;
+                    // LE BOM
+                    m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
                     reset();
                     return true;
                     break;
 
                 case 0xfeff:
-                    // BE BOM, but due to the way we assemble words it means the
-                    // input is LE.
-                    m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
+                    // BE BOM
+                    m_endian = byte_order::FHTAGN_BIG_ENDIAN;
                     reset();
                     return true;
                     break;
@@ -470,7 +471,11 @@ struct utf16_decoder
             }
         }
 
-        next_word = byte_order::to_host(next_word, m_endian);
+        // Because the buffer is built in a BE fashion, we want to swap the
+        // value's endianness if it's meant to be LE.
+        if (m_endian == byte_order::FHTAGN_LITTLE_ENDIAN) {
+            next_word = byte_order::swap(next_word);
+        }
 
         // if m_next_word is the leading word...
         if (m_size == 0) {
@@ -555,6 +560,7 @@ struct utf32_decoder
             = byte_order::FHTAGN_UNKNOWN_ENDIAN)
         : transcoder_base()
         , m_endian(e)
+        , m_buffer(0)
         , m_buffer_used(0)
     {
     }
@@ -563,6 +569,7 @@ struct utf32_decoder
     void reset()
     {
         m_buffer_used = 0;
+        m_buffer = 0;
     }
 
 
@@ -572,8 +579,10 @@ struct utf32_decoder
             return false;
         }
 
-        unsigned char * buffer = reinterpret_cast<unsigned char *>(&m_buffer);
-        buffer[m_buffer_used++] = byte;
+        // We're building up the m_buffer contents in a BE fashion; the first
+        // byte to come is considered the most significant. That way we can
+        // correctly detect the BOM.
+        m_buffer |= byte << (3 - m_buffer_used++) * 8;
 
         if (m_buffer_used < 4) {
             return true;
@@ -582,17 +591,15 @@ struct utf32_decoder
         if (m_endian == byte_order::FHTAGN_UNKNOWN_ENDIAN) {
             switch (m_buffer) {
                 case 0xfffe0000:
-                    // LE BOM, but due to the way we assemble the buffer it
-                    // means the input is BE.
-                    m_endian = byte_order::FHTAGN_BIG_ENDIAN;
+                    // LE BOM
+                    m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
                     reset();
                     return true;
                     break;
 
                 case 0x0000feff:
-                    // BE BOM, but due to the way we assemble the buffer it
-                    // means the input is LE.
-                    m_endian = byte_order::FHTAGN_LITTLE_ENDIAN;
+                    // BE BOM
+                    m_endian = byte_order::FHTAGN_BIG_ENDIAN;
                     reset();
                     return true;
                     break;
@@ -605,7 +612,12 @@ struct utf32_decoder
 
         }
 
-        m_buffer = byte_order::to_host(m_buffer, m_endian);
+        // Because the buffer is built in a BE fashion, we want to swap the
+        // value's endianness if it's meant to be LE.
+        if (m_endian == byte_order::FHTAGN_LITTLE_ENDIAN) {
+            m_buffer = byte_order::swap(m_buffer);
+        }
+
         return true;
     }
 
