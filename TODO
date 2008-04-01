@@ -1,11 +1,5 @@
 Source code:
 
-- variant:
-  - make variant accept character string literals and store them as std::string.
-    low prio - people can work around it, but it'd be nice.
-- restricted:
-  - Add an or_ combination for chaining restrictions; maybe do and_ as well,
-    change how the restrictions are chained, and make and_ the default?
 - char encoding:
   - stream transcoder - accepts istream ref in it's ctor, and has an ostream<<
     operator.
@@ -20,9 +14,6 @@ Source code:
 - stack based allocator
   - split into traits & policies (see linked article). investigate if we need to
     throw out-of-memory ourselves or that happens when we return 0.
-  - create alloca()-based policy
-  - create alloca()-based policy with fallback to malloc - must maintain list of
-    heap pointers for that to work.
 - move url class from libwool here
   - add composing of URLs (right now URL class can only parse)
 - mime-parser
