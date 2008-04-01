@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -189,8 +189,8 @@ private:
         CPPUNIT_ASSERT_NO_THROW(x = foo);
         CPPUNIT_ASSERT(x.is<std::string>());
 
-        // TODO dosn't work yet
-        // CPPUNIT_ASSERT(x = "baz");
+        // works on some GCCs at least
+        CPPUNIT_ASSERT_NO_THROW(x = "baz");
     }
 
     void testCheck()

@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Henning Pfeiffer <slashgod@users.sourceforge.net>
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
@@ -68,5 +68,17 @@ FHTAGN_VARIANT_SPECIALIZE(std::string)
 FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type *, std::string)
 FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type const *, std::string)
 FHTAGN_VARIANT_SPECIALIZE_HOLDER(std::string::value_type const * const, std::string)
+
+// This is a specialization for character arrays of varying lengths, such as
+// string literals. I've no idea how portable this is, but on my GCC, this works
+// like a charm.
+// i686-apple-darwin8-gcc-4.0.1 (GCC) 4.0.1 (Apple Computer, Inc. build 5363)
+namespace fhtagn {
+    template <int N>
+    struct variant::specialization_traits<char [N]>
+    {
+        typedef std::string holder_type;
+    };
+} // namespace fhtagn
 
 #endif // guard
