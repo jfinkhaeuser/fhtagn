@@ -30,10 +30,11 @@ AM_CXXFLAGS = \
 	$(CXXFLAGS_FHTAGN) $(INCLUDES_FHTAGN) \
 	$(CXXFLAGS)
 
-LIB_MAJOR = $$(echo $(PACKAGE_VERSION) | sed 's/\..*//g')
-LIB_MINOR = $$(echo $(PACKAGE_VERSION) | sed 's/[^.]*\.//g')
-LIB_AGE = 0
-LIB_VERSION = -version-info $(LIB_MAJOR):$(LIB_MINOR):$(LIB_AGE)
+LIB_MAJOR = $$(echo $(PACKAGE_VERSION) | cut -d. -f1)
+LIB_MINOR = $$(echo $(PACKAGE_VERSION) | cut -d. -f2)
+LIB_MICRO = $$(echo $(PACKAGE_VERSION) | cut -d. -f3)
+LIB_VERSION = \
+	-version-number "$(LIB_MAJOR):$(LIB_MINOR):$(LIB_MICRO)"
 
 clean-local:
 	rm -f *.gcov *.gcno *.gcda
