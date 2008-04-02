@@ -3,9 +3,10 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libfhtagn
+Name: libfhtagn_util
 Description: Fhtagn! C++ library
 Version: @VERSION@
 URL: http://fhtagn.unwesen.de/
-Libs: -L${libdir} -lfhtagn
+Libs: -L${libdir} -lfhtagn_util
 Cflags: -I${includedir}
+Libs.private: -lfhtagn @CPPUNIT_LIBS@
