@@ -6,7 +6,7 @@
 
 SUBDIRS = text restrictions detail
 if HAVE_BOOST
-SUBDIRS += xml
+SUBDIRS += xml threads
 endif
 # currently, all the util lib contains is a pretty-printer for cppunit
 # test results
@@ -34,6 +34,7 @@ libfhtagn_la_SOURCES = $(FHTAGN_SRC)
 
 libfhtagn_la_LDFLAGS = $(LIB_VERSION)
 libfhtagn_la_LIBADD = \
-	$(top_builddir)/fhtagn/text/libfhtagn_text.la
+	$(top_builddir)/fhtagn/text/libfhtagn_text.la \
+	$(top_builddir)/fhtagn/threads/libfhtagn_threads.la
 
 pkginclude_HEADERS = config.h $(FHTAGN_HDR)

@@ -9,3 +9,6 @@ Version: @VERSION@
 URL: http://fhtagn.unwesen.de/
 Libs: -L${libdir} -lfhtagn
 Cflags: -I${includedir}
+if HAVE_BOOST
+Libs.private: -lboost_signals -lboost_thread-mt
+endif

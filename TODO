@@ -6,6 +6,16 @@ Source code:
   - add mac-roman? http://en.wikipedia.org/wiki/Mac-Roman
   - stream transcoder - accepts istream ref in it's ctor, and has an ostream<<
     operator.
+- threads:
+  - pre-defined locking policies, for easier implementation of code that makes
+    use of locking policies
+- "message passing":
+  - first cut, intra-process message passing, such as from thread to thread.
+    must be lock-free or deadlock-resistant. must enable the following to be
+    implemented on top of it:
+    - be notified of changes in another thread's state
+    - retrieve state of other thread
+    - change state of other threads
 - xml:
   - clean up
   - add good error reporting (which line/character failed)
