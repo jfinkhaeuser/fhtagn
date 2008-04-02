@@ -96,7 +96,7 @@ public:
      *
      * @param slot Function to execute.
      **/
-    tasklet(func_type::slot_type slot);
+    explicit tasklet(func_type::slot_type slot);
 
     /**
      * Virtual dtor to allow for derivation.
