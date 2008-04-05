@@ -32,7 +32,6 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-
 #include <boost/bind.hpp>
 #include <boost/thread/xtime.hpp>
 
@@ -44,8 +43,7 @@ namespace threads {
 
 
 tasklet::tasklet(tasklet::func_type::slot_type slot)
-    : m_done(false)
-    , m_stopped(false)
+    : m_state(STANDING_BY)
     , m_thread(0)
 {
     m_func.connect(slot);
@@ -64,8 +62,7 @@ tasklet::start()
     if (m_thread) {
         return false;
     }
-    m_done = false;
-    m_stopped = false;
+    m_state = RUNNING;
     m_thread = new boost::thread(boost::bind(&tasklet::thread_runner,
                 boost::ref(this)));
     return true;
@@ -79,7 +76,7 @@ tasklet::stop()
     if (!m_thread) {
         return false;
     }
-    m_stopped = true;
+    m_state = STOPPED;
     lock.unlock();
 
     m_finish.notify_all();
@@ -96,7 +93,7 @@ tasklet::wait()
         return false;
     }
 
-    while (!m_done) {
+    while (m_state == RUNNING || m_state == SLEEPING || m_state == STOPPED) {
         m_finish.wait(lock);
     }
 
@@ -108,32 +105,49 @@ tasklet::wait()
 
 
 bool
-tasklet::started() const
+tasklet::reset()
 {
     boost::mutex::scoped_lock lock(m_mutex);
-    return (m_thread);
+    switch (m_state) {
+      case STANDING_BY:
+      case FINISHED:
+      case ABORTED:
+        m_state = STANDING_BY;
+        return true;
+        break;
+
+      case RUNNING:
+      case STOPPED:
+        return false;
+        break;
+
+      default:
+        throw std::logic_error("Unreachable line reached");
+        return false;
+        break;
+    }
 }
 
 
-bool
-tasklet::finished() const
+tasklet::state
+tasklet::get_state() const
 {
     boost::mutex::scoped_lock lock(m_mutex);
-    return ((m_thread) && m_done);
-}
-
-
-bool
-tasklet::stopped() const
-{
-    boost::mutex::scoped_lock lock(m_mutex);
-    return ((m_thread) && m_stopped);
+    return m_state;
 }
 
 
 
-
 bool
+tasklet::alive() const
+{
+    boost::mutex::scoped_lock lock(m_mutex);
+    return (m_state == RUNNING || m_state == SLEEPING || m_state == STOPPED);
+}
+
+
+
+tasklet::state
 tasklet::sleep(uint32_t usecs /* = 0 */)
 {
     // Prepare xtime to sleep until
@@ -151,21 +165,44 @@ tasklet::sleep(uint32_t usecs /* = 0 */)
 
     // Sleep until stopped or time runs out.
     boost::mutex::scoped_lock lock(m_mutex);
-    while (!m_stopped) {
-        if (usecs) {
-            // sleep until timeout
-            if (!m_finish.timed_wait(lock, t)) {
-                // Timeout! We don't care what the flag says, we have to exit
-                // right now.
-                break;
+    if (m_state == RUNNING || m_state == SLEEPING) {
+        // Save current state and switch to SLEEPING
+        state prev_state = m_state;
+        m_state = SLEEPING;
+
+        // Perform the actual sleep. Gets interrupted either by a timeout, or
+        // by a state change.
+        while (m_state == SLEEPING) {
+            if (usecs) {
+                // sleep until timeout
+                if (!m_finish.timed_wait(lock, t)) {
+                    // Timeout! We don't care what the flag says, we have to
+                    // exit right now.
+                    break;
+                }
+            } else {
+                // sleep indefinitely
+                m_finish.wait(lock);
             }
-        } else {
-            // sleep indefinitely
-            m_finish.wait(lock);
+        }
+
+        // If the state's still SLEEPING, we exited the loop of natural causes,
+        // and must restore the previous state.
+        if (m_state == SLEEPING) {
+            m_state = prev_state;
         }
     }
-    return m_stopped;
+    return m_state;
 }
+
+
+
+
+void
+tasklet::add_error_handler(error_func_type::slot_type slot)
+{
+}
+
 
 
 void
@@ -173,13 +210,37 @@ tasklet::thread_runner()
 {
     try {
         m_func(*this);
+    } catch (std::exception const & ex) {
+        {
+            boost::mutex::scoped_lock lock(m_mutex);
+            m_state = ABORTED;
+        }
+        try {
+            // Pass any std::exception on to the error handler
+            m_error_func(*this, ex);
+        } catch (...) {
+            // silently ignore
+        }
     } catch (...) {
-        // FIXME
+        {
+            boost::mutex::scoped_lock lock(m_mutex);
+            m_state = ABORTED;
+        }
+        try {
+            // Pass a new runtime_error on to the error handler.
+            std::runtime_error e("Unspecified exception occurred in tasklet's "
+                    "bound function.");
+            m_error_func(*this, e);
+        } catch (...) {
+            // silently ignore
+        }
     }
 
     {
         boost::mutex::scoped_lock lock(m_mutex);
-        m_done = true;
+        if (m_state != ABORTED) {
+            m_state = FINISHED;
+        }
     }
 
     m_finish.notify_all();

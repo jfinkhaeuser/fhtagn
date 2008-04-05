@@ -49,6 +49,18 @@ void free_thread_func(fhtagn::threads::tasklet & t)
 }
 
 
+void throwing_free_func(fhtagn::threads::tasklet & t)
+{
+    throw std::runtime_error("test_error");
+}
+
+
+void error_handler(fhtagn::threads::tasklet & t, std::exception const & ex)
+{
+    CPPUNIT_ASSERT_EQUAL(std::string("test_error"), std::string(ex.what()));
+}
+
+
 struct bind_test
 {
     bind_test()
@@ -59,21 +71,33 @@ struct bind_test
 
     void simple_member(fhtagn::threads::tasklet & t)
     {
+        namespace th = fhtagn::threads;
+
         // These asserts lead to a premature end of the thread, and prevent
         // the done flag from being set.
-        CPPUNIT_ASSERT(t.started());
-        CPPUNIT_ASSERT(!t.stopped());
-        CPPUNIT_ASSERT(!t.finished());
+        CPPUNIT_ASSERT(t.alive());
 
         // Signal that the function is finished.
         done = true;
     }
 
 
+    void sleep_halfsec(fhtagn::threads::tasklet & t)
+    {
+        namespace th = fhtagn::threads;
+        t.sleep(500000);
+        done = true;
+    }
+
+
     void looping_member(fhtagn::threads::tasklet & t)
     {
+        namespace th = fhtagn::threads;
+
         // This isn't terribly efficient, that's what sleep() exists for...
-        while (!t.stopped()) {
+        while (t.get_state() == th::tasklet::RUNNING
+                || t.get_state() == th::tasklet::SLEEPING)
+        {
             // tum-tee-tum.
         }
 
@@ -108,6 +132,7 @@ public:
         CPPUNIT_TEST(testTaskletSleep);
         CPPUNIT_TEST(testTaskletMemFun);
         CPPUNIT_TEST(testTaskletFreeFun);
+        CPPUNIT_TEST(testTaskletError);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -148,7 +173,7 @@ private:
         // be larger than half a second.
         {
             bind_test bt;
-            th::tasklet task(boost::bind(&bind_test::simple_member,
+            th::tasklet task(boost::bind(&bind_test::sleep_halfsec,
                         boost::ref(bt), _1));
 
             boost::xtime t1;
@@ -156,7 +181,6 @@ private:
 
             boost::xtime_get(&t1, boost::TIME_UTC);
             CPPUNIT_ASSERT(task.start());
-            task.sleep(500000);
             CPPUNIT_ASSERT(task.wait());
             boost::xtime_get(&t2, boost::TIME_UTC);
 
@@ -182,7 +206,8 @@ private:
                         boost::ref(bt), _1));
 
             CPPUNIT_ASSERT(task.start());
-            CPPUNIT_ASSERT(task.started());
+            CPPUNIT_ASSERT(task.get_state() == th::tasklet::RUNNING
+                    || task.get_state() == th::tasklet::FINISHED);
 
             CPPUNIT_ASSERT(task.wait());
 
@@ -197,7 +222,7 @@ private:
                         boost::ref(bt), _1));
 
             CPPUNIT_ASSERT(task.start());
-            CPPUNIT_ASSERT(task.started());
+            CPPUNIT_ASSERT(task.get_state() == th::tasklet::RUNNING);
 
             // must stop the thread before waiting.
             CPPUNIT_ASSERT(task.stop());
@@ -214,7 +239,8 @@ private:
                         boost::ref(bt), _1));
 
             CPPUNIT_ASSERT(task.start());
-            CPPUNIT_ASSERT(task.started());
+            CPPUNIT_ASSERT(task.get_state() == th::tasklet::RUNNING
+                    || task.get_state() == th::tasklet::SLEEPING);
 
             // must stop the thread before waiting.
             CPPUNIT_ASSERT(task.stop());
@@ -236,12 +262,42 @@ private:
         th::tasklet task(boost::bind(&free_thread_func, _1));
 
         CPPUNIT_ASSERT(task.start());
-        CPPUNIT_ASSERT(task.started());
+        CPPUNIT_ASSERT(task.get_state() == th::tasklet::RUNNING
+                || task.get_state() == th::tasklet::FINISHED);
 
         CPPUNIT_ASSERT(task.wait());
 
         CPPUNIT_ASSERT(free_done && "An assertion failure here may indicate "
                     "an assertion failure in the bound function.");
+    }
+
+
+    void testTaskletError()
+    {
+        namespace th = fhtagn::threads;
+
+        // Test that upon errors the task's state is ABORTED
+        th::tasklet task(boost::bind(&throwing_free_func, _1));
+
+        CPPUNIT_ASSERT(task.start());
+        CPPUNIT_ASSERT(task.get_state() == th::tasklet::RUNNING
+                || task.get_state() == th::tasklet::FINISHED);
+
+        CPPUNIT_ASSERT(task.wait());
+        CPPUNIT_ASSERT_EQUAL((int) th::tasklet::ABORTED, (int) task.get_state());
+
+
+        CPPUNIT_ASSERT(task.reset());
+
+        // Same test again, but first we register the error handler.
+        task.add_error_handler(boost::bind(&error_handler, _1, _2));
+
+        CPPUNIT_ASSERT(task.start());
+        CPPUNIT_ASSERT(task.get_state() == th::tasklet::RUNNING
+                || task.get_state() == th::tasklet::FINISHED);
+
+        CPPUNIT_ASSERT(task.wait());
+        CPPUNIT_ASSERT_EQUAL((int) th::tasklet::ABORTED, (int) task.get_state());
     }
 };
 

@@ -39,6 +39,8 @@
 #error You are trying to include a C++ only header file
 #endif
 
+#include <exception>
+
 #include <boost/signal.hpp>
 #include <boost/thread.hpp>
 
@@ -67,8 +69,30 @@ namespace threads {
 class tasklet
 {
 public:
-    // Utility typedef
+    // Utility typedefs
     typedef boost::signal<void (tasklet &)> func_type;
+    typedef boost::signal<void (tasklet &, std::exception const &)
+        > error_func_type;
+
+    /**
+     * Enum that defines the states the tasklet can be in.
+     **/
+    enum state
+    {
+        STANDING_BY = 0,   /* Tasklet is not currently running the bound
+                              function, so start() can safely be invoked. */
+        RUNNING     = 1,   /* Tasklet is currently running the bound function.
+                              You can't start() it, but you can stop() it. */
+        SLEEPING    = 2,   /* The tasklet's bound function has invoked sleep(),
+                              but not yet returned. */
+        STOPPED     = 3,   /* The stop() function has been called, but the bound
+                              function has not yet finished execution. */
+        ABORTED     = 4,   /* Running the bound function resulted in an
+                              exception, and has stopped. */
+        FINISHED    = 5    /* The bound function has finished executing,
+                              possibly because stop() was called. The tasklet is
+                              ready for resetting. */
+    };
 
     /**
      * Construct a tasklet instance that, when started, will execute the passed
@@ -128,23 +152,30 @@ public:
      **/
     bool wait();
 
+
     /**
-     * @return true if the bound function has been started in a separate thread,
+     * Reset the tasklet's state to STANDING_BY, if possible. This isn't done
+     * automatically, so the caller has ample opportunity to query the tasklet's
+     * status.
+     *
+     * @return True if the reset was successful, else false. You may wish to
+     *      query the current state before attempting to reset the tasklet.
+     **/
+    bool reset();
+
+
+    /**
+     * @return the current state of the tasklet, i.e. one of the values of
+     *      the state enum.
+     **/
+    state get_state() const;
+
+
+    /**
+     * @return true if the current state is one of RUNNING, SLEEPING, STOPPED,
      *      else false.
      **/
-    bool started() const;
-
-    /**
-     * @return true if the bound function has been started and is already
-     *      finished, else false.
-     **/
-    bool finished() const;
-
-    /**
-     * @return true if the bound function has been started and has been sent
-     *      a stop signal via stop(), else false.
-     **/
-    bool stopped() const;
+    bool alive() const;
 
 
     /**
@@ -161,9 +192,31 @@ public:
      * @param usecs [optional] Number of microseconds to sleep. If no time is
      *      specified, the sleep is not limited to a certain amount of time,
      *      but can only be broken by a call to stop().
-     * @return same as stopped().
+     * @return The current tasklet state.
      **/
-    bool sleep(uint32_t usecs = 0);
+    state sleep(uint32_t usecs = 0);
+
+
+    /**
+     * Allows to set an error handler function for the tasklet that's invoked
+     * if the bound function produces any exception derived from std::exception
+     * (such as std::runtime_error, etc.).
+     *
+     * If any other exception is thrown, tasklet passes a std::runtime_error
+     * to the error handler.
+     *
+     * The parameters for the error handler function are a tasklet reference
+     * (this) and a reference to the caught exception.
+     *
+     * Note that you may set as many error handlers as you wish, they will all
+     * be invoked in the order they are registered here.
+     *
+     * Note also that any exceptions thrown from an error handler will be
+     * silently ignored.
+     *
+     * @param slot The error handler function to invoke on errors.
+     **/
+    void add_error_handler(error_func_type::slot_type slot);
 
 private:
     // Helper function to call the bound function and set m_done at the end.
@@ -172,10 +225,11 @@ private:
     // Bound function
     func_type               m_func;
 
-    // Flag to signal that the bound function has finished execution.
-    bool                    m_done;
-    // Flag to signal to the bound function that it should stop.
-    bool                    m_stopped;
+    // Optional error handling function
+    error_func_type         m_error_func;
+
+    // State of the tasklet, can be queried via the get_state() function.
+    state                   m_state;
     // Internal thread in which the bound function is executed.
     boost::thread *         m_thread;
     // Condition to signal a change in the m_stopped flag.
