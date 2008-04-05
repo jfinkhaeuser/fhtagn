@@ -32,8 +32,8 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_TASKLET_H
-#define FHTAGN_TASKLET_H
+#ifndef FHTAGN_THREADS_TASKLET_H
+#define FHTAGN_THREADS_TASKLET_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
