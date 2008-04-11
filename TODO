@@ -1,5 +1,10 @@
 Source code:
 
+- variants:
+  - replace boost::any with home-grown solution
+  - add comparison operators that throw on type mismatch, else use std::less,
+    etc. Use traits to determine the appropriate specialization for the holder
+    type. Might require the home-grown any replacement above.
 - char encoding:
   - http://en.wikipedia.org/wiki/ISO/IEC_8859-1#ISO-8859-1
     difference between ISO 8859-1 and ISO-8859-1 ?
