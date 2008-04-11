@@ -19,6 +19,9 @@ gencov: cleancov run-tests
 	@"$(top_srcdir)/gencov.sh" "$(top_srcdir)" "$(top_builddir)"
 endif
 
+buildbot-install:
+	DESTDIR=$(shell pwd)/buildbot-install $(MAKE) install
+
 EXTRA_DIST = \
 	Makefile.common bootstrap.sh gencov.sh libfhtagn.pc.in libfhtagn_util.pc.in
 
