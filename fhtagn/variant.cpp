@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Henning Pfeiffer <slashgod@users.sourceforge.net>
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
@@ -52,7 +52,7 @@ variant::instanciate_invalid_value()
 
 variant::variant(variant_state state)
     : m_state(state)
-    , m_data()
+    , m_data(0)
 {
     // only used for null value, so don't instanciate again.
 }
@@ -60,7 +60,7 @@ variant::variant(variant_state state)
 
 variant::variant()
     : m_state(IS_EMPTY)
-    , m_data()
+    , m_data(0)
 {
     instanciate_invalid_value();
 }
@@ -68,9 +68,15 @@ variant::variant()
 
 variant::variant(variant const & other)
     : m_state(other.m_state)
-    , m_data(other.m_data)
+    , m_data(other.m_data ? other.m_data->clone() : 0)
 {
     instanciate_invalid_value();
+}
+
+
+variant::~variant()
+{
+    delete m_data;
 }
 
 
@@ -83,8 +89,9 @@ variant::operator=(variant const & other)
     }
 
     if (this != &other) {
-        m_data = other.m_data;
         m_state = other.m_state;
+        delete m_data;
+        m_data = other.m_data ? other.m_data->clone() : 0;
     }
     return *this;
 }
@@ -158,7 +165,7 @@ variant::operator[](std::string const & key)
             // returning the invalid value - the reason is that on
             // non-const maps the expected behaviour is to silently add
             // new kv-pairs. On const maps, that can't work...
-            m_data = map_t();
+            m_data = new data<map_t>();
             m_state = IS_VALUE;
             // fall through
 

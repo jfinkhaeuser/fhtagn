@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Henning Pfeiffer <slashgod@users.sourceforge.net>
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
@@ -45,7 +45,6 @@
 #include <string>
 #include <stdexcept>
 
-#include <boost/any.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -115,7 +114,8 @@ namespace fhtagn {
 /**
  * The variant class serves the purpose of holding a variety of values, the
  * exact data type of which are determined at run time. The concept is very
- * similar to "any" data types, and in fact variant uses boost::any internally.
+ * similar to "any" data types, and in fact variant used to use boost::any
+ * internally.
  *
  * In contrast to "any", however, you can determine at compile time what data
  * types may be stored in the variant. Assigning a differently typed value to
@@ -293,7 +293,7 @@ public:
     typedef std::logic_error error;
 
     variant();
-    ~variant() {}
+    ~variant();
 
     /**
      * Variants are CopyConstructible and Assignable from other variants.
@@ -452,7 +452,11 @@ private:
     /** The state of this variant **/
     variant_state  m_state;
     /** The data (if any) this variant holds **/
-    boost::any     m_data;
+    struct data_base;
+    data_base * m_data;
+
+    template <typename T>
+    struct data;
 
     /**
      * There is little need creating hundres of invalid variants, where one

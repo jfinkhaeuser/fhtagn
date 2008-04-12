@@ -1,5 +1,7 @@
 /**
- * Copyright (C) 2007 the authors.
+ * $Id: variant.h 117 2008-02-18 08:10:24Z unwesen $
+ *
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Henning Pfeiffer <slashgod@users.sourceforge.net>
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
@@ -38,61 +40,67 @@
 #error You are trying to include a C++ only header file
 #endif
 
-namespace {
 
 /**
- * This slightly deranged construct allows us to avoid copying a value into
- * it's holder twice when the value's type and the holder's type are
- * identical (which should be the case most of the time). We do so by
- * explicitly specializing the holder_assigner for cases where valueT is
- * identical to holderT.
+ * The data_base and data<T> structs fulfil pretty much the same purpose as
+ * boost::any's nested classes, and in fact look remarkably similar ;)
  **/
-template <typename valueT, typename holderT>
-struct holder_assigner
+struct variant::data_base
 {
-  holder_assigner(valueT const & v)
-    : m_v(v)
-  {
-  }
+    virtual ~data_base()
+    {
+    }
 
-  inline void assign(boost::any & data)
-  {
-    // In the generic case, i.e. where valueT != holderT, we need to
-    // instanciate a holder_type temporary (creating one copy) which we then
-    // assign to the boost::any (creating another copy).
-    data = holderT(m_v);
-  }
-
-  valueT const & m_v;
+    virtual std::type_info const & type() const = 0;
+    virtual data_base * clone() const = 0;
 };
 
+/**
+ * By providing type-parameterized versions of type() and clone() to data_base,
+ * we can determine whether the contents of two variants are of the same type
+ * at run-time. We can also copy a variant's contents without knowing it's type.
+ **/
 template <typename valueT>
-struct holder_assigner<valueT, valueT>
+struct variant::data
+    : public variant::data_base
 {
-  holder_assigner(valueT const & v)
-    : m_v(v)
-  {
-  }
+    typedef typename specialization_traits<valueT>::holder_type holder_type;
 
-  inline void assign(boost::any & data)
-  {
-    // In the special case where valueT == holderT, we can skip the temporary
-    // holder_type, and immediately assign to the boost::any (creating just
-    // one copy).
-    data = m_v;
-  }
+    data()
+        : m_value()
+    {
+    }
 
-  valueT const & m_v;
+    data(holder_type const & val)
+        : m_value(val)
+    {
+    }
+
+    virtual ~data()
+    {
+    }
+
+    virtual std::type_info const & type() const
+    {
+      return typeid(holder_type);
+    }
+
+    virtual data_base * clone() const
+    {
+      return new data<valueT>(m_value);
+    }
+
+    holder_type m_value;
 };
 
-} // anonymous namespace
+
 
 
 
 template <typename T>
 variant::variant(T const & other)
     : m_state(IS_VALUE)
-    , m_data()
+    , m_data(0)
 {
     instanciate_invalid_value();
     this->operator=(other);
@@ -103,22 +111,25 @@ template <typename T>
 variant::variant &
 variant::operator=(T const & other)
 {
+    if (this == reinterpret_cast<variant const *>(&other)) {
+        return *this;
+    }
+
     switch (m_state) {
         case IS_INVALID:
             throw error("Cannot assign to the variant::invalid_value!");
             break;
 
-        case IS_EMPTY:
         case IS_VALUE:
-            if (this != reinterpret_cast<variant const *>(&other)) {
-                holder_assigner<
-                    T,
-                    typename specialization_traits<T>::holder_type
-                > assigner(other);
-                assigner.assign(m_data);
-                // we don't actually know if other is a value, but we hope it is.
-                m_state = IS_VALUE;
-            }
+            delete m_data;
+            // fall through
+        case IS_EMPTY:
+            // data<T> accepts a holder_type const & as it's parameter. If T and
+            // the holder type are the same, that's great. If not, the coercion
+            // is performed at this point.
+            m_data = new data<T>(other);
+            // we don't actually know if other is a value, but we hope it is.
+            m_state = IS_VALUE;
             break;
 
         default:
@@ -133,8 +144,9 @@ template <typename T>
 typename variant::specialization_traits<T>::holder_type &
 variant::as()
 {
-    return *boost::any_cast<typename specialization_traits<T>::holder_type>(
-        &m_data);
+    // We don't actually know if the reinterpret_cast is safe. It's left up to
+    // the caller to precede calls to as() with calls to is().
+    return reinterpret_cast<data<T> *>(m_data)->m_value;
 }
 
 
@@ -142,8 +154,9 @@ template <typename T>
 typename variant::specialization_traits<T>::holder_type const &
 variant::as() const
 {
-    return *boost::any_cast<typename specialization_traits<T>::holder_type>(
-        &m_data);
+    // We don't actually know if the reinterpret_cast is safe. It's left up to
+    // the caller to precede calls to as() with calls to is().
+    return reinterpret_cast<data<T> *>(m_data)->m_value;
 }
 
 
@@ -151,8 +164,7 @@ template <typename T>
 bool
 variant::is() const
 {
-    return (0 != boost::any_cast<typename specialization_traits<T>::holder_type>(
-          &m_data));
+    return (m_data && typeid(T) == m_data->type());
 }
 
 
