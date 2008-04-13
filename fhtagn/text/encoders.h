@@ -318,6 +318,64 @@ struct cp1252_encoder
 };
 
 
+
+/**
+ * Encoder for Mac Roman. This encoding covers all possible 8 bit values.
+ **/
+struct mac_roman_encoder
+    : public transcoder_base
+{
+    typedef char const * const_iterator;
+
+    /**
+     * When encoding unknown characters, the default is to skip these characters.
+     **/
+    explicit mac_roman_encoder()
+        : transcoder_base(true, '\0')
+        , m_flag(false)
+        , m_byte(0)
+    {
+    }
+
+    const_iterator begin() const
+    {
+        if (m_flag) {
+            return &m_byte;
+        }
+        return end();
+    }
+
+    const_iterator end() const
+    {
+        return &m_byte + 1;
+    }
+
+    bool encode(utf32_char_t ch)
+    {
+        if (0 <= ch && ch <= 127) {
+            m_byte = static_cast<char>(ch);
+            m_flag = true;
+        }
+
+        for (uint32_t i = 0 ; i < 128 ; ++i) {
+            if (detail::mac_roman_mapping[i] == ch) {
+                m_byte = i + 0x80;
+                m_flag = true;
+                return true;
+            }
+        }
+
+        // other bytes can't be encoded
+        m_flag = false;
+        return false;
+    }
+
+    bool  m_flag;
+    char  m_byte;
+};
+
+
+
 /**
  * UTF-8 encoder
  **/

@@ -158,7 +158,9 @@ enum char_encoding_type
     ISO_8859_16           = IEC_8859_16,
     ISO_LATIN_10          = IEC_8859_16,
     WINDOWS_1252          = 24,
-    CP_1252               = WINDOWS_1252
+    CP_1252               = WINDOWS_1252,
+    MAC_ROMAN             = 25,
+    MACINTOSH             = MAC_ROMAN
 };
 
 
@@ -175,6 +177,10 @@ extern utf32_char_t iso8859_mapping[];
  **/
 extern utf32_char_t cp1252_mapping[];
 
+/**
+ * And again for Mac Roman
+ **/
+extern utf32_char_t mac_roman_mapping[];
 
 } // namespace detail
 

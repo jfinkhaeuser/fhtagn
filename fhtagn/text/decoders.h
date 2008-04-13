@@ -305,6 +305,60 @@ struct cp1252_decoder
 
 
 /**
+ * Decoder for Mac Roman. This encoding covers all possible 8 bit values.
+ **/
+struct mac_roman_decoder
+    : public transcoder_base
+{
+    mac_roman_decoder()
+        : transcoder_base()
+        , m_byte(0)
+        , m_empty(true)
+    {
+    }
+
+
+    bool append(unsigned char byte)
+    {
+        if (have_full_sequence()) {
+            return false;
+        }
+
+        m_byte = byte;
+        m_empty = false;
+        return true;
+    }
+
+
+    bool have_full_sequence() const
+    {
+        return !m_empty;
+    }
+
+
+    void reset()
+    {
+        // signal empty buffer
+        m_empty = true;
+    }
+
+
+    utf32_char_t to_utf32() const
+    {
+        unsigned char tmp = m_byte;
+        if (tmp <= 127) {
+            return tmp;
+        }
+        return detail::mac_roman_mapping[tmp - 0x80];
+    }
+
+    unsigned char       m_byte;
+    bool                m_empty;
+};
+
+
+
+/**
  * UTF-8 decoder
  **/
 struct utf8_decoder
