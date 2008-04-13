@@ -218,6 +218,89 @@ variant::safe_get(variant & var)
 }
 
 
+template <typename T>
+inline bool
+variant::operator==(T const & other) const
+{
+    if (!m_data || m_data->type() != typeid(T)) {
+        throw variant::error("fhtagn::variant: cannot compare to a value type "
+                "other than the one held in the variant.");
+    }
+
+    return std::equal_to<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+        other);
+}
+
+
+template <typename T>
+inline bool
+variant::operator<(T const & other) const
+{
+    if (!m_data || m_data->type() != typeid(T)) {
+        throw variant::error("fhtagn::variant: cannot compare to a value type "
+                "other than the one held in the variant.");
+    }
+
+    return std::less<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+        other);
+}
+
+
+template <typename T>
+inline bool
+variant::operator<=(T const & other) const
+{
+    if (!m_data || m_data->type() != typeid(T)) {
+        throw variant::error("fhtagn::variant: cannot compare to a value type "
+                "other than the one held in the variant.");
+    }
+
+    return std::less_equal<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+        other);
+}
+
+
+template <typename T>
+inline bool
+variant::operator>(T const & other) const
+{
+    if (!m_data || m_data->type() != typeid(T)) {
+        throw variant::error("fhtagn::variant: cannot compare to a value type "
+                "other than the one held in the variant.");
+    }
+
+    return std::greater<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+        other);
+}
+
+
+template <typename T>
+inline bool
+variant::operator>=(T const & other) const
+{
+    if (!m_data || m_data->type() != typeid(T)) {
+        throw variant::error("fhtagn::variant: cannot compare to a value type "
+                "other than the one held in the variant.");
+    }
+
+    return std::greater_equal<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+        other);
+}
+
+
+template <typename T>
+inline bool
+variant::operator!=(T const & other) const
+{
+    if (!m_data || m_data->type() != typeid(T)) {
+        throw variant::error("fhtagn::variant: cannot compare to a value type "
+                "other than the one held in the variant.");
+    }
+
+    return std::not_equal_to<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+        other);
+}
+
 
 } // namespace fhtagn
 

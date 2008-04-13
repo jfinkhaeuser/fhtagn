@@ -89,6 +89,7 @@ public:
       CPPUNIT_TEST(testCheck);
       CPPUNIT_TEST(testExists);
       CPPUNIT_TEST(testSafeGet);
+      CPPUNIT_TEST(testOperators);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -270,6 +271,36 @@ private:
         fhtagn::variant z;
         CPPUNIT_ASSERT_THROW(FHTAGN_VARIANT_SAFE_GET(int, z, ["baz"]["quux"]), fhtagn::variant::error);
         CPPUNIT_ASSERT_EQUAL(false, FHTAGN_VARIANT_CHECK(fhtagn::variant::map_t, z, ["baz"]));
+    }
+
+
+    void testOperators()
+    {
+        fhtagn::variant x = 42;
+
+        // Test positives
+        CPPUNIT_ASSERT(x == 42);
+        CPPUNIT_ASSERT(x < 43);
+        CPPUNIT_ASSERT(x <= 42);
+        CPPUNIT_ASSERT(x > 41);
+        CPPUNIT_ASSERT(x >= 42);
+        CPPUNIT_ASSERT(x != 0);
+
+        // Test negatives
+        CPPUNIT_ASSERT(!(x == 43));
+        CPPUNIT_ASSERT(!(x < 41));
+        CPPUNIT_ASSERT(!(x <= 41));
+        CPPUNIT_ASSERT(!(x > 43));
+        CPPUNIT_ASSERT(!(x >= 43));
+        CPPUNIT_ASSERT(!(x != 42));
+
+        // Test other type
+        CPPUNIT_ASSERT_THROW(x == 42.0, fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x < 43.0, fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x <= 42.0, fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x > 41.0, fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x >= 42.0, fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x != 0.0, fhtagn::variant::error);
     }
 };
 

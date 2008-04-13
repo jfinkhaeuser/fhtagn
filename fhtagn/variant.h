@@ -419,6 +419,27 @@ public:
     static typename specialization_traits<T>::holder_type &
     safe_get(variant & var);
 
+    /**
+     * Comparison operators. All of these will throw a variant::error if T
+     * isn't the same as the held type. The comparison operators use the
+     * comparison functions from <functional> (i.e. std::equal_to, etc.), so
+     * even if your held type does not define comparison operators, you can
+     * produce specializations of these functions, and variant's comparisons
+     * will work.
+     **/
+    template <typename T>
+    bool operator==(T const & other) const;
+    template <typename T>
+    bool operator<(T const & other) const;
+    template <typename T>
+    bool operator<=(T const & other) const;
+    template <typename T>
+    bool operator>(T const & other) const;
+    template <typename T>
+    bool operator>=(T const & other) const;
+    template <typename T>
+    bool operator!=(T const & other) const;
+
 private:
     /**
      * Internally, variants can be in three states:
