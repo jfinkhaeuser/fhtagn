@@ -64,7 +64,7 @@ struct test_type
   int m_x;
   static int sm_copy_count;
 
-  bool operator==(test_type const & other)
+  bool operator==(test_type const & other) const
   {
     return m_x == other.m_x;
   }
@@ -74,6 +74,16 @@ int test_type::sm_copy_count = 0;
 
 } // anonymous namespace
 FHTAGN_VARIANT_SPECIALIZE(test_type)
+FHTAGN_VARIANT_SPECIALIZE_COMPARE(test_type, not_equal_to,
+        fhtagn::variant::compare_throw<test_type>)
+FHTAGN_VARIANT_SPECIALIZE_COMPARE(test_type, less,
+        fhtagn::variant::compare_throw<test_type>)
+FHTAGN_VARIANT_SPECIALIZE_COMPARE(test_type, less_equal,
+        fhtagn::variant::compare_throw<test_type>)
+FHTAGN_VARIANT_SPECIALIZE_COMPARE(test_type, greater,
+        fhtagn::variant::compare_throw<test_type>)
+FHTAGN_VARIANT_SPECIALIZE_COMPARE(test_type, greater_equal,
+        fhtagn::variant::compare_throw<test_type>)
 
 class VariantTest
     : public CppUnit::TestFixture
@@ -301,6 +311,30 @@ private:
         CPPUNIT_ASSERT_THROW(x > 41.0, fhtagn::variant::error);
         CPPUNIT_ASSERT_THROW(x >= 42.0, fhtagn::variant::error);
         CPPUNIT_ASSERT_THROW(x != 0.0, fhtagn::variant::error);
+
+        // Test positives with other variants
+        CPPUNIT_ASSERT(x == fhtagn::variant(42));
+        CPPUNIT_ASSERT(x < fhtagn::variant(43));
+        CPPUNIT_ASSERT(x <= fhtagn::variant(42));
+        CPPUNIT_ASSERT(x > fhtagn::variant(41));
+        CPPUNIT_ASSERT(x >= fhtagn::variant(42));
+        CPPUNIT_ASSERT(x != fhtagn::variant(0));
+
+        // Test negatives with other variants
+        CPPUNIT_ASSERT(!(x == fhtagn::variant(43)));
+        CPPUNIT_ASSERT(!(x < fhtagn::variant(41)));
+        CPPUNIT_ASSERT(!(x <= fhtagn::variant(41)));
+        CPPUNIT_ASSERT(!(x > fhtagn::variant(43)));
+        CPPUNIT_ASSERT(!(x >= fhtagn::variant(43)));
+        CPPUNIT_ASSERT(!(x != fhtagn::variant(42)));
+
+        // Test other types with other variants
+        CPPUNIT_ASSERT_THROW(x == fhtagn::variant(42.0), fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x < fhtagn::variant(43.0), fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x <= fhtagn::variant(42.0), fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x > fhtagn::variant(41.0), fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x >= fhtagn::variant(42.0), fhtagn::variant::error);
+        CPPUNIT_ASSERT_THROW(x != fhtagn::variant(0.0), fhtagn::variant::error);
     }
 };
 

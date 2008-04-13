@@ -209,5 +209,65 @@ variant::operator[](std::string const & key) const
 }
 
 
+bool
+variant::operator==(variant const & other) const
+{
+    if (!m_data || !other.m_data) {
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
+    }
+    return (*m_data == *other.m_data);
+}
+
+
+bool
+variant::operator<(variant const & other) const
+{
+    if (!m_data || !other.m_data) {
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
+    }
+    return (*m_data < *other.m_data);
+}
+
+
+bool
+variant::operator<=(variant const & other) const
+{
+    if (!m_data || !other.m_data) {
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
+    }
+    return (*m_data <= *other.m_data);
+}
+
+
+bool
+variant::operator>(variant const & other) const
+{
+    if (!m_data || !other.m_data) {
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
+    }
+    return (*m_data > *other.m_data);
+}
+
+
+bool
+variant::operator>=(variant const & other) const
+{
+    if (!m_data || !other.m_data) {
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
+    }
+    return (*m_data >= *other.m_data);
+}
+
+
+bool
+variant::operator!=(variant const & other) const
+{
+    if (!m_data || !other.m_data) {
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
+    }
+    return (*m_data != *other.m_data);
+}
+
+
 
 } // namespace fhtagn

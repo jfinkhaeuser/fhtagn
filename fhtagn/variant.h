@@ -44,6 +44,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <functional>
 
 #include <boost/static_assert.hpp>
 #include <boost/shared_ptr.hpp>
@@ -72,9 +73,29 @@
         struct variant::specialization_traits<_value_type>                    \
         {                                                                     \
             typedef _holder_type holder_type;                                 \
+            /** specialize comparison functors as well **/                    \
+            typedef comp_equal_to<holder_type>::type        equal_to;         \
+            typedef comp_not_equal_to<holder_type>::type    not_equal_to;     \
+            typedef comp_less<holder_type>::type            less;             \
+            typedef comp_less_equal<holder_type>::type      less_equal;       \
+            typedef comp_greater<holder_type>::type         greater;          \
+            typedef comp_greater_equal<holder_type>::type   greater_equal;    \
         };                                                                    \
     } // namespace
 
+/**
+ * Call these macros for specializing the comparison functor to use when
+ * comparing two variants holding the same value type. Note that the comparison
+ * functor must be specialized on the holder type, not the value type itself.
+ **/
+#define FHTAGN_VARIANT_SPECIALIZE_COMPARE(_value_type, _operator, _functor)   \
+    namespace fhtagn {                                                        \
+        template <>                                                           \
+        struct variant::comp_##_operator<_value_type>                         \
+        {                                                                     \
+            typedef _functor type;                                            \
+        };                                                                    \
+    } // namespace
 
 /**
  * Safe version of fhtagn::variant::check - calls fhtagn::variant::check but
@@ -271,6 +292,11 @@ namespace fhtagn {
  * an internal header file for each use case, and #include that wherever
  * appropriate. The included header file <fhtagn/stdvariant.h> may be a good
  * starting point.
+ *
+ * Note that if you use any value type that does not have comparison oerators
+ * defined, you will either have to define those comparison operators, or
+ * explicitly tell variant what functor to use for comparisons via the
+ * FHTAGN_VARIANT_SPECIALIZE_COMPARE macro.
  **/
 class variant
 {
@@ -321,6 +347,63 @@ public:
     struct is_specialized;
 
     /**
+     * For each of the comparison operators, a typedef in a specialized struct
+     * is declared, which is then used in specialization_traits. The reason is
+     * that for most types, the predefined comparison functors from <functional>
+     * are likely what you want to compare variant's contents with; however
+     * some value types may not define all operators, and you may wish to
+     * explicitly specialize which functor to use instead.
+     **/
+    template <typename valueT>
+    struct comp_equal_to
+    {
+        typedef std::equal_to<valueT> type;
+    };
+
+    template <typename valueT>
+    struct comp_not_equal_to
+    {
+        typedef std::not_equal_to<valueT> type;
+    };
+
+    template <typename valueT>
+    struct comp_less
+    {
+        typedef std::less<valueT> type;
+    };
+
+    template <typename valueT>
+    struct comp_less_equal
+    {
+        typedef std::less_equal<valueT> type;
+    };
+
+    template <typename valueT>
+    struct comp_greater
+    {
+        typedef std::greater<valueT> type;
+    };
+
+    template <typename valueT>
+    struct comp_greater_equal
+    {
+        typedef std::greater_equal<valueT> type;
+    };
+
+
+    /**
+     * Comparison functor to use whenever you want a comparison to throw an
+     * exception. That is likely to be the case whenever the corresponding
+     * operator for your value type does not exist.
+     **/
+    template <typename T>
+    struct compare_throw
+    {
+        bool operator()(T const & first, T const & second) const;
+    };
+
+
+    /**
      * Using a traits structure for valueT enables us to do two things:
      * 1. easily define at compile time, whether a different holder_type is to
      *    be used from the valueT specified. By default, holder_type and valueT
@@ -331,6 +414,18 @@ public:
     struct specialization_traits
     {
         typedef valueT holder_type;
+
+        /**
+         * Comparator typedefs - each of them can be specialized separately, if
+         * desired.
+         **/
+        typedef typename comp_equal_to<valueT>::type        equal_to;
+        typedef typename comp_not_equal_to<valueT>::type    not_equal_to;
+        typedef typename comp_less<valueT>::type            less;
+        typedef typename comp_less_equal<valueT>::type      less_equal;
+        typedef typename comp_greater<valueT>::type         greater;
+        typedef typename comp_greater_equal<valueT>::type   greater_equal;
+
         BOOST_STATIC_ASSERT(sizeof(is_specialized<valueT>) != 0);
     };
 
@@ -439,6 +534,18 @@ public:
     bool operator>=(T const & other) const;
     template <typename T>
     bool operator!=(T const & other) const;
+
+    /**
+     * Special overloads for variant, behave much the same way. Note that two
+     * empty or two invalid variants will always throw, even with operator==
+     * or operator!=, where we could technically return false.
+     **/
+    bool operator==(variant const & other) const;
+    bool operator<(variant const & other) const;
+    bool operator<=(variant const & other) const;
+    bool operator>(variant const & other) const;
+    bool operator>=(variant const & other) const;
+    bool operator!=(variant const & other) const;
 
 private:
     /**

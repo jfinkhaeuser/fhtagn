@@ -40,6 +40,26 @@
 #error You are trying to include a C++ only header file
 #endif
 
+/**
+ * This particular error/error message is used in many places, so defined just
+ * once.
+ **/
+#define FHTAGN_VARIANT_COMPARISON_ERROR \
+    variant::error("fhtagn::variant: cannot compare to a value type other " \
+            "than the one held in the variant.")
+
+/**
+ * The compare_throw comparison functor always throws.
+ **/
+template <typename T>
+inline bool
+variant::compare_throw<T>::operator()(T const & first, T const & second) const
+{
+    throw FHTAGN_VARIANT_COMPARISON_ERROR;
+    return false;
+}
+
+
 
 /**
  * The data_base and data<T> structs fulfil pretty much the same purpose as
@@ -53,6 +73,18 @@ struct variant::data_base
 
     virtual std::type_info const & type() const = 0;
     virtual data_base * clone() const = 0;
+
+    /**
+     * The comparison operators need to be defined in data<T> as well, where
+     * after a comparison of other.type() to our own held type, we can decide
+     * whether it's safe to upcast data_base to data<T> or not.
+     **/
+    virtual bool operator==(data_base const & other) const = 0;
+    virtual bool operator<(data_base const & other) const = 0;
+    virtual bool operator<=(data_base const & other) const = 0;
+    virtual bool operator>(data_base const & other) const = 0;
+    virtual bool operator>=(data_base const & other) const = 0;
+    virtual bool operator!=(data_base const & other) const = 0;
 };
 
 /**
@@ -89,6 +121,70 @@ struct variant::data
     {
       return new data<valueT>(m_value);
     }
+
+
+    /**
+     * Comparison operators
+     **/
+    virtual bool operator==(data_base const & other) const
+    {
+        if (other.type() != typeid(holder_type)) {
+            throw FHTAGN_VARIANT_COMPARISON_ERROR;
+        }
+        return typename specialization_traits<holder_type>::equal_to()(m_value,
+                reinterpret_cast<data<valueT> const *>(&other)->m_value);
+    }
+
+
+    virtual bool operator<(data_base const & other) const
+    {
+        if (other.type() != typeid(holder_type)) {
+            throw FHTAGN_VARIANT_COMPARISON_ERROR;
+        }
+        return typename specialization_traits<holder_type>::less()(m_value,
+                reinterpret_cast<data<valueT> const *>(&other)->m_value);
+    }
+
+
+    virtual bool operator<=(data_base const & other) const
+    {
+        if (other.type() != typeid(holder_type)) {
+            throw FHTAGN_VARIANT_COMPARISON_ERROR;
+        }
+        return typename specialization_traits<holder_type>::less_equal()(m_value,
+                reinterpret_cast<data<valueT> const *>(&other)->m_value);
+    }
+
+
+    virtual bool operator>(data_base const & other) const
+    {
+        if (other.type() != typeid(holder_type)) {
+            throw FHTAGN_VARIANT_COMPARISON_ERROR;
+        }
+        return typename specialization_traits<holder_type>::greater()(m_value,
+                reinterpret_cast<data<valueT> const *>(&other)->m_value);
+    }
+
+
+    virtual bool operator>=(data_base const & other) const
+    {
+        if (other.type() != typeid(holder_type)) {
+            throw FHTAGN_VARIANT_COMPARISON_ERROR;
+        }
+        return typename specialization_traits<holder_type>::greater_equal()(m_value,
+                reinterpret_cast<data<valueT> const *>(&other)->m_value);
+    }
+
+
+    virtual bool operator!=(data_base const & other) const
+    {
+        if (other.type() != typeid(holder_type)) {
+            throw FHTAGN_VARIANT_COMPARISON_ERROR;
+        }
+        return typename specialization_traits<holder_type>::not_equal_to()(m_value,
+                reinterpret_cast<data<valueT> const *>(&other)->m_value);
+    }
+
 
     holder_type m_value;
 };
@@ -223,11 +319,10 @@ inline bool
 variant::operator==(T const & other) const
 {
     if (!m_data || m_data->type() != typeid(T)) {
-        throw variant::error("fhtagn::variant: cannot compare to a value type "
-                "other than the one held in the variant.");
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
     }
 
-    return std::equal_to<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+    return typename specialization_traits<T>::equal_to()(reinterpret_cast<data<T> *>(m_data)->m_value,
         other);
 }
 
@@ -237,11 +332,10 @@ inline bool
 variant::operator<(T const & other) const
 {
     if (!m_data || m_data->type() != typeid(T)) {
-        throw variant::error("fhtagn::variant: cannot compare to a value type "
-                "other than the one held in the variant.");
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
     }
 
-    return std::less<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+    return typename specialization_traits<T>::less()(reinterpret_cast<data<T> *>(m_data)->m_value,
         other);
 }
 
@@ -251,11 +345,10 @@ inline bool
 variant::operator<=(T const & other) const
 {
     if (!m_data || m_data->type() != typeid(T)) {
-        throw variant::error("fhtagn::variant: cannot compare to a value type "
-                "other than the one held in the variant.");
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
     }
 
-    return std::less_equal<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+    return typename specialization_traits<T>::less_equal()(reinterpret_cast<data<T> *>(m_data)->m_value,
         other);
 }
 
@@ -265,11 +358,10 @@ inline bool
 variant::operator>(T const & other) const
 {
     if (!m_data || m_data->type() != typeid(T)) {
-        throw variant::error("fhtagn::variant: cannot compare to a value type "
-                "other than the one held in the variant.");
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
     }
 
-    return std::greater<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+    return typename specialization_traits<T>::greater()(reinterpret_cast<data<T> *>(m_data)->m_value,
         other);
 }
 
@@ -279,11 +371,10 @@ inline bool
 variant::operator>=(T const & other) const
 {
     if (!m_data || m_data->type() != typeid(T)) {
-        throw variant::error("fhtagn::variant: cannot compare to a value type "
-                "other than the one held in the variant.");
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
     }
 
-    return std::greater_equal<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+    return typename specialization_traits<T>::greater_equal()(reinterpret_cast<data<T> *>(m_data)->m_value,
         other);
 }
 
@@ -293,11 +384,10 @@ inline bool
 variant::operator!=(T const & other) const
 {
     if (!m_data || m_data->type() != typeid(T)) {
-        throw variant::error("fhtagn::variant: cannot compare to a value type "
-                "other than the one held in the variant.");
+        throw FHTAGN_VARIANT_COMPARISON_ERROR;
     }
 
-    return std::not_equal_to<T>()(reinterpret_cast<data<T> *>(m_data)->m_value,
+    return typename specialization_traits<T>::not_equal_to()(reinterpret_cast<data<T> *>(m_data)->m_value,
         other);
 }
 
