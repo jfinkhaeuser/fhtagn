@@ -280,8 +280,9 @@ private:
         th::tasklet task(boost::bind(&throwing_free_func, _1));
 
         CPPUNIT_ASSERT(task.start());
+        // The thread may already be ABORTED, but never FINISHED.
         CPPUNIT_ASSERT(task.get_state() == th::tasklet::RUNNING
-                || task.get_state() == th::tasklet::FINISHED);
+                || task.get_state() == th::tasklet::ABORTED);
 
         CPPUNIT_ASSERT(task.wait());
         CPPUNIT_ASSERT_EQUAL((int) th::tasklet::ABORTED, (int) task.get_state());
@@ -293,8 +294,9 @@ private:
         task.add_error_handler(boost::bind(&error_handler, _1, _2));
 
         CPPUNIT_ASSERT(task.start());
+        // The thread may already be ABORTED, but never FINISHED.
         CPPUNIT_ASSERT(task.get_state() == th::tasklet::RUNNING
-                || task.get_state() == th::tasklet::FINISHED);
+                || task.get_state() == th::tasklet::ABORTED);
 
         CPPUNIT_ASSERT(task.wait());
         CPPUNIT_ASSERT_EQUAL((int) th::tasklet::ABORTED, (int) task.get_state());
