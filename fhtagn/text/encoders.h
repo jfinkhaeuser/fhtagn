@@ -294,7 +294,7 @@ struct cp1252_encoder
         }
 
         for (uint32_t i = 0 ; i < 32 ; ++i) {
-            if (detail::iso8859_mapping[i] == ch) {
+            if (detail::cp1252_mapping[i] == ch) {
                 m_byte = i + 0x80;
                 m_flag = true;
                 return true;
