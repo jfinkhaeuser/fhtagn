@@ -152,8 +152,9 @@ struct ascii_encoder
 
 
 /**
- * Base encoder for ISO-8859 encoders. ISO-8859 includes ASCII and bytes with a
- * value between 160 and 255, but the in between block of bytes is left undefined.
+ * Base encoder for ISO-8859 encoders. Note that the IANA versions of the
+ * standard is implemented, i.e. control characters in the C0 and C1 ranges
+ * are interpreted as well.
  **/
 struct iso8859_encoder_base
     : public transcoder_base
@@ -166,7 +167,8 @@ struct iso8859_encoder_base
     explicit iso8859_encoder_base(uint32_t subencoding)
         : transcoder_base(true, '\0')
         , m_subencoding(subencoding)
-        , m_byte(FHTAGN_TEXT_INVALID_CHAR)
+        , m_byte(0)
+        , m_valid(true)
     {
     }
 
@@ -174,7 +176,7 @@ struct iso8859_encoder_base
     {
         // If m_byte has a valid value, return m_byte's address. Else return
         // end()
-        return &m_byte + (m_byte == FHTAGN_TEXT_INVALID_CHAR ? 1 : 0);
+        return (m_valid ? &m_byte : end());
     }
 
     const_iterator end() const
@@ -184,8 +186,12 @@ struct iso8859_encoder_base
 
     bool encode(utf32_char_t ch)
     {
+        m_valid = true;
+
         // Characters with values <= 127 can be encoded in just like in ASCII
-        if (0 <= ch && ch <= 127) {
+        // Characters with values in the range [128, 159] are technically only
+        // valid after the 1987/1988/1989 extensions to the ISO 8859 standard.
+        if (0 <= ch && ch <= 159) {
             m_byte = static_cast<char>(ch);
             return true;
         }
@@ -214,12 +220,13 @@ struct iso8859_encoder_base
         }
 
         // other bytes can't be encoded in any of the iso8859 encodings.
-        m_byte = FHTAGN_TEXT_INVALID_CHAR; // signal empty buffer
+        m_valid = false;
         return false;
     }
 
     uint32_t  m_subencoding;
     char      m_byte;
+    bool      m_valid;
 };
 
 

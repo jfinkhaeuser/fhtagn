@@ -149,8 +149,9 @@ struct ascii_decoder
 
 
 /**
- * Base decoder for ISO-8859 decoders. ISO-8859 includes ASCII and bytes with a
- * value between 160 and 255, but the in between block of bytes is left undefined.
+ * Base decoder for ISO-8859 decoders. Note that the IANA versions of the
+ * standard is implemented, i.e. control characters in the C0 and C1 ranges
+ * are interpreted as well.
  **/
 struct iso8859_decoder_base
     : public transcoder_base
@@ -158,7 +159,8 @@ struct iso8859_decoder_base
     iso8859_decoder_base(uint32_t subencoding)
         : transcoder_base()
         , m_subencoding(subencoding)
-        , m_byte(128)
+        , m_byte(0)
+        , m_empty(true)
     {
     }
 
@@ -169,12 +171,11 @@ struct iso8859_decoder_base
             return false;
         }
 
-        if (byte <= 127 || byte >= 160) {
-            m_byte = byte;
-            return true;
-        }
-
-        return false;
+        // Characters with values in the range [128, 159] are technically only
+        // valid after the 1987/1988/1989 extensions to the ISO 8859 standard.
+        m_byte = byte;
+        m_empty = false;
+        return true;
     }
 
 
@@ -182,14 +183,14 @@ struct iso8859_decoder_base
     {
         // 128 is an invalid byte value, we use it to signal that the buffer
         // is unused.
-        return (m_byte != 128);
+        return !m_empty;
     }
 
 
     void reset()
     {
         // signal empty buffer
-        m_byte = 128;
+        m_empty = true;
     }
 
 
@@ -202,7 +203,7 @@ struct iso8859_decoder_base
         }
 
         unsigned char tmp = m_byte;
-        if (tmp <= 127) {
+        if (tmp <= 159) {
             return tmp;
         }
 
@@ -217,6 +218,7 @@ struct iso8859_decoder_base
 
     uint32_t            m_subencoding;
     unsigned char       m_byte;
+    bool                m_empty;
 };
 
 
