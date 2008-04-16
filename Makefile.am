@@ -26,4 +26,4 @@ EXTRA_DIST = \
 	Makefile.common bootstrap.sh gencov.sh libfhtagn.pc.in libfhtagn_util.pc.in
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libfhtagn.pc
+pkgconfig_DATA = libfhtagn.pc libfhtagn_util.pc
