@@ -206,6 +206,8 @@ tasklet::sleep(uint32_t usecs /* = 0 */)
 void
 tasklet::add_error_handler(error_func_type::slot_type slot)
 {
+    boost::mutex::scoped_lock lock(m_error_func_mutex);
+    m_error_func.connect(slot);
 }
 
 
@@ -222,6 +224,7 @@ tasklet::thread_runner()
         }
         try {
             // Pass any std::exception on to the error handler
+            boost::mutex::scoped_lock lock(m_error_func_mutex);
             m_error_func(*this, ex);
         } catch (...) {
             // silently ignore
@@ -235,6 +238,7 @@ tasklet::thread_runner()
             // Pass a new runtime_error on to the error handler.
             std::runtime_error e("Unspecified exception occurred in tasklet's "
                     "bound function.");
+            boost::mutex::scoped_lock lock(m_error_func_mutex);
             m_error_func(*this, e);
         } catch (...) {
             // silently ignore

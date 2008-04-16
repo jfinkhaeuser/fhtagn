@@ -55,9 +55,11 @@ void throwing_free_func(fhtagn::threads::tasklet & t)
 }
 
 
+bool free_error_handled = false;
 void error_handler(fhtagn::threads::tasklet & t, std::exception const & ex)
 {
     CPPUNIT_ASSERT_EQUAL(std::string("test_error"), std::string(ex.what()));
+    free_error_handled = true;
 }
 
 
@@ -287,6 +289,7 @@ private:
         CPPUNIT_ASSERT(task.wait());
         CPPUNIT_ASSERT_EQUAL((int) th::tasklet::ABORTED, (int) task.get_state());
 
+        CPPUNIT_ASSERT_EQUAL(false, free_error_handled);
 
         CPPUNIT_ASSERT(task.reset());
 
@@ -300,6 +303,8 @@ private:
 
         CPPUNIT_ASSERT(task.wait());
         CPPUNIT_ASSERT_EQUAL((int) th::tasklet::ABORTED, (int) task.get_state());
+
+        CPPUNIT_ASSERT_EQUAL(true, free_error_handled);
     }
 };
 

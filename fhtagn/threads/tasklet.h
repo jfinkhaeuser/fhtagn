@@ -208,11 +208,14 @@ public:
      * The parameters for the error handler function are a tasklet reference
      * (this) and a reference to the caught exception.
      *
-     * Note that you may set as many error handlers as you wish, they will all
-     * be invoked in the order they are registered here.
+     * Note #1: You may set as many error handlers as you wish, they will all
+     *          be invoked in the order they are registered here.
      *
-     * Note also that any exceptions thrown from an error handler will be
-     * silently ignored.
+     * Note #2: Any exceptions thrown from an error handler will be silently
+     *          ignored.
+     *
+     * Note #3: Calling add_error_handler() from within any of the error handlers
+     *          registered here will deadlock.
      *
      * @param slot The error handler function to invoke on errors.
      **/
@@ -236,6 +239,10 @@ private:
     boost::condition        m_finish;
     // Mutex to serialize access to flags and m_thread.
     mutable boost::mutex    m_mutex;
+    // Mutex to serialize access to the error handler callback. It's a separate
+    // mutex, unfortunately, because we don't want to block access to tasklet's
+    // functions from the error handler.
+    mutable boost::mutex    m_error_func_mutex;
 };
 
 
