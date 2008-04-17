@@ -100,7 +100,6 @@ public:
       CPPUNIT_TEST(testExists);
       CPPUNIT_TEST(testSafeGet);
       CPPUNIT_TEST(testOperators);
-      CPPUNIT_TEST(testFail);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -336,12 +335,6 @@ private:
         CPPUNIT_ASSERT_THROW(x > fhtagn::variant(41.0), fhtagn::variant::error);
         CPPUNIT_ASSERT_THROW(x >= fhtagn::variant(42.0), fhtagn::variant::error);
         CPPUNIT_ASSERT_THROW(x != fhtagn::variant(0.0), fhtagn::variant::error);
-    }
-
-
-    void testFail()
-    {
-      CPPUNIT_ASSERT(false);
     }
 };
 
