@@ -9,7 +9,7 @@ SUBDIRS = fhtagn test
 include $(top_srcdir)/Makefile.common
 
 run-tests: check
-	@test/testsuite
+	@ulimit -c unlimited ; test/testsuite
 
 if ENABLE_COVERAGE
 cleancov:
