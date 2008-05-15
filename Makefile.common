@@ -7,7 +7,7 @@
 INCLUDES_FHTAGN = \
 	-I $(top_srcdir) -I $(top_builddir)
 
-CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb -std=c++98 -ansi -pedantic
+CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb -std=c++98 -ansi
 LDFLAGS_FHTAGN =
 
 if ENABLE_EXTRA_CHECKS
