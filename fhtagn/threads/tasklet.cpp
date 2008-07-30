@@ -157,6 +157,9 @@ tasklet::sleep(uint32_t usecs /* = 0 */)
 {
     // Prepare xtime to sleep until
     boost::xtime t;
+    t.sec = 0;
+    t.nsec = 0;
+
     if (usecs) {
         // Add usecs to current time
         boost::xtime_get(&t, boost::TIME_UTC);
