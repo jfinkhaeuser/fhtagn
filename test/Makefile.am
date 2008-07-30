@@ -18,23 +18,29 @@ TEST_SRC = \
 	misc_test.cpp \
 	testdriver.cpp
 
+TEST_LIBS=
+TEST_FLAGS=
+
 if HAVE_BOOST
 TEST_SRC += variant_test.cpp \
 	threads_test.cpp
+TEST_LIBS += -lboost_signals-mt -lboost_thread-mt
+TEST_FLAGS += -pthread
 endif
 
 testsuite_SOURCES = $(TEST_SRC)
 
 testsuite_CXXFLAGS = \
-	$(AM_CXXFLAGS) $(CPPUNIT_CFLAGS)
+	$(AM_CXXFLAGS) $(CPPUNIT_CFLAGS) $(TEST_FLAGS)
 
 testsuite_LDADD = \
 	$(top_builddir)/fhtagn/libfhtagn.la \
 	$(top_builddir)/fhtagn/util/libfhtagn_util.la \
 	$(CPPUNIT_LIBS) \
-	$(BOOST_LDFLAGS) -lboost_signals -lboost_thread-mt
+	$(BOOST_LDFLAGS) \
+	$(TEST_LIBS)
 
-testsuite_LDFLAGS = $(LDFLAGS_FHTAGN)
+testsuite_LDFLAGS = $(LDFLAGS_FHTAGN) $(TEST_FLAGS)
 
 else
 

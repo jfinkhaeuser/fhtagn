@@ -25,16 +25,20 @@ FHTAGN_HDR= \
 	restricted.h restrictions.h \
 	byteorder.h
 
+FHTAGN_LIBS=
+
 if HAVE_BOOST
 FHTAGN_SRC += variant.cpp
 FHTAGN_HDR += variant.h stdvariant.h detail/variant.tcc
+FHTAGN_LIBS += $(top_builddir)/fhtagn/threads/libfhtagn_threads.la
 endif
+
 
 libfhtagn_la_SOURCES = $(FHTAGN_SRC)
 
 libfhtagn_la_LDFLAGS = $(LIB_VERSION)
 libfhtagn_la_LIBADD = \
 	$(top_builddir)/fhtagn/text/libfhtagn_text.la \
-	$(top_builddir)/fhtagn/threads/libfhtagn_threads.la
+	$(FHTAGN_LIBS)
 
 pkginclude_HEADERS = config.h $(FHTAGN_HDR)
