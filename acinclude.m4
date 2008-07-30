@@ -240,7 +240,7 @@ if test "x$want_boost" = "xyes"; then
         else
                 AC_SUBST(BOOST_CPPFLAGS)
                 AC_SUBST(BOOST_LDFLAGS)
-                AC_DEFINE(HAVE_BOOST,,[define if the Boost library is available])
+                AC_DEFINE(HAVE_BOOST,1,[define if the Boost library is available])
         fi
         AM_CONDITIONAL([HAVE_BOOST], [test x$succeeded = xyes])
         AM_FHTAGN_HAVE([boost], [test x$succeeded = xyes])
@@ -330,7 +330,7 @@ AC_ARG_WITH(cppunit-exec-prefix,[  --with-cppunit-exec-prefix=PFX  Exec prefix w
 
     if test "$cppunit_version_proper" = "1" ; then
       AC_MSG_RESULT([$cppunit_major_version.$cppunit_minor_version.$cppunit_micro_version])
-      AC_DEFINE(HAVE_CPPUNIT,,[define if the cppunit library is available])
+      AC_DEFINE(HAVE_CPPUNIT,1,[define if the cppunit library is available])
     else
       AC_MSG_RESULT(no)
       no_cppunit=yes
