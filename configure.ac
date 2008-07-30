@@ -27,10 +27,6 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
-# Checks for libraries.
-AX_BOOST_BASE([1.33.1])
-AM_PATH_CPPUNIT
-
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -39,6 +35,11 @@ AC_C_CONST
 AC_C_INLINE
 AC_TYPE_UINT32_T
 AC_C_BIGENDIAN
+AX_TYPE_CXX_LONGLONG
+
+# Checks for libraries.
+AX_BOOST_BASE([1.33.1])
+AM_PATH_CPPUNIT
 
 # Checks for library functions.
 
