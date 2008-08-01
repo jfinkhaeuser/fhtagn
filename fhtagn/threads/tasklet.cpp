@@ -64,7 +64,7 @@ tasklet::start()
     }
     m_state = RUNNING;
     m_thread = new boost::thread(boost::bind(&tasklet::thread_runner,
-                boost::ref(this)));
+                this));
     return true;
 }
 
