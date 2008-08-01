@@ -52,6 +52,8 @@ tasklet::tasklet(tasklet::func_type::slot_type slot)
 
 tasklet::~tasklet()
 {
+    stop();
+    wait();
 }
 
 

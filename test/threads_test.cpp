@@ -135,6 +135,7 @@ public:
         CPPUNIT_TEST(testTaskletMemFun);
         CPPUNIT_TEST(testTaskletFreeFun);
         CPPUNIT_TEST(testTaskletError);
+        CPPUNIT_TEST(testTaskletScope);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -305,6 +306,34 @@ private:
         CPPUNIT_ASSERT_EQUAL((int) th::tasklet::ABORTED, (int) task.get_state());
 
         CPPUNIT_ASSERT_EQUAL(true, free_error_handled);
+    }
+
+
+    void testTaskletScope()
+    {
+        namespace th = fhtagn::threads;
+
+        // Checks to determine whether tasklets that are destroyed before being
+        // started, stopped or waited upon cause ugliness. These tests basically
+        // only have to not segfault...
+
+        // Unused task
+        {
+            th::tasklet task(boost::bind(&free_thread_func, _1));
+        }
+
+        // started task
+        {
+            th::tasklet task(boost::bind(&free_thread_func, _1));
+            task.start();
+        }
+
+        // started & stopped task
+        {
+            th::tasklet task(boost::bind(&free_thread_func, _1));
+            task.start();
+            task.stop();
+        }
     }
 };
 

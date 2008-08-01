@@ -43,6 +43,7 @@
 
 #include <boost/signal.hpp>
 #include <boost/thread.hpp>
+#include <boost/noncopyable.hpp>
 
 namespace fhtagn {
 namespace threads {
@@ -67,6 +68,7 @@ namespace threads {
  *    such functionality is abstracted out.
  **/
 class tasklet
+    : public boost::noncopyable
 {
 public:
     // Utility typedefs
