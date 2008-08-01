@@ -1,4 +1,4 @@
-# Copyright (C) 2007 the authors.
+# Copyright (C) 2007,2008 the authors.
 #
 # This file is part of the Fhtagn! C++ Library, and may be distributed under
 # the following license terms and conditions as set forth in the COPYING file
@@ -7,8 +7,14 @@
 INCLUDES_FHTAGN = \
 	-I $(top_srcdir) -I $(top_builddir)
 
-CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb -std=c++98 -ansi -pedantic
+CXXFLAGS_FHTAGN = -Wall -Wsign-promo -ggdb -std=c++98 -ansi
 LDFLAGS_FHTAGN =
+
+# Work around a bug in boost 1.35 which uses long long on gcc, no matter what.
+if HAVE_CXX_PEDANTIC_LONG_LONG
+CXXFLAGS_FHTAGN += -pedantic
+endif
+
 
 if ENABLE_EXTRA_CHECKS
 CXXFLAGS_FHTAGN += -Weffc++ -Wold-style-cast -Wshadow

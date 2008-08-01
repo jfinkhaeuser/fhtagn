@@ -1,8 +1,33 @@
-dnl Copyright (C) 2007 the authors unless statet otherwise
+dnl Copyright (C) 2007,2008 the authors unless statet otherwise
 dnl
 dnl This file is part of the Fhtagn! C++ Library, and may be distributed under
 dnl the following license terms and conditions as set forth in the COPYING file
 dnl included in this source distribution.
+
+dnl
+dnl Checks whether the compiler's -pedantic flag is pedantic enough to produce
+dnl errors on C++ code using the long long type.
+dnl
+AC_DEFUN([AX_TYPE_CXX_LONGLONG],
+[
+  AC_LANG_PUSH([C++])
+  old_CXXFLAGS=${CXXFLAGS}
+  CXXFLAGS="${CXXFLAGS} -std=c++98 -ansi -pedantic"
+  AC_CACHE_CHECK([for long long type in pedantic C++], _have_cxx_pedantic_longlong,
+    [AC_TRY_COMPILE([
+       long long foo = (long long) 0;], ,
+       _have_cxx_pedantic_longlong=yes,
+       _have_cxx_pedantic_longlong=no)])
+  if test x$_have_cxx_pedantic_longlong = xyes; then
+    AC_DEFINE(HAVE_CXX_PEDANTIC_LONG_LONG, 1,
+      [Define if you have the 'long long' type in C++ with -pedantic.])
+  fi
+  CXXFLAGS=${old_CXXFLAGS}
+
+  AM_CONDITIONAL([HAVE_CXX_PEDANTIC_LONG_LONG],
+    [test x$_have_cxx_pedantic_longlong = xyes])
+  AC_LANG_POP([C++])
+])
 
 dnl
 dnl Defines and exports PACKAGE_MAJOR and PACKAGE_MINOR
