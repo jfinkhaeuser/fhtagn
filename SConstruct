@@ -227,6 +227,7 @@ SUBDIRS = [
   'fhtagn',
   'fhtagn/detail',
   'fhtagn/text',
+  'fhtagn/text/detail',
   'fhtagn/restrictions',
   'test',
 ]
