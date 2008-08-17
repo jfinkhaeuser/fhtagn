@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Henning Pfeiffer <slashgod@users.sourceforge.net>
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
@@ -34,8 +34,30 @@
  * DEALINGS IN THE SOFTWARE.
  **/
 
-#include <fhtagn/config.h>
+#include <fhtagn/fhtagn-config.h>
 #include <fhtagn/version.h>
+
+#define FHTAGN_STRINGIFY(n) FHTAGN_STRINGIFY_HELPER(n)
+#define FHTAGN_STRINGIFY_HELPER(n) #n
+
+/**
+ * For (temporary) compatibility with autotools build
+ **/
+#if defined(PACKAGE_MAJOR)
+#define FHTAGN_MAJOR PACKAGE_MAJOR
+#endif
+
+#if defined(PACKAGE_MINOR)
+#define FHTAGN_MINOR PACKAGE_MINOR
+#endif
+
+#if defined(PACKAGE_MAJOR) && defined(PACKAGE_MINOR)
+#define FHTAGN_VERSION PACKAGE_MAJOR.PACKAGE_MINOR
+#endif
+
+/**
+ * end of autotools compatibility
+ **/
 
 namespace fhtagn {
 
@@ -43,13 +65,13 @@ namespace fhtagn {
 std::pair<uint16_t, uint16_t>
 version()
 {
-    return std::make_pair<uint16_t, uint16_t>(PACKAGE_MAJOR, PACKAGE_MINOR);
+    return std::make_pair<uint16_t, uint16_t>(FHTAGN_MAJOR, FHTAGN_MINOR);
 }
 
 
 
-char const * const copyright_string = "Fhtagn! " PACKAGE_VERSION
-    " - Copyright (c) 2007 by the authors.\n"
+char const * const copyright_string = "Fhtagn! " FHTAGN_STRINGIFY(FHTAGN_VERSION)
+    " - Copyright (c) 2007,2008 by the authors.\n"
     "This version of Fhtagn! is released under the Boost Software License\n"
     "Version 1.0 from August 17th, 2003.";
 

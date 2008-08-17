@@ -37,7 +37,7 @@
 
 #include <stdint.h>
 
-#include <fhtagn/config.h>
+#include <fhtagn/fhtagn-config.h>
 
 /**
  * If we can grab the byte order from the compiler, do that - if not, try to

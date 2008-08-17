@@ -1,4 +1,4 @@
-# Copyright (C) 2007 the authors.
+# Copyright (C) 2007,2008 the authors.
 #
 # This file is part of the Fhtagn! C++ Library, and may be distributed under
 # the following license terms and conditions as set forth in the COPYING file
@@ -41,4 +41,4 @@ libfhtagn_la_LIBADD = \
 	$(top_builddir)/fhtagn/text/libfhtagn_text.la \
 	$(FHTAGN_LIBS)
 
-pkginclude_HEADERS = config.h $(FHTAGN_HDR)
+pkginclude_HEADERS = fhtagn-config.h $(FHTAGN_HDR)

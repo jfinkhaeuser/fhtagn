@@ -1,4 +1,4 @@
-# Copyright (C) 2007 the authors.
+# Copyright (C) 2007,2008 the authors.
 #
 # This file is part of the Fhtagn! C++ Library, and may be distributed under
 # the following license terms and conditions as set forth in the COPYING file
@@ -15,7 +15,7 @@ AC_INIT(fhtagn, 0.1.0, fhtagn-devel@lists.sourceforge.net)
 AC_CONFIG_SRCDIR([fhtagn/version.cpp])
 AM_INIT_AUTOMAKE
 
-AM_CONFIG_HEADER([fhtagn/config.h])
+AM_CONFIG_HEADER([fhtagn/fhtagn-config.h])
 
 # ... repeat of the version number above. At the point where AC_INIT is
 # called, there's so little known about autoconf's macros, that this macro
