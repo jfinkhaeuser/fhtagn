@@ -15,46 +15,8 @@ import os.path
 # Environment
 class FhtagnEnvironment(ExtendedEnvironment):
   def __init__(self, version, parent = None, args = None, **kw):
-    ### Remember version
-    self.version = version
-
-    ### Target resources lists
-    self._sources = {}
-    self._headers = {}
-    self._libs = {}
-
     ### Define options for config.py
-    opts = Options('fhtagn.conf')
-
-    opts.Add('CXXFLAGS', 'Flags for the C++ compiler',
-        '-ansi -std=c++98 -Wall -Wsign-promo -fstrict-aliasing -Wstrict-aliasing')
-
-    self.BUILD_CONFIGS = {
-      'debug': {
-        'CPPDEFINES': { 'DEBUG': '1' },
-        'CXXFLAGS': [ '-ggdb', '-O0' ],
-      },
-      'release': {
-        'CPPDEFINES': { 'NDEBUG': '1' },
-        'CXXFLAGS': [ '-ggdb', '-O2' ],
-      },
-    }
-    opts.Add(EnumOption('BUILD_CONFIG', 'Target for the build', 'release',
-          allowed_values = self.BUILD_CONFIGS.keys(),
-        ))
-
-    opts.Add(EnumOption('BUILD_LIB_TYPE', 'Type of library to build', 'both',
-          allowed_values = ['static', 'shared', 'both']))
-
-    self.BUILD_PREFIX = 'BUILD_PREFIX'
-    opts.Add(PathOption(self.BUILD_PREFIX, 'Build directory', 'build',
-          PathOption.PathIsDirCreate))
-
-    import os.path
-    opts.INSTALL_PREFIX = 'INSTALL_PREFIX'
-    opts.Add(PathOption(opts.INSTALL_PREFIX, 'Base path for the installation.',
-            os.path.join(os.path.sep, 'opt', 'local'),
-            PathOption.PathIsDirCreate))
+    opts = self.Options('fhtagn.conf')
 
     self.register_check(checks.BoostCheck, opts)
     self.register_check(checks.CppUnitCheck, opts)
@@ -62,6 +24,8 @@ class FhtagnEnvironment(ExtendedEnvironment):
     ### Fixup kwargs
     import os
     kw['options'] = opts
+    kw['name'] = 'fhtagn'
+    kw['version'] = version
     kw['ENV'] = os.environ
     if not kw.has_key('CPPPATH'):
       kw['CPPPATH'] = []
@@ -69,25 +33,12 @@ class FhtagnEnvironment(ExtendedEnvironment):
     kw['LIBPATH'] = [ os.path.join('#', '${BUILD_PREFIX}', p) for p in kw['LIBPATH'] ]
 
     ### Superclass
-    Environment.__init__(self, **kw)
+    ExtendedEnvironment.__init__(self, **kw)
     self.init_checks('FHTAGN', 'CUSTOM_TESTS')
-
-    ### Fixup Options
-    self['CXXFLAGS'] = self['CXXFLAGS'].split()
-
-    for k, v in self.BUILD_CONFIGS[self['BUILD_CONFIG']].items():
-      if not self.has_key(k):
-        self[k] = v
-      else:
-        if type(v) == type(dict()):
-          self[k].update(v)
-        elif type(v) == type(list()):
-          self[k].extend(v)
-        else:
-          self[k] += v
 
     ### Render help
     Help(opts.GenerateHelpText(self))
+
 
   def configure(self):
 
@@ -142,71 +93,15 @@ class FhtagnEnvironment(ExtendedEnvironment):
 
 
     # add version
-    conf.Define('FHTAGN_VERSION', '%d.%d' % self.version,
+    conf.Define('FHTAGN_VERSION', '%d.%d' % self['version'],
             'Fhtagn! version')
-    conf.Define('FHTAGN_MAJOR', '%d' % self.version[0],
+    conf.Define('FHTAGN_MAJOR', '%d' % self['version'][0],
             'Fhtagn! major version component')
-    conf.Define('FHTAGN_MINOR', '%d' % self.version[1],
+    conf.Define('FHTAGN_MINOR', '%d' % self['version'][1],
             'Fhtagn! minor version component')
 
     conf.Finish()
     return True
-
-
-  def addSources(self, target, sources):
-    if not self._sources.has_key(target):
-      self._sources[target] = []
-    self._sources[target].extend(self.arg2nodes(sources))
-
-
-  def addLibs(self, target, libs):
-    if not self._libs.has_key(target):
-      self._libs[target] = []
-    self._libs[target].extend(libs)
-
-
-  def addHeaders(self, target, headers):
-    if not self._headers.has_key(target):
-      self._headers[target] = []
-    self._headers[target].extend(self.arg2nodes(headers))
-
-
-  def getSources(self, target):
-    return self._sources.get(target, [])
-
-
-  def getLibs(self, target):
-    return self._libs.get(target, [])
-
-
-  def getHeaders(self, target):
-    return self._headers.get(target, [])
-
-
-  def getHeadersRelative(self, target):
-    retval = {}
-
-    build_prefix = env[env.BUILD_PREFIX]
-
-    for header in self.getHeaders(target):
-      build_path = header.get_path()
-      if not build_path.startswith(build_prefix):
-        sys.stderr.write('Header file %s in unknown location.\n', build_path)
-        continue
-
-      build_path = build_path[len(build_prefix):]
-      while build_path[0] == os.path.sep:
-        build_path = build_path[1:]
-
-      path, filename = os.path.split(build_path)
-
-      if not retval.has_key(path):
-        retval[path] = []
-      retval[path].append(header)
-
-    return retval.items()
-
-
 
 
 ###############################################################################
@@ -265,6 +160,7 @@ for subdir in SUBDIRS:
 import os.path
 lib_path = os.path.join('${INSTALL_PREFIX}', 'lib')
 header_base_path = os.path.join('${INSTALL_PREFIX}', 'include')
+pkgconfig_path = os.path.join('${INSTALL_PREFIX}', 'lib', 'pkgconfig')
 
 
 ###############################################################################
@@ -305,6 +201,17 @@ env.Alias('check', testsuite)
 env.Default(testsuite)
 
 
+pc_name = env.Substitute(os.path.join('#', env[env.BUILD_PREFIX], 'libfhtagn.pc'),
+    'libfhtagn.pc.in')
+env.Install(pkgconfig_path, pc_name)
+env.Default(pc_name)
+
+util_pc_name = env.Substitute(os.path.join('#', env[env.BUILD_PREFIX],
+      'libfhtagn_util.pc'),
+    'libfhtagn_util.pc.in')
+env.Install(pkgconfig_path, util_pc_name)
+env.Default(util_pc_name)
+
 ###############################################################################
 # install
 
@@ -319,3 +226,5 @@ for dir, headers in env.getHeadersRelative('fhtagn_util'):
   full_dir = os.path.join(header_base_path, dir)
   env.Install(full_dir, headers)
   env.Alias('install', full_dir)
+
+

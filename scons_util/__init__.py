@@ -64,6 +64,11 @@ installation paths.
 
 
   def __init__(self, *args, **kw):
+    ### Target resources lists
+    self._sources = {}
+    self._headers = {}
+    self._libs = {}
+
     #### Create regexes for later use
     import re
     self.__find_regex = re.compile(r'(@(.*?)@)')
@@ -91,6 +96,28 @@ installation paths.
     self['exec_prefix'] = os.path.join(self['INSTALL_PREFIX'], 'bin')
     self['libdir'] = os.path.join(self['INSTALL_PREFIX'], 'lib')
     self['includedir'] = os.path.join(self['INSTALL_PREFIX'], 'include')
+
+    ### Fixup Options
+    self['CXXFLAGS'] = self['CXXFLAGS'].split()
+
+    for k, v in self.BUILD_CONFIGS[self['BUILD_CONFIG']].items():
+      if not self.has_key(k):
+        self[k] = v
+      else:
+        if type(v) == type(dict()):
+          self[k].update(v)
+        elif type(v) == type(list()):
+          self[k].extend(v)
+        else:
+          self[k] += v
+
+    ### Store version
+    if kw.has_key('version'):
+      version_name = 'VERSION'
+      if kw.has_key('name'):
+        version_name = '%s_%s' % (kw['name'].upper(), version_name)
+      self[version_name] = '%d.%d' % kw['version']
+
 
 
   def register_check(self, check, opts = None):
@@ -336,3 +363,62 @@ installation paths.
         context[depth]['content'].append(line)
 
     file(out_filename, 'w').writelines(context[0]['content'])
+
+
+
+  def addSources(self, target, sources):
+    if not self._sources.has_key(target):
+      self._sources[target] = []
+    self._sources[target].extend(self.arg2nodes(sources))
+
+
+  def addLibs(self, target, libs):
+    if not self._libs.has_key(target):
+      self._libs[target] = []
+    self._libs[target].extend(libs)
+
+
+  def addHeaders(self, target, headers):
+    if not self._headers.has_key(target):
+      self._headers[target] = []
+    self._headers[target].extend(self.arg2nodes(headers))
+
+
+  def getSources(self, target):
+    return self._sources.get(target, [])
+
+
+  def getLibs(self, target):
+    return self._libs.get(target, [])
+
+
+  def getHeaders(self, target):
+    return self._headers.get(target, [])
+
+
+  def getHeadersRelative(self, target):
+    retval = {}
+    import os.path
+
+    build_prefix = self[self.BUILD_PREFIX]
+
+    for header in self.getHeaders(target):
+      build_path = header.get_path()
+      if not build_path.startswith(build_prefix):
+        sys.stderr.write('Header file %s in unknown location.\n', build_path)
+        continue
+
+      build_path = build_path[len(build_prefix):]
+      while build_path[0] == os.path.sep:
+        build_path = build_path[1:]
+
+      path, filename = os.path.split(build_path)
+
+      if not retval.has_key(path):
+        retval[path] = []
+      retval[path].append(header)
+
+    return retval.items()
+
+
+
