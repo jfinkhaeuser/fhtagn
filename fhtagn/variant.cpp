@@ -124,6 +124,7 @@ variant::operator[](uint32_t index)
         default:
             assert(0);
     }
+    return *invalid_value.get();
 }
 
 
@@ -147,6 +148,7 @@ variant::operator[](uint32_t index) const
         default:
             assert(0);
     }
+    return *invalid_value.get();
 }
 
 
@@ -179,6 +181,7 @@ variant::operator[](std::string const & key)
         default:
             assert(0);
     }
+    return *invalid_value.get();
 }
 
 
@@ -206,6 +209,7 @@ variant::operator[](std::string const & key) const
         default:
             assert(0);
     }
+    return *invalid_value.get();
 }
 
 

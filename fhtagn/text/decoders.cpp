@@ -77,6 +77,7 @@ bool
 universal_decoder::append(unsigned char byte)
 {
     FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, append, (byte));
+    return false;
 }
 
 
@@ -84,6 +85,7 @@ bool
 universal_decoder::have_full_sequence() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, have_full_sequence, ());
+    return false;
 }
 
 
@@ -91,6 +93,7 @@ utf32_char_t
 universal_decoder::to_utf32() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, to_utf32, ());
+    return utf32_char_t();
 }
 
 
@@ -98,6 +101,7 @@ bool
 universal_decoder::use_replacement_char() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, use_replacement_char, ());
+    return false;
 }
 
 
@@ -113,6 +117,7 @@ utf32_char_t
 universal_decoder::replacement_char() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_decoder, decoder, replacement_char, ());
+    return utf32_char_t();
 }
 
 

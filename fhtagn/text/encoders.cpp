@@ -70,6 +70,7 @@ universal_encoder::const_iterator
 universal_encoder::begin() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, begin, ());
+    return const_iterator();
 }
 
 
@@ -77,6 +78,7 @@ universal_encoder::const_iterator
 universal_encoder::end() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, end, ());
+    return const_iterator();
 }
 
 
@@ -84,6 +86,7 @@ bool
 universal_encoder::encode(utf32_char_t ch)
 {
     FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, encode, (ch));
+    return false;
 }
 
 
@@ -91,6 +94,7 @@ bool
 universal_encoder::use_replacement_char() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, use_replacement_char, ());
+    return false;
 }
 
 
@@ -106,6 +110,7 @@ utf32_char_t
 universal_encoder::replacement_char() const
 {
     FHTAGN_TEXT_CALL(m_encoding, m_encoder, encoder, replacement_char, ());
+    return utf32_char_t();
 }
 
 
