@@ -1,4 +1,16 @@
 ##############################################################################
+# Custom Builders
+
+def substitute_build_function(target, source, env):
+  map(lambda s, t: env._substitute_file(s.rstr(), t.rstr()), source, target)
+  return None
+
+def substitute_build_str(target, source, env):
+  import sys
+  map(lambda t: sys.stdout.write("Generating `%s'...\n" % t.rstr()), target)
+
+
+##############################################################################
 # class ExtendedEnvironment
 
 from SCons.Environment import Environment
@@ -7,6 +19,79 @@ class ExtendedEnvironment(Environment):
 functions for checking for libraries/frameworks in default and user-defined
 installation paths.
 """
+
+  def Options(self, file_name, defaults = {}):
+    from SCons.Script import Options, EnumOption, PathOption
+
+    opts = Options(file_name)
+
+    opts.Add('CXXFLAGS', 'Flags for the C++ compiler',
+        defaults.get('CXXFLAGS',
+          '-ansi -std=c++98 -Wall -Wsign-promo -fstrict-aliasing -Wstrict-aliasing'))
+
+    self.BUILD_CONFIGS = {
+      'debug': {
+        'CPPDEFINES': { 'DEBUG': '1' },
+        'CXXFLAGS': [ '-ggdb', '-O0' ],
+      },
+      'release': {
+        'CPPDEFINES': { 'NDEBUG': '1' },
+        'CXXFLAGS': [ '-ggdb', '-O2' ],
+      },
+    }
+    opts.Add(EnumOption('BUILD_CONFIG', 'Target for the build',
+          defaults.get('BUILD_CONFIG', 'release'),
+          allowed_values = self.BUILD_CONFIGS.keys(),
+        ))
+
+    opts.Add(EnumOption('BUILD_LIB_TYPE', 'Type of library to build',
+          defaults.get('BUILD_LIB_TYPE', 'both'),
+          allowed_values = ['static', 'shared', 'both']))
+
+    self.BUILD_PREFIX = 'BUILD_PREFIX'
+    opts.Add(PathOption(self.BUILD_PREFIX, 'Build directory',
+          defaults.get('BUILD_PREFIX', 'build'),
+          PathOption.PathIsDirCreate))
+
+    import os.path
+    opts.INSTALL_PREFIX = 'INSTALL_PREFIX'
+    opts.Add(PathOption(opts.INSTALL_PREFIX, 'Base path for the installation.',
+            defaults.get('INSTALL_PREFIX',
+              os.path.join(os.path.sep, 'opt', 'local')),
+            PathOption.PathIsDirCreate))
+
+    return opts
+
+
+  def __init__(self, *args, **kw):
+    #### Create regexes for later use
+    import re
+    self.__find_regex = re.compile(r'(@(.*?)@)')
+    self.__match_regex = re.compile(r'^[a-zA-Z_]+$')
+
+    ### Superclass
+    Environment.__init__(self, *args, **kw)
+
+    ### Custom builders
+    from SCons.Builder import Builder
+    from SCons.Action import Action
+    substitute_builder = Builder(action = Action(
+          substitute_build_function,
+          substitute_build_str),
+        src_suffix = '.in',
+        name = 'SubstituteBuilder',
+        explain = 'foo')
+    self.Append(BUILDERS = {
+        'Substitute' : substitute_builder,
+    })
+
+    ### Set a few variables, for autotools-compatibility
+    import os.path
+    self['prefix'] = self['INSTALL_PREFIX']
+    self['exec_prefix'] = os.path.join(self['INSTALL_PREFIX'], 'bin')
+    self['libdir'] = os.path.join(self['INSTALL_PREFIX'], 'lib')
+    self['includedir'] = os.path.join(self['INSTALL_PREFIX'], 'include')
+
 
   def register_check(self, check, opts = None):
     check.register_options(opts)
@@ -178,3 +263,76 @@ installation paths.
     result = 0
     context.Result(result)
     return result
+
+
+
+  def _substitute(self, line):
+    """
+    substitutes occurrences of @FOO@ patterns with the contents of the environment
+    variable 'FOO'.
+    """
+    mod_line = line
+
+    matches = self.__find_regex.findall(line)
+    for pattern, variable in matches:
+      if not self.__match_regex.match(variable):
+        raise AssertionError('Illegal variable name "%s"' % variable)
+
+      if not self.has_key(variable):
+        continue
+
+      import re
+      r = re.compile(pattern)
+      mod_line = r.sub(self[variable], mod_line)
+
+    return mod_line
+
+
+  def _substitute_file(self, in_filename, out_filename):
+    """
+    substitute() on all lines of in_filename, written to out_filename.
+    """
+    if not in_filename or not out_filename:
+      raise AssertionError('Invalid input or output filename: %s, %s' % (
+            in_filename, out_filename))
+
+    context = []
+    depth = 0
+    for line in file(in_filename).readlines():
+      line = self._substitute(line)
+
+      if line.startswith('if'):
+        cond = line[3:].strip()
+        # For now, the only condition we check for is the existence of a variable.
+        # By implication, the whole cond string must match a variable name.
+        if not self.__match_regex.match(cond):
+          raise AssertionError('Illegal condition "%s" in if-statement' % cond)
+        depth += 1
+        if len(context) < (depth + 1):
+          context.append({'content': []})
+        if not self.has_key(cond):
+          context[depth]['skip'] = True
+
+      elif line.startswith('else'):
+        if context[depth].has_key('skip'):
+          del context[depth]['skip']
+          context[depth]['content'] = []
+        else:
+          context[depth - 1]['content'] += context[depth]['content']
+          context[depth]['content'] = []
+          context[depth]['skip'] = True
+
+      elif line.startswith('endif'):
+        # Paste the contents of the current context onto the parent context and
+        # then delete it.
+        if not context[depth].has_key('skip'):
+          context[depth - 1]['content'] += context[depth]['content']
+        context.pop()
+        depth -= 1
+
+      else:
+        if len(context) < (depth + 1):
+          context.append({'content': []})
+        context[depth]['content'].append(line)
+
+    file(out_filename, 'w').writelines(context[0]['content'])
