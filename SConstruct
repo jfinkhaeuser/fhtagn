@@ -9,6 +9,8 @@ EnsureSConsVersion(0, 98, 4)
 from scons_util import ExtendedEnvironment
 from scons_util import checks
 
+import os.path
+
 ###############################################################################
 # Environment
 class FhtagnEnvironment(ExtendedEnvironment):
@@ -94,7 +96,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
         conf_dir = os.path.join(self[self.BUILD_PREFIX], 'configure.tmp'),
         log_file = os.path.join(self[self.BUILD_PREFIX], 'config.log'),
         config_h = os.path.join(self[self.BUILD_PREFIX],
-          'fhtagn/fhtagn-config.h'),
+          os.path.join('fhtagn', 'fhtagn-config.h')),
         custom_tests = self['CUSTOM_TESTS']
       )
 
@@ -211,7 +213,10 @@ class FhtagnEnvironment(ExtendedEnvironment):
 # initialize environment
 FHTAGN_VERSION = (0, 1) # (major, minor)
 
-env = FhtagnEnvironment(FHTAGN_VERSION, LIBPATH = [ 'fhtagn', 'fhtagn/util' ])
+env = FhtagnEnvironment(FHTAGN_VERSION, LIBPATH = [
+    'fhtagn',
+    os.path.join('fhtagn', 'util'),
+  ])
 
 if not env.GetOption('clean'):
   if not env.configure():
@@ -225,22 +230,22 @@ if not env.GetOption('clean'):
 
 SUBDIRS = [
   'fhtagn',
-  'fhtagn/detail',
-  'fhtagn/text',
-  'fhtagn/text/detail',
-  'fhtagn/restrictions',
+  os.path.join('fhtagn', 'detail'),
+  os.path.join('fhtagn', 'text'),
+  os.path.join('fhtagn', 'text', 'detail'),
+  os.path.join('fhtagn', 'restrictions'),
   'test',
 ]
 
 if env.has_key('FHTAGN_BOOST_VERSION'):
   SUBDIRS += [
-    'fhtagn/xml',
-    'fhtagn/threads',
+    os.path.join('fhtagn', 'xml'),
+    os.path.join('fhtagn', 'threads'),
   ]
 
 if env.has_key('FHTAGN_CPPUNIT_VERSION'):
   SUBDIRS += [
-    'fhtagn/util',
+    os.path.join('fhtagn', 'util'),
   ]
 
 import os.path
@@ -265,7 +270,7 @@ header_base_path = os.path.join('${INSTALL_PREFIX}', 'include')
 ###############################################################################
 # define targets
 
-fhtagn_name = os.path.join('#', env[env.BUILD_PREFIX], 'fhtagn')
+fhtagn_name = os.path.join('#', env[env.BUILD_PREFIX], 'fhtagn', 'fhtagn')
 if env['BUILD_LIB_TYPE'] in ('shared', 'both'):
   fhtagn_shared_lib = env.SharedLibrary(fhtagn_name, env.getSources('fhtagn'),
       LIBS = env.getLibs('fhtagn'))
@@ -278,7 +283,8 @@ if env['BUILD_LIB_TYPE'] in ('static', 'both'):
   env.Install(lib_path, fhtagn_static_lib)
   env.Default(fhtagn_static_lib)
 
-fhtagn_util_name = os.path.join('#', env[env.BUILD_PREFIX], 'fhtagn_util')
+fhtagn_util_name = os.path.join('#', env[env.BUILD_PREFIX], 'fhtagn', 'util',
+    'fhtagn_util')
 if env['BUILD_LIB_TYPE'] in ('shared', 'both'):
   fhtagn_util_shared_lib = env.SharedLibrary(fhtagn_util_name,
       env.getSources('fhtagn_util'), LIBS = env.getLibs('fthagn_util'))
@@ -291,6 +297,12 @@ if env['BUILD_LIB_TYPE'] in ('static', 'both'):
   env.Install(lib_path, fhtagn_util_static_lib)
   env.Default(fhtagn_util_static_lib)
 
+
+testsuite_name = os.path.join('#', env[env.BUILD_PREFIX], 'test', 'testsuite')
+testsuite = env.Program(testsuite_name, env.getSources('testsuite'),
+    LIBS = env.getLibs('testsuite'))
+env.Alias('check', testsuite)
+env.Default(testsuite)
 
 
 ###############################################################################

@@ -4,6 +4,7 @@
 # the following license terms and conditions as set forth in the COPYING file
 # included in this source distribution.
 Import('env')
+import os.path
 
 SOURCES = [
   'version.cpp',
@@ -29,7 +30,7 @@ if env.has_key('FHTAGN_BOOST_VERSION'):
   HEADERS += [
     'variant.h',
     'stdvariant.h',
-    'detail/variant.tcc',
+    os.path.join('detail', 'variant.tcc'),
   ]
 
 
