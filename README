@@ -8,107 +8,106 @@
   ; _, _,>
   '" '"
 
-Copyright (C) 2007 by the authors.
+Copyright (C) 2007,2008 by the authors.
 
 Requirements
-==================
+=======================
 
    The Fhtagn! C++ Library depends heavily on boost. If boost is not part
 of your development environment yet, obtain a copy from http://www.boost.org/
 
-   There are version requirements on autotools as well, but at the moment,
-these are not clearly defined. It's pretty clear that automake 1.4 is too old
-to work with Fhtagn!
+   The build system used for Fhtagn! is SCons - you can find it at
+http://www.scons.org/ . Familiarity with SCons is not really required, this
+document explains all the necessary stuff.
+
+   Lastly, parts of Fhtagn! depend on CppUnit - most notably the unit tests. If
+you do not care about the unit tests, Fhtagn! does not have any further
+dependencies on CppUnit, but may build an optional fhtagn_util library with some
+CppUnit extensions. You can find CppUnit here: http://cppunit.sourceforge.net/
+
 
 Installation
-==================
+=======================
 
-   In addition to the generic installation instructions in the INSTALL file,
-you may need to specifice the --with-boost parameter to the configure script.
+   Building and installing via SCons is easy. Simply type `scons' in the root
+source directory, and a the build will get started.
 
-   If your copy of boost is installed in a non-standard location, specify where
-`configure' may find boost by providing the `--with-boost' option followed by
-an installation root.  On my machine, I run:
+   SCons - or the extensions to SCons found in scons_util - does most of the
+hard work in finding dependencies. You can help it along by creating a file
+`fhtagn.conf' in the root source directory with a few configuration parameters.
 
-    ./configure --with-boost=/opt/local
+   Similar to make, SCons accepts build targets on it's command line. The
+default is to build the libraries, and nothing else.
 
-   `configure' then attempts to locate the boost header files in
-`/opt/local/include/boost' and the libraries in `/opt/local/lib'.
+   If you're stuck with SCons, running `scons -H' provides you with available
+command line options. Note that this is not the same as running `scons --help',
+as that prints configuration options for use in `fhtagn.conf'.
 
-Options
-==================
 
-  --enable-extra-checks   (default is no) Turn on extra static code checking
-                          (`-Weffc++' compiler option). This will lead to spam
-                          in headers included from the STL and/or boost, but
-                          may help finding flaws in Fhtagn!
+Build Targets
+=======================
 
-  GCC supports a compiler option `-Weffc++' which performs static checks on C++
-code based on guidelines from Scott Meyers' book "Effective C++". Some of these
-checks can turn up flaws in your program, but when one of these checks fails,
-that does not necessarily imply that your program is faulty.
+   Any file or directory under the build directory can be used as a target.
+Since all files from the source directory are copied to the build directory,
+you can specify those as well. For example `scons test' will build all targets
+in the `test' directory.
 
-  Both the STL implementation provided with GCC and boost use code that is in
-violation of these guidelines, but works just fine. One example is to not
-initialize data members in a class' constructor - when metaprogramming with
-templates, it often matters little what the data member's value is, what matters
-is whether the template class can be instanciated.
+   In addition, the following targets are defined:
 
-  Turning on this switch will lead to a lot of compiler warnings, most of which
-turn out to be superfluous. Still, it can be helpful.
+`scons check'
+    Builds the testsuite.
 
-  --enable-coverage       (default is no) Embed coverage information into the
-                          build, that can be be used for test coverage
-                          analysis. Coverage information is extracted by
-                          `gcov'; if that program cannot be found,
-                          `--enable-coverage' has no effect. Implies
-                          `--enable-debug=yes'
+`scons install'
+    Installs the build artefacts into the configured installation directory (see
+    below).
 
-  GCC comes with the ability to instrumentalize function calls. A program
-compiled with the appropriate compiler options will produce output files from
-this instrumentalization. GCC comes with a tool called `gcov' that can parse
-these output files, and create an annotated source file in which each line is
-marked with how often it was called.
 
-  There are some drawbacks to GCC's approach to instrumentalization; most
-notably, it doesn't work well with inlined code. In order to produce better
-output, when you use `--enable-coverage', that also implies `--enable-debug'
-and overrides any other parameters you might specifiy on the command line.
+Build Configuration
+=======================
 
-  There will still be lines in the annotated source files that make little
-sense - `gcov' might tell you that the line containing the closing brace of a
-function was never called, but that every other line in the function has been
-executed, etc.
+   At the time of writing, the Fhtagn! build defines the following build
+configuration variables and their defaults:
 
-  One other thing to note is that an instrumentalized binary creates an output
-file per .cpp file used to create the binary. Since the header files associated
-with each .cpp file may be included in numerous places, each header file may be
-annotated more than once.
+CXXFLAGS: Flags for the C++ compiler
+    default: -ansi -std=c++98 -Wall -Wsign-promo -fstrict-aliasing
+             -Wstrict-aliasing
+    actual: -ansi -std=c++98 -Wall -Wsign-promo -fstrict-aliasing
+            -Wstrict-aliasing -ggdb -O2
 
-  The gencov.sh script included in this distribution will collect coverage
-information per each output file of the instrumentalized binary. It's up to you
-to correlate the information in the resulting coverage files.
+    CXXFLAGS are modified depending on the BUILD_CONFIG (see below). The
+    `release' BUILD_CONFIG adds optimization flags.
 
-  Still, looking at coverage output may help you find code that is never
-executed, or identify code that is executed many times and could therefore
-benefit from optimization.
+BUILD_CONFIG: Target for the build (debug|release)
+    default: release
+    actual: release
 
-  --enable-debug          (default is yes) Switch off debug builds, i.e. pass
-                          the -DNDEBUG flag and use more highly optimized
-                          build flags. Use `--disable-debug' for production
-                          builds.
+BUILD_LIB_TYPE: Type of library to build (static|shared|both)
+    default: both
+    actual: both
 
-  By default, `--enable-debug' is set, and that implies that the sources are
-built without optimization and with the `-DDEBUG' flag passed to the compiler.
-By contrast, if you disable the debug build, sources are optimized with the
-`-O2' optimizer flag, and `-DNDEBUG' is passed to the compiler. The latter is
-strongly recommended by some boost libraries used in Fhtagn!.
+BUILD_PREFIX: Build directory ( /path/to/BUILD_PREFIX )
+    default: build
+    actual: build
 
-  As a rule of thumb, leave this option as it is unless you want to produce
-production builds.
+    The BUILD_PREFIX is relative to the root source directory.
+
+INSTALL_PREFIX: Base path for the installation. ( /path/to/INSTALL_PREFIX )
+    default: /opt/local
+    actual: /opt/local
+
+BOOST_PREFIX: Base path of boost installation; use this if auto-detection fails.
+              ( /path/to/BOOST_PREFIX )
+    default: None
+    actual: None
+
+CPPUNIT_PREFIX: Base path of cppunit installation; use this if auto-detection
+                fails. ( /path/to/CPPUNIT_PREFIX )
+    default: None
+    actual: None
+
 
 Platforms
-==================
+=======================
 
    Fhtagn! is supposed to be pretty portable, but at the time of writing, it
 hasn't been built on many platforms yet. The list of currently tested platforms
