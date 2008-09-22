@@ -16,7 +16,7 @@ class BoostCheck(object):
   register_options = Callable(register_options)
 
 
-  def check_for_boost(context):
+  def check_for_boost(context, *args, **kw):
     test_file = """
 #include <iostream>
 #include <boost/version.hpp>
@@ -29,12 +29,26 @@ int main(int argc, char **argv)
             << std::endl;
 }
 """
-    return context.sconf.env.check_for_lib(context, 'boost',
+    env = context.sconf.env
+
+    lib_patterns = {}
+    for libname in kw.get('LIBS', []):
+      pattern = '%s(?P<LINK_NAME>boost_%s(-mt)?(-(?P<VERSION_MAJOR>[0-9]+)_(?P<VERSION_MINOR>[0-9]+))?)' % (env['LIBPREFIX'],
+          libname)
+      lib_patterns[libname] = [
+        r'%s%s' % (pattern, env['LIBSUFFIX']),
+        r'%s%s' % (pattern, env['SHLIBSUFFIX']),
+      ]
+
+    return env.check_for_lib(context, 'boost',
         header_only = True,
         test_file = test_file,
         suffix = '.cpp',
         prefix_var = 'BOOST_PREFIX',
-        output_var = '%s_BOOST_VERSION' % context.sconf.env._custom_check_prefix)
+        output_var = '%s_BOOST_VERSION' % env._custom_check_prefix,
+        lib_patterns = lib_patterns,
+        min_version = kw.get('min_version', ()),
+        max_version = kw.get('max_version', ()))
   check_for_boost = Callable(check_for_boost)
 
 
@@ -59,7 +73,7 @@ class CppUnitCheck(object):
   register_options = Callable(register_options)
 
 
-  def check_for_cppunit(context):
+  def check_for_cppunit(context, *args, **kw):
     test_file = """
 #include <iostream>
 #include <cppunit/Portability.h>
@@ -99,7 +113,7 @@ class FhtagnCheck(object):
   register_options = Callable(register_options)
 
 
-  def check_for_fhtagn(context):
+  def check_for_fhtagn(context, *args, **kw):
     test_file = """
 #include <iostream>
 #include <fhtagn/version.h>
@@ -138,7 +152,7 @@ class CartographCheck(object):
   register_options = Callable(register_options)
 
 
-  def check_for_cartograph(context):
+  def check_for_cartograph(context, *args, **kw):
     test_file = """
 #include <iostream>
 #include <cartograph/version.h>
@@ -179,7 +193,7 @@ class OSGCheck(object):
   register_options = Callable(register_options)
 
 
-  def check_for_osg(context):
+  def check_for_osg(context, *args, **kw):
     test_file = """
 #include <iostream>
 #include <osg/Version>

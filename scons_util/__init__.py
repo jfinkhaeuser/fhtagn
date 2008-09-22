@@ -68,6 +68,7 @@ installation paths.
     self._sources = {}
     self._headers = {}
     self._libs = {}
+    self._named_libs = {}
 
     #### Create regexes for later use
     import re
@@ -118,6 +119,14 @@ installation paths.
         version_name = '%s_%s' % (kw['name'].upper(), version_name)
       self[version_name] = '%d.%d' % kw['version']
 
+
+  def is_unix(self):
+    import sys
+    if sys.platform in ('darwin', 'linux2', 'sunos5'):
+      return True
+    elif sys.platform[:7] == 'freebsd':
+      return True
+    return False
 
 
   def register_check(self, check, opts = None):
@@ -193,6 +202,109 @@ installation paths.
         outputvar, text)
 
 
+  def _find_libs(self, dirs, patterns):
+    # XXX currently only works on unices
+    if not self.is_unix():
+      raise AssertionError("Library patterns are only implemented on UNIX.")
+
+    results = {}
+    import os
+    for install_dir in dirs:
+      if not install_dir:
+        install_dir = '/usr'
+
+      lib_dir = os.path.join(install_dir, 'lib') # FIXME
+      entries = os.listdir(lib_dir)
+      for lib, libpatterns in patterns.items():
+        for pattern in libpatterns:
+          import re
+          c = re.compile(pattern)
+          for entry in entries:
+            if c.match(entry):
+              matches = c.search(entry)
+              groups = matches.groupdict()
+              # version
+              version = []
+              if groups.has_key('VERSION_MAJOR'):
+                version.append(groups['VERSION_MAJOR'])
+              if groups.has_key('VERSION_MINOR'):
+                version.append(groups['VERSION_MINOR'])
+              if groups.has_key('VERSION_MICRO'):
+                version.append(groups['VERSION_MICRO'])
+              if groups.has_key('VERSION_PATCH'):
+                version.append(groups['VERSION_PATCH'])
+              if groups.has_key('VERSION_BUILD'):
+                version.append(groups['VERSION_BUILD'])
+
+              if not results.has_key(lib):
+                results[lib] = {}
+
+              if results[lib].has_key(entry):
+                # Skip identical results in different paths; we assume that the
+                # earlier the path in the list, the more 'default' the location,
+                # i.e. the more preferred the result
+                continue
+
+              results[lib][entry] = {
+                'path' : install_dir,
+                'version' : tuple(self.int_version(version)),
+                'name' : groups.get('LINK_NAME', None),
+              }
+
+    # Filter results. We prefer:
+    # a) A higher version number over a lower
+    # b) A version number over none
+    filtered_results = {}
+    for name, info in results.items():
+      highest_version = (None, None)
+      for fname, data in info.items():
+        if data['version'] > highest_version[0]:
+          highest_version = (data['version'], fname)
+
+      filtered_results[name] = info[highest_version[1]]
+
+    # Post-process for sanity. If the path & version in the results don't match,
+    # we'd better abort the build.
+    path = None
+    version = None
+    for name, info in filtered_results.items():
+      if not path:
+        path = info['path']
+      if not version:
+        version = info['version']
+      if version != info['version'] or path != info['path']:
+        raise AssertionError('Found different libraries of the same package in '
+            'different locations.')
+
+    return filtered_results
+
+
+  def int_version(self, version):
+    result = []
+    for v in version:
+      try:
+        result.append(int(v))
+      except TypeError:
+        result.append(v)
+    return result
+
+
+  def compare_version(self, version1, version2):
+    mapped_version = map(lambda x, y: (x, y), self.int_version(version1),
+        self.int_version(version2))
+    result = 0
+    for v in mapped_version:
+      if v[0] == None or v[1] == None:
+        continue
+      if v[0] > v[1]:
+        result = 1
+        break
+      elif v[0] < v[1]:
+        result = -1
+        break
+    return result
+
+
   def check_for_lib(self, context, name, **kw):
     # Testfile suffix, default to C
     suffix = kw.get('suffix', '.c')
@@ -208,6 +320,23 @@ installation paths.
     extra_flags = kw.get('extra_flags', {})
     # The check might just require headers, no linking against a library.
     header_only = kw.get('header_only', False)
+    # If library patterns are defined, the function needs to attempt and detect
+    # file names based on these patterns...
+    patterns = kw.get('lib_patterns', {})
+    # If libnames are given, match those against patterns
+    libnames = kw.get('lib_names', [])
+    # The user might specify a version range
+    min_version = kw.get('min_version', ())
+    max_version = kw.get('max_version', ())
+
+    # Validity checking.
+    if libnames and header_only:
+      raise AssertionError("You cannot specify lib_names and header_only at the"
+          " same time.")
+    if libnames and patterns and libnames != patterns.keys():
+      raise AssertionError("If you specify lib_names and lib_patterns, the "
+          "patterns must match lib_names exactly.")
+    libnames += patterns.keys()
 
     context.Message('Checking for %s... ' % name)
 
@@ -218,16 +347,36 @@ installation paths.
       '/opt/local',
     ]
 
-    # The libs we test for are considered to be equivalent to name, except if
-    # header_only is true...
-    libs = [name]
-    if header_only:
-      libs = []
-    pre_test_libs = context.AppendLIBS(libs)
-
     # User-provided install dir?
     if self.has_key(prefix_var) and self[prefix_var]:
       install_dirs = [self[prefix_var]] + install_dirs
+
+    # If library patterns are defined, we'll have to search all install dirs
+    # for files matching them.
+    pattern_results = {}
+    libs = []
+    lib_matches = {}
+    version = None
+    if patterns:
+      # Find library files, then build the install_dirs and libs around the
+      # findings.
+      pattern_results = self._find_libs(install_dirs, patterns)
+      install_dirs = []
+      for lname, info in pattern_results.items():
+        lib_matches[lname] = info['name']
+        libs.append(info['name'])
+        if not install_dirs.count(info['path']):
+          install_dirs.append(info['path'])
+        if not version:
+          version = info['version']
+    else:
+      # Use the names from the command line, and the default install dirs
+      libs = libnames
+      if header_only:
+        libs = []
+
+    # Store libs
+    pre_test_libs = context.AppendLIBS(libs)
 
     # Crawl through all installation directories
     for install_dir in install_dirs:
@@ -266,12 +415,37 @@ installation paths.
         self[prefix_var] = install_dir
 
         # If there's no output (which would be the case with the default
-        # test_file, we'll default to saying "found"
+        # test_file, we'll default to saying "found")
         if not output:
           output = 'found'
+
+        # If there was a min_version or max_version specified, or searching for
+        # patterns resulted in a specific version to link against, we might need
+        # to do some checking on the output now.
+        # We assume that version components are separated by dots.
+        output_version = tuple(output.split('.'))
+
+        # Check for exact version. Now the number of components may vary
+        # between what's specified and what is detected.
+        if version:
+          if 0 != self.compare_version(version, output_version):
+            context.Result(0)
+            return 0
+
+        if min_version:
+          if self.compare_version(min_version, output_version) not in (-1, 0):
+            context.Result(0)
+            return 0
+        if max_version:
+          if self.compare_version(max_version, output_version) not in (1, 0):
+            context.Result(0)
+            return 0
+
         self[output_var] = output
         context.sconf.Define(output_var, output,
             'Version of the installed %s library' % name)
+        if lib_matches:
+          context.sconf.env.storeNamedLibs(name, lib_matches)
         context.Result(output)
         return (result, output)
 
@@ -375,13 +549,27 @@ installation paths.
   def addLibs(self, target, libs):
     if not self._libs.has_key(target):
       self._libs[target] = []
-    self._libs[target].extend(libs)
+    for lib in libs:
+      if type(lib) == type(str()):
+        self._libs[target].append(lib)
+      elif type(lib) in (type(list()), type(tuple())):
+        if not self._named_libs.has_key(lib[0]):
+          raise AssertionError, 'No named library "%s" known.' % lib[0]
+        if not self._named_libs[lib[0]].has_key(lib[1]):
+          raise AssertionError, 'No library "%s" known for named lib "%s".' % (lib[1], lib[0])
+        self._libs[target].append(self._named_libs[lib[0]][lib[1]])
 
 
   def addHeaders(self, target, headers):
     if not self._headers.has_key(target):
       self._headers[target] = []
     self._headers[target].extend(self.arg2nodes(headers))
+
+
+  def storeNamedLibs(self, name, matches):
+    if not self._named_libs.has_key(name):
+      self._named_libs[name] = {}
+    self._named_libs[name].update(matches)
 
 
   def getSources(self, target):

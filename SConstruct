@@ -70,7 +70,11 @@ class FhtagnEnvironment(ExtendedEnvironment):
       ('C++', 'int32_t', '#include <stdint.h>'),
     ]
 
-    if not conf.BoostCheck():
+    boost_libs = [
+      'signals',
+      'thread',
+    ]
+    if not conf.BoostCheck(LIBS = boost_libs):
       print ">> Features depending on boost will not be built."
 
     if not conf.CppUnitCheck():

@@ -15,4 +15,4 @@ HEADERS = [
 
 env.addSources('fhtagn', SOURCES)
 env.addHeaders('fhtagn', HEADERS)
-env.addLibs('fhtagn', ['boost_thread-mt-1_35', 'boost_signals-mt-1_35']) # FIXME
+env.addLibs('fhtagn', [('boost', 'thread'), ('boost', 'signals')])
