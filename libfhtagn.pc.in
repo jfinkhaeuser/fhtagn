@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: libfhtagn
 Description: Fhtagn! C++ library
-Version: @VERSION@
+Version: @FHTAGN_VERSION@
 URL: http://fhtagn.unwesen.de/
 Libs: -L${libdir} -lfhtagn
 if HAVE_BOOST
@@ -14,5 +14,5 @@ else
 Cflags: -I${includedir}
 endif
 if HAVE_BOOST
-Libs.private: -lboost_signals-mt -lboost_thread-mt -pthread
+Libs.private: @FHTAGN_BOOST_LIBS@ -pthread
 endif

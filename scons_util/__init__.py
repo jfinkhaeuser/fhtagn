@@ -315,6 +315,8 @@ installation paths.
     prefix_var = kw.get('prefix_var', '%s_PREFIX' % name.upper())
     # When we detect the library's version, we save it in an output variable.
     output_var = kw.get('output_var', '%s_VERSION' % name.upper())
+    # Define for Substitute that we've detected a library.
+    have_var = kw.get('have_var', 'HAVE_%s' % name.upper())
     # In order to successfully link the test file, we might need a few extra
     # flags.
     extra_flags = kw.get('extra_flags', {})
@@ -444,8 +446,13 @@ installation paths.
         self[output_var] = output
         context.sconf.Define(output_var, output,
             'Version of the installed %s library' % name)
+
+        self[have_var] = 1
+        context.sconf.Define(have_var, 1, 'Found %s library?' % name)
+
         if lib_matches:
           context.sconf.env.storeNamedLibs(name, lib_matches)
+
         context.Result(output)
         return (result, output)
 
@@ -571,6 +578,15 @@ installation paths.
       self._named_libs[name] = {}
     self._named_libs[name].update(matches)
 
+
+  def getNamedLibs(self, name, libs):
+    if not self._named_libs.has_key(name):
+      return []
+    retval = []
+    for lib in libs:
+      if self._named_libs[name].has_key(lib):
+        retval.append(self._named_libs[name][lib])
+    return retval
 
   def getSources(self, target):
     return self._sources.get(target, [])

@@ -5,8 +5,8 @@ includedir=@includedir@
 
 Name: libfhtagn_util
 Description: Fhtagn! C++ library
-Version: @VERSION@
+Version: @FHTAGN_VERSION@
 URL: http://fhtagn.unwesen.de/
 Libs: -L${libdir} -lfhtagn_util
 Cflags: -I${includedir}
-Libs.private: -lfhtagn @CPPUNIT_LIBS@
+Libs.private: -lfhtagn @FHTAGN_UTIL_CPPUNIT_LIBS@

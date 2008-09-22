@@ -205,16 +205,34 @@ env.Alias('check', testsuite)
 env.Default(testsuite)
 
 
-pc_name = env.Substitute(os.path.join('#', env[env.BUILD_PREFIX], 'libfhtagn.pc'),
-    'libfhtagn.pc.in')
-env.Install(pkgconfig_path, pc_name)
-env.Default(pc_name)
+if env.is_unix():
+  # Add a few env variables for substition later on.
+  if env.has_key('FHTAGN_BOOST_VERSION'):
+    boost_libs = ''
+    if env.has_key('BOOST_PREFIX') and env['BOOST_PREFIX']:
+      boost_libs += '%s%s%s' % (env['LIBDIRPREFIX'],
+          os.path.join(env['BOOST_PREFIX'], 'lib'), env['LIBDIRSUFFIX'])
+    for libname in env.getNamedLibs('boost', ['signals', 'thread']):
+      boost_libs += ' %s%s%s' % (env['LIBLINKPREFIX'], libname,
+          env['LIBLINKSUFFIX'])
+    env['FHTAGN_BOOST_LIBS'] = boost_libs
 
-util_pc_name = env.Substitute(os.path.join('#', env[env.BUILD_PREFIX],
-      'libfhtagn_util.pc'),
-    'libfhtagn_util.pc.in')
-env.Install(pkgconfig_path, util_pc_name)
-env.Default(util_pc_name)
+  if env.has_key('FHTAGN_CPPUNIT_VERSION'):
+    cppunit_libs = os.popen('cppunit-config --libs').read()
+    env['FHTAGN_UTIL_CPPUNIT_LIBS'] = cppunit_libs
+
+
+  # Generate .pc files
+  pc_name = env.Substitute(os.path.join('#', env[env.BUILD_PREFIX], 'libfhtagn.pc'),
+      'libfhtagn.pc.in')
+  env.Install(pkgconfig_path, pc_name)
+  env.Default(pc_name)
+
+  util_pc_name = env.Substitute(os.path.join('#', env[env.BUILD_PREFIX],
+        'libfhtagn_util.pc'),
+      'libfhtagn_util.pc.in')
+  env.Install(pkgconfig_path, util_pc_name)
+  env.Default(util_pc_name)
 
 ###############################################################################
 # install
