@@ -4,6 +4,7 @@
 # the following license terms and conditions as set forth in the COPYING file
 # included in this source distribution.
 Import('env')
+import os.path
 
 SOURCES = [
   'tasklet.cpp',
@@ -11,6 +12,9 @@ SOURCES = [
 
 HEADERS = [
   'tasklet.h',
+  'lock_policy.h',
+  os.path.join('detail', 'mutex_concepts.h'),
+  os.path.join('detail', 'fake_mutex.h'),
 ]
 
 env.addSources('fhtagn', SOURCES)

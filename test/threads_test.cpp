@@ -35,10 +35,12 @@
 
 #include <boost/bind.hpp>
 #include <boost/thread/xtime.hpp>
+#include <boost/thread/shared_mutex.hpp>
 
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <fhtagn/threads/tasklet.h>
+#include <fhtagn/threads/lock_policy.h>
 
 namespace {
 
@@ -136,6 +138,9 @@ public:
         CPPUNIT_TEST(testTaskletFreeFun);
         CPPUNIT_TEST(testTaskletError);
         CPPUNIT_TEST(testTaskletScope);
+
+        CPPUNIT_TEST(testMutexConcepts);
+        CPPUNIT_TEST(testFakeMutex);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -334,6 +339,54 @@ private:
             task.start();
             task.stop();
         }
+    }
+
+
+    void testMutexConcepts()
+    {
+        namespace th = fhtagn::threads;
+
+        // Just need to compile...
+
+        // Lockable concept
+        boost::function_requires<th::concepts::Lockable<boost::mutex> >();
+        boost::function_requires<th::concepts::Lockable<boost::try_mutex> >();
+        boost::function_requires<th::concepts::Lockable<boost::timed_mutex> >();
+        boost::function_requires<th::concepts::Lockable<boost::recursive_mutex> >();
+        boost::function_requires<th::concepts::Lockable<boost::recursive_try_mutex> >();
+        boost::function_requires<th::concepts::Lockable<boost::recursive_timed_mutex> >();
+        boost::function_requires<th::concepts::Lockable<boost::shared_mutex> >();
+
+        // TimedLockable concept
+        boost::function_requires<th::concepts::TimedLockable<boost::timed_mutex> >();
+        boost::function_requires<th::concepts::TimedLockable<boost::recursive_timed_mutex> >();
+        // XXX shared_mutex supports absolute timed locking, but not relative
+        // timed locking. Ugh.
+        // boost::function_requires<th::concepts::TimedLockable<boost::shared_mutex> >();
+
+        // SharedLockable concept
+        boost::function_requires<th::concepts::SharedLockable<boost::shared_mutex> >();
+
+        // UpgradeLockable concept
+        boost::function_requires<th::concepts::UpgradeLockable<boost::shared_mutex> >();
+    }
+
+
+    void testFakeMutex()
+    {
+        namespace th = fhtagn::threads;
+
+        // Needs to conform to all mutex concepts
+        boost::function_requires<th::concepts::Lockable<th::fake_mutex> >();
+        boost::function_requires<th::concepts::TimedLockable<th::fake_mutex> >();
+        boost::function_requires<th::concepts::SharedLockable<th::fake_mutex> >();
+        boost::function_requires<th::concepts::UpgradeLockable<th::fake_mutex> >();
+
+        // Needs to finish with fake_mutex. The code must also work for several
+        // of boost's mutex types to ensure there'll be no runtime
+        // complications.
+        //
+        // TODO
     }
 };
 
