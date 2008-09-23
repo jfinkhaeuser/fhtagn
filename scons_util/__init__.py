@@ -329,7 +329,11 @@ installation paths.
     libnames = kw.get('lib_names', [])
     # The user might specify a version range
     min_version = kw.get('min_version', ())
+    if type(min_version) == type(str()):
+      min_version = min_version.split('.')
     max_version = kw.get('max_version', ())
+    if type(max_version) == type(str()):
+      max_version = max_version.split('.')
 
     # Validity checking.
     if libnames and header_only:
@@ -436,11 +440,13 @@ installation paths.
 
         if min_version:
           if self.compare_version(min_version, output_version) not in (-1, 0):
-            context.Result(0)
+            context.Result('required at least %s but only found %s' % ('.'.join(min_version),
+                  '.'.join(output_version)))
             return 0
         if max_version:
           if self.compare_version(max_version, output_version) not in (1, 0):
-            context.Result(0)
+            context.Result('required at most %s but found %s' % ('.'.join(max_version),
+                  '.'.join(output_version)))
             return 0
 
         self[output_var] = output
