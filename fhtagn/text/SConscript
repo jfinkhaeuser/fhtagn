@@ -15,8 +15,12 @@ HEADERS = [
   'transcoding.h',
   'decoders.h',
   'encoders.h',
-  'xparser.h',
 ]
+
+if env.has_key('FHTAGN_BOOST_VERSION'):
+  HEADERS += [
+    'xparser.h',
+  ]
 
 env.addSources('fhtagn', SOURCES)
 env.addHeaders('fhtagn', HEADERS)

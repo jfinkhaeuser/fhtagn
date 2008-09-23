@@ -21,4 +21,6 @@ if env.has_key('FHTAGN_CPPUNIT_VERSION'):
     ]
 
   env.addSources('testsuite', SOURCES)
-  env.addLibs('testsuite', ['fhtagn', 'fhtagn_util', 'cppunit', ('boost', 'signals')])
+  env.addLibs('testsuite', ['fhtagn', 'fhtagn_util', 'cppunit'])
+  if env.has_key('FHTAGN_BOOST_VERSION'):
+    env.addLibs('testsuite', [('boost', 'signals')])
