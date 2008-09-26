@@ -32,13 +32,12 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_THREADS_DETAIL_FAKE_MUTEX_H
-#define FHTAGN_THREADS_DETAIL_FAKE_MUTEX_H
+#ifndef FHTAGN_THREADS_DETAIL_PSEUDO_MUTEX_H
+#define FHTAGN_THREADS_DETAIL_PSEUDO_MUTEX_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
 #endif
-
 
 #include <boost/noncopyable.hpp>
 #include <boost/thread/xtime.hpp>
@@ -47,34 +46,47 @@ namespace fhtagn {
 namespace threads {
 
 /**
- * Provides an interface like boost's mutexes, but does nothing at all. Since it
- * does nothing at all, it might as well provide all the lock types.
+ * Provides an interface like boost's mutexes, but does next to nothing.
  *
- * Similar to recursive_mutex behaviour in a single thread.
+ * Similar to mutex behaviour in a single thread.
  **/
-class fake_mutex
+class pseudo_mutex
     : private boost::noncopyable
 {
 public:
-    typedef boost::unique_lock<fake_mutex> scoped_lock;
+    typedef boost::unique_lock<pseudo_mutex> scoped_lock;
     typedef scoped_lock scoped_try_lock;
     typedef scoped_lock scoped_timed_lock;
+
+
+    pseudo_mutex()
+        : m_locked(false)
+    {
+    }
+
 
     /*************************************************************************
      * Lockable implementation
      */
     void lock()
     {
+        m_locked = true;
     }
 
 
     bool try_lock()
     {
+        if (m_locked) {
+            return false;
+        }
+
+        m_locked = true;
         return true;
     }
 
     void unlock()
     {
+        m_locked = false;
     }
 
 
@@ -83,14 +95,14 @@ public:
      */
     bool timed_lock(boost::system_time const & abs_time)
     {
-        return true;
+        return try_lock();
     }
 
 
     template <typename time_durationT>
     bool timed_lock(time_durationT const & rel_time)
     {
-        return true;
+        return try_lock();
     }
 
 
@@ -99,53 +111,30 @@ public:
      */
     void lock_shared()
     {
+        lock();
     }
 
 
     bool try_lock_shared()
     {
-        return true;
+        return try_lock();
     }
 
 
     void unlock_shared()
     {
+        unlock();
     }
 
 
     bool timed_lock_shared(boost::system_time const & abs_time)
     {
-        return true;
+        return try_lock();
     }
 
 
-    /*************************************************************************
-     * UpgradeLockable implementation
-     */
-    void lock_upgrade()
-    {
-    }
-
-
-    void unlock_upgrade()
-    {
-    }
-
-
-    void unlock_upgrade_and_lock()
-    {
-    }
-
-
-    void unlock_and_lock_upgrade()
-    {
-    }
-
-
-    void unlock_upgrade_and_lock_shared()
-    {
-    }
-
+private:
+    bool m_locked;
 };
 
 }} // namespace fhtagn::threads

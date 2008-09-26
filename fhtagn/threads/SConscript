@@ -15,6 +15,7 @@ HEADERS = [
   'lock_policy.h',
   os.path.join('detail', 'mutex_concepts.h'),
   os.path.join('detail', 'fake_mutex.h'),
+  os.path.join('detail', 'pseudo_mutex.h'),
 ]
 
 env.addSources('fhtagn', SOURCES)

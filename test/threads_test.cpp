@@ -125,6 +125,187 @@ struct bind_test
 };
 
 
+
+template <typename mutexT>
+struct mutex_test
+{
+    mutexT m_mutex;
+
+    void test_lock_guard()
+    {
+        boost::lock_guard<mutexT> l1(m_mutex);
+        boost::lock_guard<mutexT> l2(m_mutex, boost::adopt_lock_t());
+    }
+
+
+    void test_unique_lock_nonrecursive()
+    {
+        boost::unique_lock<mutexT> l1(m_mutex);
+        CPPUNIT_ASSERT_EQUAL(true, l1.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l1));
+
+        boost::unique_lock<mutexT> l2(m_mutex, boost::try_to_lock_t());
+        CPPUNIT_ASSERT_EQUAL(false, l2.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l2));
+
+        l1.unlock();
+        CPPUNIT_ASSERT_EQUAL(false, l1.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l1));
+
+        boost::unique_lock<mutexT> l3(m_mutex, boost::try_to_lock_t());
+        CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
+
+        boost::unique_lock<mutexT> l4(m_mutex, boost::adopt_lock_t());
+        CPPUNIT_ASSERT_EQUAL(true, l4.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
+
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l4));
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
+
+        l4.unlock();
+        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l4));
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
+
+        l3.unlock();
+
+        boost::unique_lock<mutexT> l5(m_mutex, boost::defer_lock_t());
+        CPPUNIT_ASSERT_EQUAL(false, l5.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l5));
+
+        l5.lock();
+        CPPUNIT_ASSERT_EQUAL(true, l5.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l5));
+
+        l5.unlock();
+    }
+
+
+    void test_unique_lock_recursive()
+    {
+        boost::unique_lock<mutexT> l1(m_mutex);
+        CPPUNIT_ASSERT_EQUAL(true, l1.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l1));
+
+        boost::unique_lock<mutexT> l2(m_mutex, boost::try_to_lock_t());
+        CPPUNIT_ASSERT_EQUAL(true, l2.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
+
+        boost::unique_lock<mutexT> l3(m_mutex, boost::adopt_lock_t());
+        CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, l2.owns_lock());
+
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
+
+        l3.unlock();
+        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l3));
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
+
+        l2.unlock();
+
+        boost::unique_lock<mutexT> l4(m_mutex, boost::defer_lock_t());
+        CPPUNIT_ASSERT_EQUAL(false, l4.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l4));
+
+        l4.lock();
+        CPPUNIT_ASSERT_EQUAL(true, l4.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l4));
+
+        l4.unlock();
+    }
+
+
+    void test_timed_lock_nonrecursive()
+    {
+        boost::unique_lock<mutexT> l1(m_mutex, boost::get_system_time());
+        CPPUNIT_ASSERT_EQUAL(true, l1.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l1));
+
+        boost::unique_lock<mutexT> l2(m_mutex, boost::get_system_time());
+        CPPUNIT_ASSERT_EQUAL(false, l2.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l2));
+    }
+
+
+    void test_timed_lock_recursive()
+    {
+        boost::unique_lock<mutexT> l1(m_mutex, boost::get_system_time());
+        CPPUNIT_ASSERT_EQUAL(true, l1.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l1));
+
+        boost::unique_lock<mutexT> l2(m_mutex, boost::get_system_time());
+        CPPUNIT_ASSERT_EQUAL(true, l2.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
+    }
+
+
+    void lock_shared_lock()
+    {
+        boost::shared_lock<mutexT> l(m_mutex);
+        CPPUNIT_ASSERT_EQUAL(true, l.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l));
+    }
+
+
+    void test_shared_lock()
+    {
+        boost::shared_lock<mutexT> l(m_mutex);
+        CPPUNIT_ASSERT_EQUAL(true, l.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l));
+
+        // Works like a recursive mutex...
+        boost::shared_lock<mutexT> l2(m_mutex);
+        CPPUNIT_ASSERT_EQUAL(true, l2.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
+
+        // ... but also across threads
+        namespace th = fhtagn::threads;
+        th::tasklet t(boost::bind(&mutex_test<mutexT>::lock_shared_lock,
+              this));
+        CPPUNIT_ASSERT(t.start());
+        CPPUNIT_ASSERT(t.wait());
+    }
+
+
+    void test_upgrade_lock()
+    {
+        boost::shared_lock<mutexT> l(m_mutex);
+        CPPUNIT_ASSERT_EQUAL(true, l.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l));
+
+        // Works like a recursive mutex with shared_locks...
+        boost::upgrade_lock<mutexT> l2(m_mutex);
+        CPPUNIT_ASSERT_EQUAL(true, l2.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
+
+        // ... so we can have even more shared locks. (but only one upgrade_lock
+        // per mutex).
+        boost::shared_lock<mutexT> l3(m_mutex);
+        CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
+        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
+
+        // ... once the shared_locks are unlocked, we can upgrade the
+        // upgrade_lock.
+        l.unlock();
+        l3.unlock();
+
+        {
+            boost::upgrade_to_unique_lock<mutexT> l4(l2);
+
+            // ... at which point the shared_locks can't be locked any longer.
+            CPPUNIT_ASSERT_EQUAL(false, l.try_lock());
+            CPPUNIT_ASSERT_EQUAL(false, l3.try_lock());
+        }
+
+        // At least until the upgrade is reversed.
+        CPPUNIT_ASSERT_EQUAL(true, l.try_lock());
+        CPPUNIT_ASSERT_EQUAL(true, l3.try_lock());
+    }
+};
+
+
+
 } // anonymous namespace
 
 class ThreadsTest
@@ -140,7 +321,7 @@ public:
         CPPUNIT_TEST(testTaskletScope);
 
         CPPUNIT_TEST(testMutexConcepts);
-        CPPUNIT_TEST(testFakeMutex);
+        CPPUNIT_TEST(testMutexes);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -372,21 +553,86 @@ private:
     }
 
 
-    void testFakeMutex()
+    void testMutexes()
     {
         namespace th = fhtagn::threads;
 
         // Needs to conform to all mutex concepts
+        boost::function_requires<th::concepts::Lockable<th::pseudo_mutex> >();
+        boost::function_requires<th::concepts::TimedLockable<th::pseudo_mutex> >();
+        boost::function_requires<th::concepts::SharedLockable<th::pseudo_mutex> >();
+
         boost::function_requires<th::concepts::Lockable<th::fake_mutex> >();
         boost::function_requires<th::concepts::TimedLockable<th::fake_mutex> >();
         boost::function_requires<th::concepts::SharedLockable<th::fake_mutex> >();
         boost::function_requires<th::concepts::UpgradeLockable<th::fake_mutex> >();
 
-        // Needs to finish with fake_mutex. The code must also work for several
-        // of boost's mutex types to ensure there'll be no runtime
-        // complications.
-        //
-        // TODO
+
+        // Test test code first, by trying it out on boost's mutexes...
+        {
+          mutex_test<boost::mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_nonrecursive();
+        }
+
+        {
+          mutex_test<boost::try_mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_nonrecursive();
+        }
+
+        {
+          mutex_test<boost::timed_mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_nonrecursive();
+          m.test_timed_lock_nonrecursive();
+        }
+
+        {
+          mutex_test<boost::recursive_mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_recursive();
+        }
+
+        {
+          mutex_test<boost::recursive_try_mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_recursive();
+        }
+
+        {
+          mutex_test<boost::recursive_timed_mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_recursive();
+          m.test_timed_lock_recursive();
+        }
+
+        {
+          mutex_test<boost::shared_mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_nonrecursive();
+          m.test_timed_lock_nonrecursive();
+          m.test_shared_lock();
+          m.test_upgrade_lock();
+        }
+
+        // pseudo_mutex should survive most of non-recursive tests
+        {
+          mutex_test<th::pseudo_mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_nonrecursive();
+          m.test_timed_lock_nonrecursive();
+          m.test_shared_lock();
+        }
+
+        // fake_mutex can only survive recursive tests
+        {
+          mutex_test<th::fake_mutex> m;
+          m.test_lock_guard();
+          m.test_unique_lock_recursive();
+          m.test_timed_lock_recursive();
+          m.test_shared_lock();
+        }
     }
 };
 

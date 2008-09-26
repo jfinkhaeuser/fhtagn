@@ -101,9 +101,37 @@
  *
  *    1. Boost does *not* provide a mutex type that does nothing, i.e. all of
  *       it's lock types incur some overhead. We remedy that by providing a
- *       fake_mutex type with the same interface as boost's mutexes.
+ *       mutex types with the same interface as boost's mutexes.
+ *
+ *       Actually, we provide more than one mutex type. The first one,
+ *       fake_mutex, really does nothing at all. It implements the interfaces of
+ *       Lockable, TimedLockable, SharedLockable and UpgradeLockable, but all of
+ *       it's functions will *always* succeed.
+ *
+ *       That is probably what is best when designing an algorithm to work both
+ *       in a threaded and non-threaded environment.
  **/
 #include <fhtagn/threads/detail/fake_mutex.h>
+/**
+ *       On the other hand, code that relies on specific *behaviour* of a mutex
+ *       class, such as try_lock() succeeding or failing depending on whether
+ *       the mutex is already locked, would break.
+ *
+ *       To deal with those situations, we provide pseudo_mutex. It implements
+ *       the Lockable, TimedLockable and SharedLockable interfaces, and
+ *       actually flags whether or not it's locked. But it's not thread-safe,
+ *       and will pretty much only work in a single thread.
+ *
+ **/
+#include <fhtagn/threads/detail/pseudo_mutex.h>
+ /**
+  *      Another way of thinking of these mutexes is that in a single thread,
+  *      fake_mutex exhibits the same behaviour as a recursive_mutex, whereas
+  *      pseudo_mutex exhibits that of a mutex.
+  *
+  *      XXX None of the mutexes simulate the UpgradeLockable behaviour.
+  **/
+
 /**
  *    2. We'd like to know as early as possible and as quickly as possible
  *       whether or not our selected mutex type works with the expectations of
