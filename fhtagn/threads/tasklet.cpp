@@ -130,9 +130,11 @@ tasklet::reset()
 
       default:
         throw std::logic_error("Unreachable line reached");
-        return false;
         break;
     }
+
+    // unreachable
+    return false;
 }
 
 
