@@ -39,6 +39,16 @@
 #error You are trying to include a C++ only header file
 #endif
 
+/**
+ * XXX In DEBUG mode, boost 1.35.0 (and possibly other versions) verify the
+ *     return values of pthread functions via an assertion. While that's not
+ *     a bad thing as such, they do so when the pthread functions must fail,
+ *     but the boost function calling the pthread function must succeed
+ *     (according to the docs).
+ *     We disable those asserts here.
+ **/
+#define BOOST_DISABLE_ASSERTS 1
+
 #include <exception>
 
 #include <boost/signal.hpp>
