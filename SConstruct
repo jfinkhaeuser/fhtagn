@@ -15,14 +15,15 @@ import os.path
 # Environment
 class FhtagnEnvironment(ExtendedEnvironment):
   def __init__(self, version, parent = None, args = None, **kw):
+    import os
+
     ### Define options for config.py
-    opts = self.Options('fhtagn.conf')
+    opts = self.Options(os.environ.get('SCONS_CONF', 'fhtagn.conf'))
 
     self.register_check(checks.BoostCheck, opts)
     self.register_check(checks.CppUnitCheck, opts)
 
     ### Fixup kwargs
-    import os
     kw['options'] = opts
     kw['name'] = 'fhtagn'
     kw['version'] = version
@@ -74,7 +75,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
       'signals',
       'thread',
     ]
-    if not conf.BoostCheck(LIBS = boost_libs):
+    if not conf.BoostCheck(LIBS = boost_libs, min_version = (1, 35, 0)):
       print ">> Features depending on boost will not be built."
     else:
       self['CXXFLAGS'] += ['-pthread']
