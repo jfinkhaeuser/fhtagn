@@ -606,6 +606,24 @@ installation paths.
     return self._headers.get(target, [])
 
 
+  def stripBuildPrefix(self, file_list):
+    retval = []
+    import os.path
+
+    build_prefix = self[self.BUILD_PREFIX]
+
+    for filename in file_list:
+      build_path = filename.get_path()
+      if build_path.startswith(build_prefix):
+        build_path = build_path[len(build_prefix):]
+        while build_path[0] == os.path.sep:
+          build_path = build_path[1:]
+
+      retval.append(build_path)
+
+    return retval
+
+
   def getHeadersRelative(self, target):
     retval = {}
     import os.path
@@ -615,7 +633,8 @@ installation paths.
     for header in self.getHeaders(target):
       build_path = header.get_path()
       if not build_path.startswith(build_prefix):
-        sys.stderr.write('Header file %s in unknown location.\n', build_path)
+        import sys
+        sys.stderr.write('Header file %s in unknown location.\n' % build_path)
         continue
 
       build_path = build_path[len(build_prefix):]
@@ -631,4 +650,27 @@ installation paths.
     return retval.items()
 
 
+  def getManifestFiles(self):
+    import os
+
+    filenames = [l.strip() for l in file('MANIFEST', 'rb').readlines()]
+
+    def visitor(arg, dirname, entries):
+      import fnmatch
+      filtered_entries = []
+      for pattern in ('*.pyc', '.*.sw*', '.svn'):
+        filtered_entries += fnmatch.filter(entries, pattern)
+      for fe in filtered_entries:
+        i = entries.index(fe)
+        del entries[i]
+
+      arg += [os.path.join(dirname, e) for e in entries]
+
+    result = []
+    for p in filenames:
+      if os.path.isdir(p):
+        os.path.walk(p, visitor, result)
+      else:
+        result.append(p)
+    return result
 

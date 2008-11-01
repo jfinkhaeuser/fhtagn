@@ -1,0 +1,11 @@
+AUTHORS
+COPYING
+NEWS
+MANIFEST
+README
+SConstruct
+libfhtagn.pc.in
+libfhtagn_util.pc.in
+scons_util
+templates
+tools

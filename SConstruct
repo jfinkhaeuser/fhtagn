@@ -244,14 +244,39 @@ if env.is_unix():
 
 env.Alias('install', lib_path)
 
-for dir, headers in env.getHeadersRelative('fhtagn'):
-  full_dir = os.path.join(header_base_path, dir)
+for subdir, headers in env.getHeadersRelative('fhtagn'):
+  full_dir = os.path.join(header_base_path, subdir)
   env.Install(full_dir, headers)
   env.Alias('install', full_dir)
 
-for dir, headers in env.getHeadersRelative('fhtagn_util'):
-  full_dir = os.path.join(header_base_path, dir)
+for subdir, headers in env.getHeadersRelative('fhtagn_util'):
+  full_dir = os.path.join(header_base_path, subdir)
   env.Install(full_dir, headers)
   env.Alias('install', full_dir)
 
+###############################################################################
+# Packaging
+env.Tool('packaging')
+
+package_version = '%d.%d' % FHTAGN_VERSION
+
+all_sources = env.stripBuildPrefix(env.FindSourceFiles())
+all_sources = [f for f in all_sources if os.path.exists(f)]
+all_sources += env.getManifestFiles()
+
+env.Package(
+  NAME            = 'fhtagn',
+  VERSION         = package_version,
+  PACKAGETYPE     = 'src_tarbz2',
+  PACKAGEROOT     = '.',
+  source          = all_sources,
+)
+
+#  env.Package(
+#    NAME            = 'fhtagn',
+#    VERSION         = package_version,
+#    PACKAGETYPE     = 'targz',
+#    PACKAGEROOT     = '.',
+#    source          = env.FindInstalledFiles(),
+#  )
 
