@@ -18,7 +18,9 @@ class FhtagnEnvironment(ExtendedEnvironment):
     import os
 
     ### Define options for config.py
-    opts = self.Options(os.environ.get('SCONS_CONF', 'fhtagn.conf'))
+    config_file = os.environ.get('SCONS_CONF', 'fhtagn.conf')
+    print 'Using config file "%s"...' % config_file
+    opts = self.Options(config_file)
 
     self.register_check(checks.BoostCheck, opts)
     self.register_check(checks.CppUnitCheck, opts)
