@@ -267,7 +267,7 @@ all_sources += env.getManifestFiles()
 env.Package(
   NAME            = 'fhtagn',
   VERSION         = package_version,
-  PACKAGETYPE     = 'src_tarbz2',
+  PACKAGETYPE     = 'src_targz',
   PACKAGEROOT     = '.',
   source          = all_sources,
 )
