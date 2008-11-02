@@ -99,7 +99,7 @@ public:
         CPPUNIT_TEST(testProperty);
         CPPUNIT_TEST(testMandatory);
         CPPUNIT_TEST(testRestricted);
-        CPPUNIT_TEST(testRestrictedSpeed);
+//        CPPUNIT_TEST(testRestrictedSpeed);
         CPPUNIT_TEST(testRestrictedORChain);
 
     CPPUNIT_TEST_SUITE_END();
