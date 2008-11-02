@@ -268,7 +268,6 @@ env.Package(
   NAME            = 'fhtagn',
   VERSION         = package_version,
   PACKAGETYPE     = 'src_targz',
-  PACKAGEROOT     = '.',
   source          = all_sources,
 )
 
