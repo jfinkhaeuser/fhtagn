@@ -39,6 +39,8 @@
 #error You are trying to include a C++ only header file
 #endif
 
+#include <fhtagn/fhtagn.h>
+
 #include <functional>
 
 #include <boost/concept_check.hpp>

@@ -35,9 +35,13 @@
 #ifndef FHTAGN_BYTEORDER_H
 #define FHTAGN_BYTEORDER_H
 
-#include <stdint.h>
+#ifndef __cplusplus
+#error You are trying to include a C++ only header file
+#endif
 
-#include <fhtagn/fhtagn-config.h>
+#include <fhtagn/fhtagn.h>
+
+#include <stdint.h>
 
 /**
  * If we can grab the byte order from the compiler, do that - if not, try to

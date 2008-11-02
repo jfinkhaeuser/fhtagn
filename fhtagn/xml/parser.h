@@ -35,6 +35,12 @@
 #ifndef FHTAGN_XML_PARSER_H
 #define FHTAGN_XML_PARSER_H
 
+#ifndef __cplusplus
+#error You are trying to include a C++ only header file
+#endif
+
+#include <fhtagn/fhtagn.h>
+
 #include <string>
 #include "fhtagn/xml/parser.h"
 #include "fhtagn/xml/grammar.h"

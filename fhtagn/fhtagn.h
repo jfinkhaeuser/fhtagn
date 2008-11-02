@@ -3,8 +3,7 @@
  *
  * Copyright (C) 2007 the authors.
  *
- * Author: Author's Name <author@users.sourceforge.net>
- * ...
+ * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
  * This file is part of the Fhtagn! C++ Library, and may be distributed under
  * the following license terms:
@@ -33,19 +32,24 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_TEMPLATE_H
-#define FHTAGN_TEMPLATE_H
+#ifndef FHTAGN_H
+#define FHTAGN_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
 #endif
 
-#include <fhtagn/fhtagn.h>
+#include <fhtagn/fhtagn-config.h>
 
-namespace fhtagn {
+/**
+ * XXX In DEBUG mode, boost 1.35.0 (and possibly other versions) verify the
+ *     return values of pthread functions via an assertion. While that's not
+ *     a bad thing as such, they do so when the pthread functions must fail,
+ *     but the boost function calling the pthread function must succeed
+ *     (according to the docs).
+ *     We disable those asserts here.
+ **/
+#define BOOST_DISABLE_ASSERTS 1
 
-
-
-} // namespace fhtagn
 
 #endif // guard
