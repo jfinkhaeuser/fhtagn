@@ -133,41 +133,48 @@ struct mutex_test
 
     void test_lock_guard()
     {
-        boost::lock_guard<mutexT> l1(m_mutex);
-        boost::lock_guard<mutexT> l2(m_mutex, boost::adopt_lock_t());
+        // Lockable via lock_guard
+        {
+            boost::lock_guard<mutexT> l1(m_mutex);
+        }
+
+        // Unlockable via lock_guard
+        m_mutex.lock();
+        {
+            boost::lock_guard<mutexT> l2(m_mutex, boost::adopt_lock_t());
+        }
+
+        // ... make sure lock_guard dropped the lock
+        boost::unique_lock<mutexT> l3(m_mutex);
     }
 
 
     void test_unique_lock_nonrecursive()
     {
-        boost::unique_lock<mutexT> l1(m_mutex);
-        CPPUNIT_ASSERT_EQUAL(true, l1.owns_lock());
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l1));
+        {
+            boost::unique_lock<mutexT> l1(m_mutex);
+            CPPUNIT_ASSERT_EQUAL(true, l1.owns_lock());
+            CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l1));
 
-        boost::unique_lock<mutexT> l2(m_mutex, boost::try_to_lock_t());
-        CPPUNIT_ASSERT_EQUAL(false, l2.owns_lock());
-        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l2));
+            boost::unique_lock<mutexT> l2(m_mutex, boost::try_to_lock_t());
+            CPPUNIT_ASSERT_EQUAL(false, l2.owns_lock());
+            CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l2));
 
-        l1.unlock();
-        CPPUNIT_ASSERT_EQUAL(false, l1.owns_lock());
-        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l1));
+            l1.unlock();
+            CPPUNIT_ASSERT_EQUAL(false, l1.owns_lock());
+            CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l1));
 
-        boost::unique_lock<mutexT> l3(m_mutex, boost::try_to_lock_t());
-        CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
+            boost::unique_lock<mutexT> l3(m_mutex, boost::try_to_lock_t());
+            CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
+            CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
+        }
 
-        boost::unique_lock<mutexT> l4(m_mutex, boost::adopt_lock_t());
-        CPPUNIT_ASSERT_EQUAL(true, l4.owns_lock());
-        CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
-
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l4));
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
-
-        l4.unlock();
-        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l4));
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
-
-        l3.unlock();
+        m_mutex.lock();
+        {
+            boost::unique_lock<mutexT> l4(m_mutex, boost::adopt_lock_t());
+            CPPUNIT_ASSERT_EQUAL(true, l4.owns_lock());
+            CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l4));
+        }
 
         boost::unique_lock<mutexT> l5(m_mutex, boost::defer_lock_t());
         CPPUNIT_ASSERT_EQUAL(false, l5.owns_lock());
@@ -176,33 +183,27 @@ struct mutex_test
         l5.lock();
         CPPUNIT_ASSERT_EQUAL(true, l5.owns_lock());
         CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l5));
-
-        l5.unlock();
     }
 
 
     void test_unique_lock_recursive()
     {
-        boost::unique_lock<mutexT> l1(m_mutex);
-        CPPUNIT_ASSERT_EQUAL(true, l1.owns_lock());
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l1));
+        {
+            boost::unique_lock<mutexT> l1(m_mutex);
+            CPPUNIT_ASSERT_EQUAL(true, l1.owns_lock());
+            CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l1));
 
-        boost::unique_lock<mutexT> l2(m_mutex, boost::try_to_lock_t());
-        CPPUNIT_ASSERT_EQUAL(true, l2.owns_lock());
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
+            boost::unique_lock<mutexT> l2(m_mutex, boost::try_to_lock_t());
+            CPPUNIT_ASSERT_EQUAL(true, l2.owns_lock());
+            CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
+        }
 
-        boost::unique_lock<mutexT> l3(m_mutex, boost::adopt_lock_t());
-        CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
-        CPPUNIT_ASSERT_EQUAL(true, l2.owns_lock());
-
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
-
-        l3.unlock();
-        CPPUNIT_ASSERT_EQUAL(false, static_cast<bool>(l3));
-        CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l2));
-
-        l2.unlock();
+        m_mutex.lock();
+        {
+            boost::unique_lock<mutexT> l3(m_mutex, boost::adopt_lock_t());
+            CPPUNIT_ASSERT_EQUAL(true, l3.owns_lock());
+            CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l3));
+        }
 
         boost::unique_lock<mutexT> l4(m_mutex, boost::defer_lock_t());
         CPPUNIT_ASSERT_EQUAL(false, l4.owns_lock());
@@ -211,8 +212,6 @@ struct mutex_test
         l4.lock();
         CPPUNIT_ASSERT_EQUAL(true, l4.owns_lock());
         CPPUNIT_ASSERT_EQUAL(true, static_cast<bool>(l4));
-
-        l4.unlock();
     }
 
 
