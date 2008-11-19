@@ -42,6 +42,7 @@
 #include <fhtagn/fhtagn.h>
 
 #include <stdexcept>
+#include <algorithm>
 
 #include <boost/concept_check.hpp>
 
@@ -416,6 +417,15 @@ public:
         return m_value;
     }
 
+    /** Utility functions */
+    void swap(own_type & other)
+    {
+        // Both this object and other must have passed restrictions to set their
+        // m_value. And the restrictions are identical. So we can just swap
+        // m_value.
+        std::swap(m_value, other.m_value);
+    }
+
 private:
     /** wrapped value */
     wrappedT m_value;
@@ -423,5 +433,21 @@ private:
 
 
 } // namespace fhtagn
+
+
+namespace std {
+
+// Specialize std::swap for restricted types.
+template <
+    typename wrappedT,
+    typename restrictionT
+>
+inline void swap(fhtagn::restricted<wrappedT, restrictionT> & first,
+    fhtagn::restricted<wrappedT, restrictionT> & second)
+{
+  first.swap(second);
+}
+
+} // namespace std
 
 #endif // guard

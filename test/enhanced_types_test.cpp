@@ -154,6 +154,19 @@ private:
         > non_zero_char_pointer;
         CPPUNIT_ASSERT_THROW(non_zero_char_pointer p, fhtagn::restrictions::violation_error);
         CPPUNIT_ASSERT_NO_THROW(non_zero_char_pointer p = "Hello, world!");
+
+        // Swap two values
+        typedef fhtagn::restricted<int, fhtagn::restrictions::numeric::even<int> > even_int_t;
+        even_int_t a = 2;
+        CPPUNIT_ASSERT_THROW(a = 3, fhtagn::restrictions::violation_error);
+        even_int_t b = 4;
+        CPPUNIT_ASSERT_THROW(b = 3, fhtagn::restrictions::violation_error);
+        CPPUNIT_ASSERT_NO_THROW(a.swap(b));
+        CPPUNIT_ASSERT_EQUAL(2, static_cast<int>(b));
+        CPPUNIT_ASSERT_EQUAL(4, static_cast<int>(a));
+        CPPUNIT_ASSERT_NO_THROW(std::swap(a, b));
+        CPPUNIT_ASSERT_EQUAL(2, static_cast<int>(a));
+        CPPUNIT_ASSERT_EQUAL(4, static_cast<int>(b));
     }
 
 
