@@ -43,6 +43,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/thread/xtime.hpp>
+#include <boost/thread/locks.hpp>
 
 namespace fhtagn {
 namespace threads {
