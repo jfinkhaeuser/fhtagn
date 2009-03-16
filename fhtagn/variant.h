@@ -598,6 +598,9 @@ private:
     static boost::shared_ptr<variant> invalid_value;
 };
 
+
+} // namespace fhtagn
+
 #include <fhtagn/detail/variant.tcc>
 
 #endif // guard

@@ -50,6 +50,8 @@
     variant::error("fhtagn::variant: cannot compare to a value type other " \
             "than the one held in the variant.")
 
+namespace fhtagn {
+
 /**
  * The compare_throw comparison functor always throws.
  **/
