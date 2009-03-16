@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008,2009 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -36,6 +36,81 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <fhtagn/byteorder.h>
+#include <fhtagn/patterns/singleton.h>
+
+namespace {
+
+struct singleton_default_ctor
+{
+  singleton_default_ctor()
+  {
+    instanciated = true;
+  }
+
+  static bool instanciated;
+};
+
+bool singleton_default_ctor::instanciated = false;
+
+
+struct singleton_non_default_ctor
+{
+  singleton_non_default_ctor(int a)
+  {
+    instanciated = true;
+  }
+
+  static bool instanciated;
+};
+
+bool singleton_non_default_ctor::instanciated = false;
+
+
+struct auto_creator
+{
+  auto_creator()
+  {
+    instanciated = true;
+  }
+
+
+  singleton_non_default_ctor * create()
+  {
+    created = true;
+    return new singleton_non_default_ctor(42);
+  }
+
+  static bool instanciated;
+  static bool created;
+};
+
+bool auto_creator::instanciated = false;
+bool auto_creator::created = false;
+
+
+struct manual_creator
+{
+  manual_creator()
+    : created(false)
+  {
+  }
+
+  singleton_non_default_ctor * create()
+  {
+    created = true;
+    return new singleton_non_default_ctor(42);
+  }
+
+  bool created;
+};
+
+
+
+
+
+} // anonymous namespace
+
+FHTAGN_SINGLETON_INITIALIZE
 
 class MiscTest
     : public CppUnit::TestFixture
@@ -44,6 +119,7 @@ public:
     CPPUNIT_TEST_SUITE(MiscTest);
 
         CPPUNIT_TEST(testByteOrder);
+        CPPUNIT_TEST(testSingleton);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -68,6 +144,56 @@ private:
         }
     }
 
+    void testSingleton()
+    {
+      // Not much of a test, really. We can't really test tearing down of a
+      // singleton, so this code only tests for creation and the existence
+      // of functions.
+      {
+        typedef fhtagn::patterns::singleton<singleton_default_ctor> singleton;
+
+        CPPUNIT_ASSERT_EQUAL(false, singleton_default_ctor::instanciated);
+        singleton::shared_ptr s = singleton::instance();
+        CPPUNIT_ASSERT_EQUAL(true, singleton_default_ctor::instanciated);
+      }
+
+      // This additional code tests for the use of a automatically created creator.
+      {
+        typedef fhtagn::patterns::singleton<singleton_non_default_ctor, auto_creator> singleton;
+
+        CPPUNIT_ASSERT_EQUAL(false, auto_creator::instanciated);
+        CPPUNIT_ASSERT_EQUAL(false, auto_creator::created);
+        CPPUNIT_ASSERT_EQUAL(false, singleton_non_default_ctor::instanciated);
+        singleton::shared_ptr s = singleton::instance();
+        CPPUNIT_ASSERT_EQUAL(true, auto_creator::instanciated);
+        CPPUNIT_ASSERT_EQUAL(true, auto_creator::created);
+        CPPUNIT_ASSERT_EQUAL(true, singleton_non_default_ctor::instanciated);
+
+        // Fixup for next test.
+        singleton_non_default_ctor::instanciated = false;
+      }
+
+      // This code tests for the use of a manually created creator.
+      {
+        typedef fhtagn::patterns::singleton<singleton_non_default_ctor, manual_creator> singleton;
+
+        singleton::creator_shared_ptr creator(new manual_creator());
+        singleton::set_creator(creator);
+
+        CPPUNIT_ASSERT_EQUAL(false, creator->created);
+        CPPUNIT_ASSERT_EQUAL(false, singleton_non_default_ctor::instanciated);
+        singleton::shared_ptr s = singleton::instance();
+        CPPUNIT_ASSERT_EQUAL(true, creator->created);
+        CPPUNIT_ASSERT_EQUAL(true, singleton_non_default_ctor::instanciated);
+
+        // Reset the creator's flag. A subsequent call to instance() will then
+        // not invoke the creator, as a singleton instance already exists.
+        creator->created = false;
+        singleton::shared_ptr s2 = singleton::instance();
+        CPPUNIT_ASSERT_EQUAL(false, creator->created);
+      }
+
+    }
 };
 
 
