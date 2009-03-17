@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007,2008 the authors.
+ * Copyright (C) 2007,2008,2009 the authors.
  *
  * Author: Henning Pfeiffer <slashgod@users.sourceforge.net>
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
@@ -71,7 +71,7 @@ version()
 
 
 char const * const copyright_string = "Fhtagn! " FHTAGN_STRINGIFY(FHTAGN_VERSION)
-    " - Copyright (c) 2007,2008 by the authors.\n"
+    " - Copyright (c) 2007,2008,2009 by the authors.\n"
     "This version of Fhtagn! is released under the Boost Software License\n"
     "Version 1.0 from August 17th, 2003.";
 
