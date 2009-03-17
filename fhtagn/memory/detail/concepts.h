@@ -32,8 +32,8 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_ALLOCATORS_DETAIL_CONCEPTS_H
-#define FHTAGN_ALLOCATORS_DETAIL_CONCEPTS_H
+#ifndef FHTAGN_MEMORY_DETAIL_CONCEPTS_H
+#define FHTAGN_MEMORY_DETAIL_CONCEPTS_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -44,7 +44,7 @@
 #include <boost/concept_check.hpp>
 
 namespace fhtagn {
-namespace allocators {
+namespace memory {
 namespace concepts {
 
 /**
@@ -131,6 +131,6 @@ struct ObjectTraitsConcept
   T const * p2;
 };
 
-}}} // namespace fhtagn::allocators::concepts
+}}} // namespace fhtagn::memory::concepts
 
 #endif // guard

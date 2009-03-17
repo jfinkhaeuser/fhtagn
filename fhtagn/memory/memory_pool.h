@@ -32,8 +32,8 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_ALLOCATORS_MEMORY_POOL_H
-#define FHTAGN_ALLOCATORS_MEMORY_POOL_H
+#ifndef FHTAGN_MEMORY_MEMORY_POOL_H
+#define FHTAGN_MEMORY_MEMORY_POOL_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -44,7 +44,7 @@
 #include <boost/concept_check.hpp>
 
 namespace fhtagn {
-namespace allocators {
+namespace memory {
 
 /**
  * Memory pools are conceptually little more than a block of memory out of which
@@ -138,8 +138,8 @@ struct heap_pool
 };
 
 
-}} // namespace fhtagn::allocators
+}} // namespace fhtagn::memory
 
-#include <fhtagn/allocators/detail/memory_pool.tcc>
+#include <fhtagn/memory/detail/memory_pool.tcc>
 
 #endif // guard

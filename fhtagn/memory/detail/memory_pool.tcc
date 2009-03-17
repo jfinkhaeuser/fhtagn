@@ -32,15 +32,15 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_ALLOCATORS_DETAIL_MEMORY_POOL_TCC
-#define FHTAGN_ALLOCATORS_DETAIL_MEMORY_POOL_TCC
+#ifndef FHTAGN_MEMORY_DETAIL_MEMORY_POOL_TCC
+#define FHTAGN_MEMORY_DETAIL_MEMORY_POOL_TCC
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
 #endif
 
 namespace fhtagn {
-namespace allocators {
+namespace memory {
 
 void *
 heap_pool::alloc(std::size_t size)
@@ -86,8 +86,7 @@ heap_pool::in_use() const
 }
 
 
-}} // namespace fhtagn::allocators
+}} // namespace fhtagn::memory
 
-#include <fhtagn/allocators/detail/memory_pool.tcc>
 
 #endif // guard

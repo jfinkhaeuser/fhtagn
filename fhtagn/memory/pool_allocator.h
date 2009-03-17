@@ -32,8 +32,8 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_ALLOCATORS_POOL_ALLOCATOR_H
-#define FHTAGN_ALLOCATORS_POOL_ALLOCATOR_H
+#ifndef FHTAGN_memory_POOL_ALLOCATOR_H
+#define FHTAGN_memory_POOL_ALLOCATOR_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -43,10 +43,10 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <fhtagn/allocators/memory_pool.h>
+#include <fhtagn/memory/memory_pool.h>
 
 namespace fhtagn {
-namespace allocators {
+namespace memory {
 
 /**
  * The pool allocator allocates objects from a preconstructed pool of memory.
@@ -86,7 +86,7 @@ template <
 class pool_allocation_policy_base
 {
 public:
-  BOOST_CLASS_REQUIRE(memory_poolT, ::fhtagn::allocators::concepts,
+  BOOST_CLASS_REQUIRE(memory_poolT, ::fhtagn::memory::concepts,
       MemoryPoolConcept);
 
   /**
@@ -115,7 +115,7 @@ protected:
 
 template <
   typename T,
-  typename memory_poolT = ::fhtagn::allocators::heap_pool
+  typename memory_poolT = ::fhtagn::memory::heap_pool
 >
 class pool_allocation_policy
   : public pool_allocation_policy_base<memory_poolT>
@@ -225,19 +225,19 @@ inline bool operator==(
     pool_allocation_policy<T> const &, other_allocatorT const &);
 
 
-}} // namespace fhtagn::allocators
+}} // namespace fhtagn::memory
 
 
 #define FHTAGN_POOL_ALLOCATION_INITIALIZE \
-  template <typename poolT>                                                         \
-  typename fhtagn::allocators::pool_allocation_policy_base<poolT>::memory_pool_ptr  \
-  fhtagn::allocators::pool_allocation_policy_base<poolT>::sm_global_pool;           \
-                                                                                    \
-  template <typename T, typename poolT>                                             \
-  typename fhtagn::allocators::pool_allocation_policy<T, poolT>::memory_pool_ptr    \
-  fhtagn::allocators::pool_allocation_policy<T, poolT>::sm_type_pool;
+  template <typename poolT>                                                     \
+  typename fhtagn::memory::pool_allocation_policy_base<poolT>::memory_pool_ptr  \
+  fhtagn::memory::pool_allocation_policy_base<poolT>::sm_global_pool;           \
+                                                                                \
+  template <typename T, typename poolT>                                         \
+  typename fhtagn::memory::pool_allocation_policy<T, poolT>::memory_pool_ptr    \
+  fhtagn::memory::pool_allocation_policy<T, poolT>::sm_type_pool;
 
 
-#include <fhtagn/allocators/detail/pool_allocator.tcc>
+#include <fhtagn/memory/detail/pool_allocator.tcc>
 
 #endif // guard

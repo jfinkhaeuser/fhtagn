@@ -1,5 +1,5 @@
 /**
- * $Id: template.h 197 2008-11-02 12:02:37Z unwesen $
+ * $Id$
  *
  * Copyright (C) 2009 the authors.
  *
@@ -32,87 +32,101 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_ALLOCATORS_DETAIL_ALLOCATOR_TCC
-#define FHTAGN_ALLOCATORS_DETAIL_ALLOCATOR_TCC
+#ifndef FHTAGN_MEMORY_ALLOCATOR_H
+#define FHTAGN_MEMORY_ALLOCATOR_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
 #endif
 
+#include <fhtagn/fhtagn.h>
+
+#include <fhtagn/memory/detail/concepts.h>
+#include <fhtagn/memory/defaults.h>
+
 namespace fhtagn {
-namespace allocators {
+namespace memory {
 
-
-template <
+/**
+ * Following a 2003 article on memory allocators (which you can find at
+ * http://www.codeproject.com/KB/cpp/allocator.aspx), this class defines an
+ * STL-compatible memory allocator.
+ *
+ * It delegates most of it's work to an object traits type, and to a memory
+ * allocation policy type, allowing for maximum extensibility.
+ **/
+template<
   typename T,
-  typename allocation_policyT,
-  typename object_traitsT
+  typename allocation_policyT = default_allocation_policy<T>,
+  typename object_traitsT = default_object_traits<T>
 >
-allocator<T, allocation_policyT, object_traitsT>::allocator()
+class allocator
+  : public allocation_policyT
+  , public object_traitsT
 {
-}
+public:
+  /**
+   * Concept checks, to catch errors early on.
+   **/
+  BOOST_CLASS_REQUIRE2(T,
+      allocation_policyT,
+      ::fhtagn::memory::concepts,
+      AllocationPolicyConcept);
+
+  BOOST_CLASS_REQUIRE2(T,
+      object_traitsT,
+      ::fhtagn::memory::concepts,
+      ObjectTraitsConcept);
 
 
+  /**
+   * Typedefs, aliased from allocation policy.
+   **/
+  typedef typename allocation_policyT::size_type size_type;
+  typedef typename allocation_policyT::difference_type difference_type;
+  typedef typename allocation_policyT::pointer pointer;
+  typedef typename allocation_policyT::const_pointer const_pointer;
+  typedef typename allocation_policyT::reference reference;
+  typedef typename allocation_policyT::const_reference const_reference;
+  typedef typename allocation_policyT::value_type value_type;
 
-template <
-  typename T,
-  typename allocation_policyT,
-  typename object_traitsT
->
-allocator<T, allocation_policyT, object_traitsT>::~allocator()
-{
-}
-
-
-
-template <
-  typename T,
-  typename allocation_policyT,
-  typename object_traitsT
->
-allocator<T, allocation_policyT, object_traitsT>::allocator(
-    allocator<T, allocation_policyT, object_traitsT> const & other)
-  : allocation_policyT(other)
-  , object_traitsT(other)
-{
-}
-
-
-
-template <
-  typename T,
-  typename allocation_policyT,
-  typename object_traitsT
->
-template <
-  typename U
->
-allocator<T, allocation_policyT, object_traitsT>::allocator(
-    allocator<U> const &)
-{
-}
+  /**
+   * Rebind this allocator to one for a different type.
+   **/
+  template <typename U>
+  struct rebind
+  {
+    typedef allocator<
+      U,
+      typename allocation_policyT::template rebind<U>::other,
+      typename object_traitsT::template rebind<U>::other
+    > other;
+  };
 
 
+  /**
+   * Constructors, for default construction, for construction from an equivalent
+   * allocator, from allocators for different types, or even from allocators
+   * with different allocation policies/object traits.
+   **/
+  inline explicit allocator();
+  inline ~allocator();
 
-template <
-  typename T,
-  typename allocation_policyT,
-  typename object_traitsT
->
-template <
-  typename U,
-  typename other_policyT,
-  typename other_traitsT
->
-allocator<T, allocation_policyT, object_traitsT>::allocator(
-    allocator<U, other_policyT, other_traitsT> const & other)
-  : allocation_policyT(other)
-  , object_traitsT(other)
-{
-}
+  inline allocator(allocator const & other);
 
+  template <typename U>
+  inline allocator(allocator<U> const &);
+
+  template <typename U, typename other_policyT, typename other_traitsT>
+  inline allocator(allocator<U, other_policyT, other_traitsT> const & other);
+};
 
 
+/**
+ * Equality and inequality comparison operators - used to detect if memory
+ * allocated from one allocator can be deallocated from the current one.
+ * Many variations again, as with the constructors.
+ **/
 template <
   typename T,
   typename allocation_policyT,
@@ -120,12 +134,7 @@ template <
 >
 inline bool operator==(
     allocator<T, allocation_policyT, object_traitsT> const & lhs,
-    allocator<T, allocation_policyT, object_traitsT> const & rhs)
-{
-  return operator==(
-      static_cast<allocation_policyT &>(lhs),
-      static_cast<allocation_policyT &>(rhs));
-}
+    allocator<T, allocation_policyT, object_traitsT> const & rhs);
 
 
 
@@ -139,12 +148,8 @@ template <
 >
 inline bool operator==(
     allocator<T1, allocation_policyT1, object_traitsT1> const & lhs,
-    allocator<T2, allocation_policyT2, object_traitsT2> const & rhs)
-{
-  return operator==(
-      static_cast<allocation_policyT1 &>(lhs),
-      static_cast<allocation_policyT2 &>(rhs));
-}
+    allocator<T2, allocation_policyT2, object_traitsT2> const & rhs);
+
 
 
 template <
@@ -155,10 +160,7 @@ template <
 >
 inline bool operator==(
     allocator<T, allocation_policyT, object_traitsT> const & lhs,
-    other_allocatorT const & rhs)
-{
-  return operator==(static_cast<allocation_policyT &>(lhs), rhs);
-}
+    other_allocatorT const & rhs);
 
 
 
@@ -169,10 +171,7 @@ template <
 >
 inline bool operator!=(
     allocator<T, allocation_policyT, object_traitsT> const & lhs,
-    allocator<T, allocation_policyT, object_traitsT> const & rhs)
-{
-  return !operator==(lhs, rhs);
-}
+    allocator<T, allocation_policyT, object_traitsT> const & rhs);
 
 
 
@@ -186,10 +185,8 @@ template <
 >
 inline bool operator!=(
     allocator<T1, allocation_policyT1, object_traitsT1> const & lhs,
-    allocator<T2, allocation_policyT2, object_traitsT2> const & rhs)
-{
-  return !operator==(lhs, rhs);
-}
+    allocator<T2, allocation_policyT2, object_traitsT2> const & rhs);
+
 
 
 template <
@@ -200,14 +197,11 @@ template <
 >
 inline bool operator!=(
     allocator<T, allocation_policyT, object_traitsT> const & lhs,
-    other_allocatorT const & rhs)
-{
-  return !operator==(lhs, rhs);
-}
+    other_allocatorT const & rhs);
 
 
+}} // namespace fhtagn::memory
 
+#include <fhtagn/memory/detail/allocator.tcc>
 
-
-}} // namespace fhtagn::allocators
 #endif // guard

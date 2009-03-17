@@ -32,8 +32,8 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_ALLOCATORS_DEFAULTS_H
-#define FHTAGN_ALLOCATORS_DEFAULTS_H
+#ifndef FHTAGN_MEMORY_DEFAULTS_H
+#define FHTAGN_MEMORY_DEFAULTS_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -42,7 +42,7 @@
 #include <fhtagn/fhtagn.h>
 
 namespace fhtagn {
-namespace allocators {
+namespace memory {
 
 /**
  * Default allocation policy, using new and delete. See allocator.h for details.
@@ -172,8 +172,8 @@ struct default_object_traits
   inline void destroy(T * p);
 };
 
-}} // namespace fhtagn::allocators
+}} // namespace fhtagn::memory
 
-#include <fhtagn/allocators/detail/defaults.tcc>
+#include <fhtagn/memory/detail/defaults.tcc>
 
 #endif // guard

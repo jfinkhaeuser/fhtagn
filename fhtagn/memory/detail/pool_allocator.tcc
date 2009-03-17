@@ -32,8 +32,8 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_ALLOCATORS_DETAIL_BLOCK_ALLOCATOR_TCC
-#define FHTAGN_ALLOCATORS_DETAIL_BLOCK_ALLOCATOR_TCC
+#ifndef FHTAGN_MEMORY_DETAIL_BLOCK_ALLOCATOR_TCC
+#define FHTAGN_MEMORY_DETAIL_BLOCK_ALLOCATOR_TCC
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -43,7 +43,7 @@
 #include <stdexcept>
 
 namespace fhtagn {
-namespace allocators {
+namespace memory {
 
 /*****************************************************************************
  * pool_allocation_policy_base
@@ -244,6 +244,6 @@ inline bool operator==(
 
 
 
-}} // namespace fhtagn::allocators
+}} // namespace fhtagn::memory
 
 #endif // guard

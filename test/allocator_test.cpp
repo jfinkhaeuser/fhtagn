@@ -37,9 +37,9 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <fhtagn/allocators/allocator.h>
-#include <fhtagn/allocators/memory_pool.h>
-#include <fhtagn/allocators/pool_allocator.h>
+#include <fhtagn/memory/allocator.h>
+#include <fhtagn/memory/memory_pool.h>
+#include <fhtagn/memory/pool_allocator.h>
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE;
 
@@ -79,7 +79,7 @@ private:
 
     void testMemoryPool()
     {
-      namespace mem = fhtagn::allocators;
+      namespace mem = fhtagn::memory;
 
       {
         mem::heap_pool p;
@@ -107,7 +107,7 @@ private:
     void testDefaults()
     {
       // T is int in these tests.
-      defaultTests<fhtagn::allocators::allocator<int> >();
+      defaultTests<fhtagn::memory::allocator<int> >();
     }
 
 
@@ -115,7 +115,7 @@ private:
     void testBlockAllocator()
     {
        // T is int in these tests.
-       namespace mem = fhtagn::allocators;
+       namespace mem = fhtagn::memory;
        typedef mem::allocator<int, mem::pool_allocation_policy<int> > allocator_t;
 
        // Set global pool to be an instance of heap_pool. That'll be the simplest.
