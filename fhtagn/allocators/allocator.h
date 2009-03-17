@@ -41,6 +41,7 @@
 
 #include <fhtagn/fhtagn.h>
 
+#include <fhtagn/allocators/detail/concepts.h>
 #include <fhtagn/allocators/defaults.h>
 
 namespace fhtagn {
@@ -64,6 +65,20 @@ class allocator
   , public object_traitsT
 {
 public:
+  /**
+   * Concept checks, to catch errors early on.
+   **/
+  BOOST_CLASS_REQUIRE2(T,
+      allocation_policyT,
+      ::fhtagn::allocators::concepts,
+      AllocationPolicyConcept);
+
+  BOOST_CLASS_REQUIRE2(T,
+      object_traitsT,
+      ::fhtagn::allocators::concepts,
+      ObjectTraitsConcept);
+
+
   /**
    * Typedefs, aliased from allocation policy.
    **/
