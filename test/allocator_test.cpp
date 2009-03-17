@@ -38,6 +38,11 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <fhtagn/allocators/allocator.h>
+#include <fhtagn/allocators/memory_pool.h>
+#include <fhtagn/allocators/pool_allocator.h>
+
+FHTAGN_POOL_ALLOCATION_INITIALIZE;
+
 
 class AllocatorTest
     : public CppUnit::TestFixture
@@ -45,19 +50,51 @@ class AllocatorTest
 public:
     CPPUNIT_TEST_SUITE(AllocatorTest);
 
+      CPPUNIT_TEST(testMemoryPool);
+
       CPPUNIT_TEST(testDefaults);
+      CPPUNIT_TEST(testBlockAllocator);
 
     CPPUNIT_TEST_SUITE_END();
 private:
 
     template <
-      template <typename> class allocatorT
+      typename poolT
+    >
+    void testMemoryPoolGeneric(poolT & pool)
+    {
+      // Technically, these tests do not always have to succeed - but they're
+      // the most basic memory pool tests and *should* always succeed on properly
+      // set up pools.
+
+      char * p = static_cast<char *>(pool.alloc(42));
+      CPPUNIT_ASSERT(p);
+
+      p = static_cast<char *>(pool.realloc(p, 666));
+      CPPUNIT_ASSERT(p);
+
+      pool.free(p);
+    }
+
+
+    void testMemoryPool()
+    {
+      namespace mem = fhtagn::allocators;
+
+      {
+        mem::heap_pool p;
+        testMemoryPoolGeneric<mem::heap_pool>(p);
+      }
+    }
+
+
+
+    template <
+      typename allocatorT
     >
     void defaultTests()
     {
-      typedef allocatorT<int> allocator_t;
-
-      std::vector<int, allocator_t> v;
+      std::vector<int, allocatorT> v;
       v.push_back(1);
 
       CPPUNIT_ASSERT(!v.empty());
@@ -69,8 +106,25 @@ private:
 
     void testDefaults()
     {
-      defaultTests<fhtagn::allocators::allocator>();
+      // T is int in these tests.
+      defaultTests<fhtagn::allocators::allocator<int> >();
+    }
+
+
+
+    void testBlockAllocator()
+    {
+       // T is int in these tests.
+       namespace mem = fhtagn::allocators;
+       typedef mem::allocator<int, mem::pool_allocation_policy<int> > allocator_t;
+
+       // Set global pool to be an instance of heap_pool. That'll be the simplest.
+       CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
+             allocator_t::memory_pool_ptr(new mem::heap_pool())));
+
+       defaultTests<allocator_t>();
     }
 };
+
 
 CPPUNIT_TEST_SUITE_REGISTRATION(AllocatorTest);
