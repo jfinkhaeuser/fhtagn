@@ -42,31 +42,33 @@
 namespace fhtagn {
 namespace allocators {
 
-char *
+void *
 heap_pool::alloc(std::size_t size)
 {
   if (!size) {
     return NULL;
   }
 
-  return static_cast<char *>(::malloc(size));
+  return ::malloc(size);
 
 }
 
 
 
-char *
-heap_pool::realloc(char * ptr, std::size_t new_size)
+void *
+heap_pool::realloc(void * ptr, std::size_t new_size)
 {
   if (!new_size) {
     return NULL;
   }
 
-  return static_cast<char *>(::realloc(ptr, new_size));
+  return ::realloc(ptr, new_size);
 }
 
+
+
 void
-heap_pool::free(char * ptr)
+heap_pool::free(void * ptr)
 {
   if (!ptr) {
     return;

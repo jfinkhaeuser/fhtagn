@@ -71,7 +71,7 @@ struct MemoryPoolConcept
   }
 
   std::size_t s;
-  char * p;
+  void * p;
   poolT & pool;
 };
 
@@ -96,7 +96,7 @@ struct heap_pool
    *
    * A size of zero will always cause NULL to be returned.
    **/
-  inline char * alloc(std::size_t size);
+  inline void * alloc(std::size_t size);
 
   /**
    * Reallocates the given pointer to a new size, and returns a new pointer to
@@ -108,13 +108,13 @@ struct heap_pool
    *
    * A size of zero will always cause NULL to be returned.
    **/
-  inline char * realloc(char * ptr, std::size_t new_size);
+  inline void * realloc(void * ptr, std::size_t new_size);
 
   /**
    * Frees the memory pointed to by the pointer parameter. If the pointer
    * parameter is NULL, this function becomes a no-op.
    **/
-  inline void free(char * ptr);
+  inline void free(void * ptr);
 };
 
 
