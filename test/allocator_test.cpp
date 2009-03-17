@@ -39,6 +39,7 @@
 
 #include <fhtagn/memory/allocator.h>
 #include <fhtagn/memory/memory_pool.h>
+#include <fhtagn/memory/fixed_pool.h>
 #include <fhtagn/memory/pool_allocator.h>
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE;
@@ -53,7 +54,7 @@ public:
       CPPUNIT_TEST(testMemoryPool);
 
       CPPUNIT_TEST(testDefaults);
-      CPPUNIT_TEST(testBlockAllocator);
+      CPPUNIT_TEST(testPoolAllocator);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -94,12 +95,35 @@ private:
     >
     void defaultTests()
     {
-      std::vector<int, allocatorT> v;
+      typedef std::vector<int, allocatorT> vector_t;
+
+      vector_t v;
       v.push_back(1);
 
       CPPUNIT_ASSERT(!v.empty());
       CPPUNIT_ASSERT_EQUAL(std::size_t(1), v.size());
       CPPUNIT_ASSERT_EQUAL(int(1), v[0]);
+
+      v.push_back(666);
+      v.push_back(42);
+      CPPUNIT_ASSERT_EQUAL(std::size_t(3), v.size());
+      CPPUNIT_ASSERT_EQUAL(int(666), v[1]);
+      CPPUNIT_ASSERT_EQUAL(int(42), v[2]);
+
+      // remove entry 666
+      typename vector_t::iterator iter = v.begin();
+      ++iter;
+      v.erase(iter);
+      CPPUNIT_ASSERT_EQUAL(std::size_t(2), v.size());
+      CPPUNIT_ASSERT_EQUAL(int(1), v[0]);
+      CPPUNIT_ASSERT_EQUAL(int(42), v[1]);
+
+      // Push back a new entry
+      v.push_back(1234);
+      CPPUNIT_ASSERT_EQUAL(std::size_t(3), v.size());
+      CPPUNIT_ASSERT_EQUAL(int(1), v[0]);
+      CPPUNIT_ASSERT_EQUAL(int(42), v[1]);
+      CPPUNIT_ASSERT_EQUAL(int(1234), v[2]);
     }
 
 
@@ -112,17 +136,37 @@ private:
 
 
 
-    void testBlockAllocator()
+    void testPoolAllocator()
     {
        // T is int in these tests.
        namespace mem = fhtagn::memory;
-       typedef mem::allocator<int, mem::pool_allocation_policy<int> > allocator_t;
 
-       // Set global pool to be an instance of heap_pool. That'll be the simplest.
-       CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
-             allocator_t::memory_pool_ptr(new mem::heap_pool())));
+       // heap_pool tests - should always succeed, unless the machine runs out of memory.
+       {
+         typedef mem::allocator<int, mem::pool_allocation_policy<int> > allocator_t;
 
-       defaultTests<allocator_t>();
+         // Set global pool to be an instance of heap_pool. That'll be the simplest.
+         CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
+               allocator_t::memory_pool_ptr(new mem::heap_pool())));
+
+         defaultTests<allocator_t>();
+       }
+
+       // fixed_pool tests - the first test tests using a small amount of stack
+       // memory.
+       {
+         typedef mem::allocator<int, mem::pool_allocation_policy<int, mem::fixed_pool> > allocator_t;
+
+         // Set global pool to be an instance of fixed_pool. That'll be the simplest.
+         char memory[200] = { 0 };
+         CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
+               allocator_t::memory_pool_ptr(
+                 new mem::fixed_pool(memory, sizeof(memory)))));
+
+         defaultTests<allocator_t>();
+
+         // FIXME test free throwing on unknown pointers. same for realloc
+       }
     }
 };
 
