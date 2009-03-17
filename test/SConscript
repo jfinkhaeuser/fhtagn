@@ -10,6 +10,7 @@ if env.has_key('FHTAGN_CPPUNIT_VERSION'):
     'pointers_test.cpp',
     'enhanced_types_test.cpp',
     'transcoding_test.cpp',
+    'allocator_test.cpp',
     'misc_test.cpp',
     'testdriver.cpp',
   ]
