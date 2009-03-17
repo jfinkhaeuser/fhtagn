@@ -130,6 +130,22 @@ template <
   typename T,
   typename memory_poolT
 >
+template <
+  typename U,
+  typename other_poolT
+>
+pool_allocation_policy<T, memory_poolT>::pool_allocation_policy(
+    pool_allocation_policy<U, other_poolT> const &)
+{
+  initialize_pool();
+}
+
+
+
+template <
+  typename T,
+  typename memory_poolT
+>
 void
 pool_allocation_policy<T, memory_poolT>::initialize_pool()
 {
@@ -218,27 +234,62 @@ pool_allocation_policy<T, memory_poolT>::max_size() const
 
 
 
+
 template <
-  typename T1,
-  typename T2
+  typename T,
+  typename memory_poolT
 >
 inline bool operator==(
-    pool_allocation_policy<T1> const &,
-    pool_allocation_policy<T2> const &)
+    pool_allocation_policy<T, memory_poolT> const & rhs,
+    pool_allocation_policy<T, memory_poolT> const & lhs)
 {
-  return true;
+  // Same memory_poolT, so we can if it's also the same instance.
+  return (rhs.get_memory_pool() == lhs.get_memory_pool());
+}
+
+
+
+template <
+  typename T1,
+  typename T2,
+  typename memory_poolT
+>
+inline bool operator==(
+    pool_allocation_policy<T1, memory_poolT> const & rhs,
+    pool_allocation_policy<T2, memory_poolT> const & lhs)
+{
+  // Same memory_poolT, so we can if it's also the same instance.
+  return (rhs.get_memory_pool() == lhs.get_memory_pool());
+}
+
+
+
+template <
+  typename T1,
+  typename memory_poolT1,
+  typename T2,
+  typename memory_poolT2
+>
+inline bool operator==(
+    pool_allocation_policy<T1, memory_poolT1> const &,
+    pool_allocation_policy<T2, memory_poolT2> const &)
+{
+  // Different memory pool type - no, won't work.
+  return false;
 }
 
 
 
 template <
   typename T,
+  typename memory_poolT,
   typename other_allocatorT
 >
 inline bool operator==(
-    pool_allocation_policy<T> const &,
+    pool_allocation_policy<T, memory_poolT> const &,
     other_allocatorT const &)
 {
+  // No. In theory, it might actually be possible, but let's not risk it.
   return false;
 }
 

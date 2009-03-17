@@ -160,6 +160,9 @@ public:
   template <typename U>
   inline explicit pool_allocation_policy(pool_allocation_policy<U> const &);
 
+  template <typename U, typename other_poolT>
+  inline explicit pool_allocation_policy(pool_allocation_policy<U, other_poolT> const &);
+
 
   /**
    * Memory allocation functions.
@@ -208,21 +211,46 @@ private:
  * Many variations again, as with the constructors.
  **/
 template <
-  typename T1,
-  typename T2
+  typename T,
+  typename memory_poolT
 >
 inline bool operator==(
-    pool_allocation_policy<T1> const &,
-    pool_allocation_policy<T2> const &);
+    pool_allocation_policy<T, memory_poolT> const & rhs,
+    pool_allocation_policy<T, memory_poolT> const & lhs);
+
+
+
+template <
+  typename T1,
+  typename T2,
+  typename memory_poolT
+>
+inline bool operator==(
+    pool_allocation_policy<T1, memory_poolT> const & rhs,
+    pool_allocation_policy<T2, memory_poolT> const & lhs);
+
+
+
+template <
+  typename T1,
+  typename memory_poolT1,
+  typename T2,
+  typename memory_poolT2
+>
+inline bool operator==(
+    pool_allocation_policy<T1, memory_poolT1> const &,
+    pool_allocation_policy<T2, memory_poolT2> const &);
 
 
 
 template <
   typename T,
+  typename memory_poolT,
   typename other_allocatorT
 >
 inline bool operator==(
-    pool_allocation_policy<T> const &, other_allocatorT const &);
+    pool_allocation_policy<T, memory_poolT> const &,
+    other_allocatorT const &);
 
 
 }} // namespace fhtagn::memory
