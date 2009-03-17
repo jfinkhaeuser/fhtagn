@@ -54,7 +54,8 @@ namespace allocators {
  * from a simply heap abstraction to some form of memory pool management.
  *
  * This file defines both a concept check for memory pools, and a heap_pool
- * class that merely wraps the heap.
+ * class that merely wraps the heap. See heap_pool for documentation on member
+ * functions.
  **/
 namespace concepts {
 
@@ -68,6 +69,14 @@ struct MemoryPoolConcept
     p = pool.alloc(s);
     p = pool.realloc(p, s);
     pool.free(p);
+
+    const_constraints();
+  }
+
+  void const_constraints() const
+  {
+    bool b = pool.in_use();
+    boost::ignore_unused_variable_warning(b);
   }
 
   std::size_t s;
@@ -115,6 +124,17 @@ struct heap_pool
    * parameter is NULL, this function becomes a no-op.
    **/
   inline void free(void * ptr);
+
+  /**
+   * Returns true if the pool has memory allocated to objects, false
+   * otherwise. This is a guard that can help prevent a MemoryPool from being
+   * destroyed while objects allocated from it still exist.
+   *
+   * This implementation always returns true, which could prevent heap_pool
+   * objects from being destroyed - make sure you understand this in your
+   * calling code.
+   **/
+  inline bool in_use() const;
 };
 
 

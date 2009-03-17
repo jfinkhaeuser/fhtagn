@@ -78,6 +78,14 @@ heap_pool::free(void * ptr)
 }
 
 
+
+bool
+heap_pool::in_use() const
+{
+  return true;
+}
+
+
 }} // namespace fhtagn::allocators
 
 #include <fhtagn/allocators/detail/memory_pool.tcc>
