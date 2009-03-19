@@ -141,6 +141,12 @@ private:
    **/
   inline segment * allocate_segment(std::size_t size);
 
+  /**
+   * Finds the segment in which ptr resides, or throws if the ptr can't be
+   * found.
+   **/
+  inline segment * find_segment_for(void * ptr);
+
   inline void defragment_free_list();
 
   void *        m_memblock;

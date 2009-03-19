@@ -152,20 +152,79 @@ fixed_pool::realloc(void * ptr, std::size_t new_size)
     return NULL;
   }
 
+  // Find segment for this pointer.
+  segment * seg = find_segment_for(ptr);
 
-  // TODO
-  return NULL;
+  // The best case would be if ptr's segment was followed by a free segment
+  // large enough to hold the new size. Given that free segments get
+  // defragmented, we only need to check the following segment.
+  if (seg->marker != segment::LAST_SEGMENT
+      && seg->next->status == segment::FREE)
+  {
+    // The next segment may be a candidate. Calculate the combined size for
+    // both, and check whether that'd be enough.
+    std::size_t combined_size = seg->size + seg->next->full_size();
+    if (combined_size >= new_size) {
+      // This is awesome, the new size would fit. There are however a few cases
+      // here, that need careful handling.
+      //
+      // a) The combined size is exactly the new size. That's the easiest one.
+      if (combined_size == new_size) {
+        seg->size = new_size;
+        seg->next = seg->next->next;
+        return pointer(seg).char_ptr + sizeof(segment);
+      }
+
+      // b) The combined size is large enough to fit the new_size and a new
+      //    segment header, so we can split off unused memory.
+      if (combined_size - new_size > sizeof(segment)) {
+        seg->size = new_size;
+
+        void * new_seg_addr = pointer(seg).char_ptr + seg->full_size();
+        segment * new_seg = new (new_seg_addr) segment(combined_size - seg->size);
+
+        new_seg->next = seg->next;
+        seg->next = new_seg;
+
+        defragment_free_list();
+        return pointer(seg).char_ptr + sizeof(segment);
+      }
+
+      // c) The combined size is large enough to fit new_size, but not large
+      //    enough to also fit a segment header. Given that we can't allocate
+      //    *anything* in memory blocks this small, we might as well merge that
+      //    as unused memory onto the current segment.
+      seg->size = combined_size;
+      seg->next = seg->next->next;
+      return pointer(seg).char_ptr + sizeof(segment);
+    }
+  }
+
+  // Apparently we could not merge the currently used segment with it's
+  // neighbouring one. So let's find some new space for this pointer to point
+  // to.
+  segment * new_seg = allocate_segment(new_size);
+  if (!new_seg) {
+    return NULL;
+  }
+
+  // If alloc returned a new segment, we'll move over the old data and free the
+  // old segment. Since freeing also defragments, there's no need to defragment
+  // manually here.
+  void * old_data = pointer(seg).char_ptr + sizeof(segment);
+  void * new_data = pointer(new_seg).char_ptr + sizeof(segment);
+
+  ::memcpy(new_data, old_data, seg->size);
+  this->free(seg);
+
+  return new_data;
 }
 
 
 
-void
-fixed_pool::free(void * ptr)
+fixed_pool::segment *
+fixed_pool::find_segment_for(void * ptr)
 {
-  if (!ptr) {
-    return;
-  }
-
   void * end = pointer(m_memblock).char_ptr + m_size;
   if (ptr < m_memblock || ptr >= end) {
     std::stringstream s;
@@ -195,8 +254,20 @@ fixed_pool::free(void * ptr)
     throw std::logic_error(s.str());
   }
 
-  // So, seg is now pointing to the segment to be freed. Let's flip it's status,
-  // and we're done.
+  return seg;
+}
+
+
+
+void
+fixed_pool::free(void * ptr)
+{
+  if (!ptr) {
+    return;
+  }
+
+  // Find segment for pointer, and mark the memory freed.
+  segment * seg = find_segment_for(ptr);
   seg->status = segment::FREE;
 
   // Lastly, defragment the free list.
@@ -259,6 +330,14 @@ fixed_pool::defragment_free_list()
     }
     seg = seg->next;
   } while (true);
+
+  // If the contiguous segment is set here, that means the segment reaches
+  // up to the end of the memory block. Let's merge stuff, then.
+  if (contiguous) {
+    contiguous->marker = segment::LAST_SEGMENT;
+    contiguous->size = ((pointer(m_memblock).char_ptr + m_size)
+        - pointer(contiguous).char_ptr) - sizeof(segment);
+  }
 }
 
 

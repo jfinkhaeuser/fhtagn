@@ -51,7 +51,8 @@ class AllocatorTest
 public:
     CPPUNIT_TEST_SUITE(AllocatorTest);
 
-      CPPUNIT_TEST(testMemoryPool);
+      CPPUNIT_TEST(testHeapMemoryPool);
+      CPPUNIT_TEST(testFixedMemoryPool);
       CPPUNIT_TEST(testFixedPoolFragmentation);
 
       CPPUNIT_TEST(testDefaults);
@@ -71,30 +72,38 @@ private:
 
       char * p = static_cast<char *>(pool.alloc(42));
       CPPUNIT_ASSERT(p);
+      CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
 
       p = static_cast<char *>(pool.realloc(p, 666));
       CPPUNIT_ASSERT(p);
+      CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
 
       pool.free(p);
     }
 
 
-    void testMemoryPool()
+    void testHeapMemoryPool()
     {
       namespace mem = fhtagn::memory;
 
-      // Heap pool
-      {
-        mem::heap_pool p;
-        testMemoryPoolGeneric(p);
-      }
+      mem::heap_pool p;
 
-      // Fixed pool with stack storage
-      {
-        char memory[200] = { 0 };
-        mem::fixed_pool p(memory, sizeof(memory));
-// FIXME        testMemoryPoolGeneric(p);
-      }
+      CPPUNIT_ASSERT_EQUAL(true, p.in_use());
+      testMemoryPoolGeneric(p);
+      CPPUNIT_ASSERT_EQUAL(true, p.in_use());
+    }
+
+
+    void testFixedMemoryPool()
+    {
+      namespace mem = fhtagn::memory;
+
+      char memory[1024] = { 0 };
+      mem::fixed_pool p(memory, sizeof(memory));
+
+      CPPUNIT_ASSERT_EQUAL(false, p.in_use());
+      testMemoryPoolGeneric(p);
+      CPPUNIT_ASSERT_EQUAL(false, p.in_use());
     }
 
 
