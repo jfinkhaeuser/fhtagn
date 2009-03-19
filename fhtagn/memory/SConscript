@@ -12,6 +12,7 @@ SOURCES = [
 HEADERS = [
   'allocator.h',
   'defaults.h',
+  'utility.h',
   'memory_pool.h',
   'fixed_pool.h',
   'pool_allocator.h',

@@ -41,44 +41,12 @@
 
 #include <fhtagn/fhtagn.h>
 
-#include <map>
-
+#include <fhtagn/memory/utility.h>
 #include <fhtagn/memory/memory_pool.h>
 #include <fhtagn/threads/lock_policy.h>
 
 namespace fhtagn {
 namespace memory {
-
-/**
- * Helper class, see fixed_pool documentation below. Exploits the fact that
- * std::size_t is defined to be as large as a pointer.
- **/
-template <
-  std::size_t T_BLOCK_SIZE = sizeof(std::size_t)
->
-struct block_alignment
-{
-  enum {
-    BLOCK_SIZE = T_BLOCK_SIZE,
-  };
-
-  static inline std::size_t adjust_size(std::size_t size)
-  {
-    std::size_t remainder = size % BLOCK_SIZE;
-    if (!remainder) {
-      return size;
-    }
-
-    return size - remainder + BLOCK_SIZE;
-  }
-
-  static inline void * adjust_pointer(void * ptr)
-  {
-    return reinterpret_cast<void *>(
-        adjust_size(reinterpret_cast<std::size_t>(ptr)));
-  }
-};
-
 
 /**
  * The fixed_pool class implements a MemoryPool that allocates space from a
@@ -172,24 +140,6 @@ private:
       std::size_t marker;
     };
   };
-
-  /**
-   * Helper struct for conveniently intepreting void * as char * and vice
-   * versa.
-   **/
-  struct pointer
-  {
-    pointer(void * ptr)
-    {
-      void_ptr = ptr;
-    }
-
-    union {
-      void * void_ptr;
-      char * char_ptr;
-    };
-  };
-
 
   /**
    * Finds and allocates a free segment of the given size, splitting larger
