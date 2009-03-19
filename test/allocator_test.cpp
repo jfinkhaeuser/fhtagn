@@ -99,7 +99,7 @@ private:
       namespace mem = fhtagn::memory;
 
       char memory[1024] = { 0 };
-      mem::fixed_pool p(memory, sizeof(memory));
+      mem::fixed_pool<> p(memory, sizeof(memory));
 
       CPPUNIT_ASSERT_EQUAL(false, p.in_use());
       testMemoryPoolGeneric(p);
@@ -113,7 +113,7 @@ private:
       namespace mem = fhtagn::memory;
 
       char memory[1024] = { 0 };
-      mem::fixed_pool p(memory, sizeof(memory));
+      mem::fixed_pool<> p(memory, sizeof(memory));
 
       // For this test, select an allocation size that's larger than the
       // segment header the fixed_pool allocator uses. That way we can produce
@@ -231,13 +231,13 @@ private:
        // fixed_pool tests - the first test tests using a small amount of stack
        // memory.
        {
-         typedef mem::allocator<int, mem::pool_allocation_policy<int, mem::fixed_pool> > allocator_t;
+         typedef mem::allocator<int, mem::pool_allocation_policy<int, mem::fixed_pool<> > > allocator_t;
 
          // Set global pool to be an instance of fixed_pool. That'll be the simplest.
          char memory[200] = { 0 };
          CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
                allocator_t::memory_pool_ptr(
-                 new mem::fixed_pool(memory, sizeof(memory)))));
+                 new mem::fixed_pool<>(memory, sizeof(memory)))));
 
          defaultTests<allocator_t>();
 

@@ -44,6 +44,7 @@
 #include <map>
 
 #include <fhtagn/memory/memory_pool.h>
+#include <fhtagn/threads/lock_policy.h>
 
 namespace fhtagn {
 namespace memory {
@@ -63,13 +64,26 @@ namespace memory {
  * be destroyed as long as in_use() returns true.
  *
  * TODO
- * - templatize with mutexT
  * - templatize with block size (default to sizeof(size_t) for best
  *   alignment)
  **/
+template <
+  typename mutexT = fhtagn::threads::fake_mutex
+>
 class fixed_pool
 {
 public:
+  /**
+   * Convenience typedefs
+   **/
+  typedef mutexT  mutex_t;
+
+  /**
+   * The constructor accepts a pointer to a block of memory of the given size.
+   * Note that the class does not take ownership of this memory; you must ensure
+   * yourself that the memory lives at least as long as this fixed_pool
+   * instance.
+   **/
   inline fixed_pool(void * memblock, std::size_t size);
 
   /**
@@ -147,12 +161,17 @@ private:
    **/
   inline segment * find_segment_for(void * ptr);
 
+  /**
+   * Merges contiguous free segments.
+   **/
   inline void defragment_free_list();
 
-  void *        m_memblock;
-  std::size_t   m_size;
+  void *          m_memblock;
+  std::size_t     m_size;
 
-  segment *     m_start;
+  segment *       m_start;
+
+  mutable mutex_t m_mutex;
 };
 
 

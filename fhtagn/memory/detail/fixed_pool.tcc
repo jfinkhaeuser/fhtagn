@@ -45,8 +45,10 @@
 namespace fhtagn {
 namespace memory {
 
-
-fixed_pool::fixed_pool(void * memblock, std::size_t size)
+template <
+  typename mutexT
+>
+fixed_pool<mutexT>::fixed_pool(void * memblock, std::size_t size)
   : m_memblock(memblock)
   , m_size(size)
 {
@@ -56,8 +58,11 @@ fixed_pool::fixed_pool(void * memblock, std::size_t size)
 
 
 
-fixed_pool::segment *
-fixed_pool::allocate_segment(std::size_t size)
+template <
+  typename mutexT
+>
+typename fixed_pool<mutexT>::segment *
+fixed_pool<mutexT>::allocate_segment(std::size_t size)
 {
   // We search for a suitable segment in two passes. In the first pass, we try
   // to find segments with exactly the requested size, so that we don't need to
@@ -124,12 +129,17 @@ fixed_pool::allocate_segment(std::size_t size)
 
 
 
+template <
+  typename mutexT
+>
 void *
-fixed_pool::alloc(std::size_t size)
+fixed_pool<mutexT>::alloc(std::size_t size)
 {
   if (!size) {
     return NULL;
   }
+
+  typename mutex_t::scoped_lock lock(m_mutex);
 
   segment * seg = allocate_segment(size);
   if (!seg) {
@@ -141,15 +151,25 @@ fixed_pool::alloc(std::size_t size)
 
 
 
+template <
+  typename mutexT
+>
 void *
-fixed_pool::realloc(void * ptr, std::size_t new_size)
+fixed_pool<mutexT>::realloc(void * ptr, std::size_t new_size)
 {
-  if (!ptr) {
-    return alloc(new_size);
-  }
-
   if (!new_size) {
     return NULL;
+  }
+
+  typename mutex_t::scoped_lock lock(m_mutex);
+
+  if (!ptr) {
+    segment * seg = allocate_segment(new_size);
+    if (!seg) {
+      return NULL;
+    }
+
+    return pointer(seg).char_ptr + sizeof(segment);
   }
 
   // Find segment for this pointer.
@@ -215,15 +235,21 @@ fixed_pool::realloc(void * ptr, std::size_t new_size)
   void * new_data = pointer(new_seg).char_ptr + sizeof(segment);
 
   ::memcpy(new_data, old_data, seg->size);
-  this->free(seg);
+
+  // Same as free(), but without an additional lock.
+  seg->status = segment::FREE;
+  defragment_free_list();
 
   return new_data;
 }
 
 
 
-fixed_pool::segment *
-fixed_pool::find_segment_for(void * ptr)
+template <
+  typename mutexT
+>
+typename fixed_pool<mutexT>::segment *
+fixed_pool<mutexT>::find_segment_for(void * ptr)
 {
   void * end = pointer(m_memblock).char_ptr + m_size;
   if (ptr < m_memblock || ptr >= end) {
@@ -259,12 +285,17 @@ fixed_pool::find_segment_for(void * ptr)
 
 
 
+template <
+  typename mutexT
+>
 void
-fixed_pool::free(void * ptr)
+fixed_pool<mutexT>::free(void * ptr)
 {
   if (!ptr) {
     return;
   }
+
+  typename mutex_t::scoped_lock lock(m_mutex);
 
   // Find segment for pointer, and mark the memory freed.
   segment * seg = find_segment_for(ptr);
@@ -276,16 +307,24 @@ fixed_pool::free(void * ptr)
 
 
 
+template <
+  typename mutexT
+>
 bool
-fixed_pool::in_use() const
+fixed_pool<mutexT>::in_use() const
 {
+  typename mutex_t::scoped_lock lock(m_mutex);
+
   return (m_start->marker != segment::LAST_SEGMENT);
 }
 
 
 
+template <
+  typename mutexT
+>
 void
-fixed_pool::defragment_free_list()
+fixed_pool<mutexT>::defragment_free_list()
 {
   // Since all fragments are in sequence, all we need to do is find two or more
   // free segments in a row, and merge them.
