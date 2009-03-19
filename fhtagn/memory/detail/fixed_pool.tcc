@@ -208,7 +208,6 @@ fixed_pool::free(void * ptr)
 bool
 fixed_pool::in_use() const
 {
-  // FIXME only correct if the free list is defragmented.
   return (m_start->marker != segment::LAST_SEGMENT);
 }
 
