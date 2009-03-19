@@ -52,6 +52,7 @@ public:
     CPPUNIT_TEST_SUITE(AllocatorTest);
 
       CPPUNIT_TEST(testMemoryPool);
+      CPPUNIT_TEST(testFixedPoolFragmentation);
 
       CPPUNIT_TEST(testDefaults);
       CPPUNIT_TEST(testPoolAllocator);
@@ -82,10 +83,76 @@ private:
     {
       namespace mem = fhtagn::memory;
 
+      // Heap pool
       {
         mem::heap_pool p;
-        testMemoryPoolGeneric<mem::heap_pool>(p);
+        testMemoryPoolGeneric(p);
       }
+
+      // Fixed pool with stack storage
+      {
+        char memory[200] = { 0 };
+        mem::fixed_pool p(memory, sizeof(memory));
+// FIXME        testMemoryPoolGeneric(p);
+      }
+    }
+
+
+    void testFixedPoolFragmentation()
+    {
+      // Test (de-)fragmentation in fixed pools
+      namespace mem = fhtagn::memory;
+
+      char memory[1024] = { 0 };
+      mem::fixed_pool p(memory, sizeof(memory));
+
+      // For this test, select an allocation size that's larger than the
+      // segment header the fixed_pool allocator uses. That way we can produce
+      // fragmentation easier.
+      std::size_t alloc_size = 10 * sizeof(std::size_t);
+
+      // Allocate three ints in a row. They should be contiguous, and all
+      // three allocations should succeed.
+      void * first = p.alloc(alloc_size);
+      CPPUNIT_ASSERT(first);
+      void * second = p.alloc(alloc_size);
+      CPPUNIT_ASSERT(second);
+      CPPUNIT_ASSERT(second > first);
+      void * third = p.alloc(alloc_size);
+      CPPUNIT_ASSERT(third);
+      CPPUNIT_ASSERT(third > second);
+
+      // Now free the second, and allocate the same amount again. The space
+      // just freed should be re-used.
+      void * second_prev = second;
+      p.free(second);
+      second = p.alloc(alloc_size);
+      CPPUNIT_ASSERT(second);
+      CPPUNIT_ASSERT_EQUAL(second_prev, second);
+
+      // More importantly, if we free the second and allocate twice the amount,
+      // that should be placed *behind* third, als there's not enough space
+      // between first and third.
+      p.free(second);
+      second = p.alloc(alloc_size * 2);
+      CPPUNIT_ASSERT(second);
+      CPPUNIT_ASSERT(second > third);
+
+      // Now we try to allocate half the size of an int in a fourth pointer.
+      // That *should* return second_prev, as that's the first space large
+      // enough to accommodate that.
+      void * fourth = p.alloc(alloc_size / 2);
+      CPPUNIT_ASSERT(fourth);
+      CPPUNIT_ASSERT_EQUAL(second_prev, fourth);
+
+      // Awesome. If we release fourth again, we'll have fragmentation. To test
+      // that defragmentation works as expected, when we again allocate
+      // alloc_size, it should again be placed at the same position second_prev
+      // is pointing.
+      p.free(fourth);
+      fourth = p.alloc(alloc_size);
+      CPPUNIT_ASSERT(fourth);
+      CPPUNIT_ASSERT_EQUAL(second_prev, fourth);
     }
 
 

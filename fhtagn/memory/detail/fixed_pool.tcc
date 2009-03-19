@@ -217,7 +217,49 @@ fixed_pool::in_use() const
 void
 fixed_pool::defragment_free_list()
 {
-  // TODO
+  // Since all fragments are in sequence, all we need to do is find two or more
+  // free segments in a row, and merge them.
+  segment * contiguous = NULL;
+
+  segment * seg = m_start;
+  do {
+
+    if (segment::FREE == seg->status) {
+      // If there's no current contiguous segment, start one now. That's all
+      // we need to do at this point.
+      if (!contiguous) {
+        contiguous = seg;
+      }
+      // All other free segments are part of the current contiguous segment
+    }
+
+    else if (seg->status == segment::ALLOCATED) {
+      // If there's a contiguous segment, then this current segments signals
+      // the end of it.
+      if (contiguous) {
+        if (contiguous->next == seg) {
+          // Found a single free segment, no merging necessary or possible.
+          contiguous = NULL;
+        }
+        else {
+          // Since the segments are contiguous, all merging is is adjusting
+          // the size and next members of the first segment in the list.
+          contiguous->next = seg;
+          contiguous->size = (pointer(seg).char_ptr
+              - pointer(contiguous).char_ptr) - sizeof(segment);
+
+          contiguous = NULL;
+        }
+      }
+
+    }
+
+    // Break after last segment.
+    if (seg->marker == segment::LAST_SEGMENT) {
+      break;
+    }
+    seg = seg->next;
+  } while (true);
 }
 
 

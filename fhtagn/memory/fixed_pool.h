@@ -104,6 +104,11 @@ private:
       marker = LAST_SEGMENT;
     }
 
+    std::size_t full_size() const
+    {
+      return size + sizeof(segment);
+    }
+
     std::size_t size;
     char        status;
     union {
