@@ -41,6 +41,7 @@
 #include <fhtagn/memory/memory_pool.h>
 #include <fhtagn/memory/fixed_pool.h>
 #include <fhtagn/memory/pool_allocator.h>
+#include <fhtagn/memory/throw_pool.h>
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE;
 
@@ -56,6 +57,7 @@ public:
       CPPUNIT_TEST(testHeapMemoryPool);
       CPPUNIT_TEST(testFixedMemoryPool);
       CPPUNIT_TEST(testFixedPoolFragmentation);
+      CPPUNIT_TEST(testThrowPool);
 
       CPPUNIT_TEST(testDefaultAllocator);
       CPPUNIT_TEST(testHeapPoolAllocator);
@@ -199,6 +201,30 @@ private:
 
 
 
+    void testThrowPool()
+    {
+      // The best way to test a throw pool is to allocate too much from a
+      // fixed_pool.
+      namespace mem = fhtagn::memory;
+
+      char memory[200] = { 0 };
+      mem::fixed_pool<> p1(memory, sizeof(memory));
+
+      mem::throw_pool<mem::fixed_pool<> > p2(p1);
+
+      // Two small allocations should work, regardless of whether they're
+      // through the raw pool or the wrapped pool.
+      CPPUNIT_ASSERT(p1.alloc(10));
+      CPPUNIT_ASSERT(p2.alloc(10));
+
+      // However, now trying to allocate too much should result in NULL in the
+      // first case...
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p1.alloc(sizeof(memory)));
+      CPPUNIT_ASSERT_THROW(p2.alloc(sizeof(memory)), std::bad_alloc);
+    }
+
+
+
     template <
       typename allocatorT
     >
@@ -263,21 +289,23 @@ private:
 
     void testFixedPoolAllocator()
     {
-       namespace mem = fhtagn::memory;
+      namespace mem = fhtagn::memory;
 
-       // fixed_pool tests - the first test tests using a small amount of stack
-       // memory.
-       typedef mem::allocator<int, mem::pool_allocation_policy<int, mem::fixed_pool<> > > allocator_t;
+      // fixed_pool tests - the first test tests using a small amount of stack
+      // memory.
+      typedef mem::allocator<int, mem::pool_allocation_policy<int, mem::fixed_pool<> > > allocator_t;
 
-       // Set global pool to be an instance of fixed_pool. That'll be the simplest.
-       char memory[200] = { 0 };
-       CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
-             allocator_t::memory_pool_ptr(
-               new mem::fixed_pool<>(memory, sizeof(memory)))));
+      // Set global pool to be an instance of fixed_pool. That'll be the simplest.
+      char memory[200] = { 0 };
+      mem::fixed_pool<> * fp = new mem::fixed_pool<>(memory, sizeof(memory));
+      CPPUNIT_ASSERT_EQUAL(false, fp->in_use());
 
-       allocatorTests<allocator_t>();
+      allocator_t::memory_pool_ptr pool = allocator_t::memory_pool_ptr(fp);
+      CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(pool));
 
-       // FIXME test free throwing on unknown pointers. same for realloc
+      CPPUNIT_ASSERT_EQUAL(false, fp->in_use());
+      allocatorTests<allocator_t>();
+      CPPUNIT_ASSERT_EQUAL(false, fp->in_use());
     }
 };
 

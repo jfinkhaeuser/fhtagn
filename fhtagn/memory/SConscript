@@ -15,6 +15,7 @@ HEADERS = [
   'utility.h',
   'memory_pool.h',
   'fixed_pool.h',
+  'throw_pool.h',
   'pool_allocator.h',
   os.path.join('detail', 'allocator.tcc'),
   os.path.join('detail', 'defaults.tcc'),
