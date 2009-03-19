@@ -62,7 +62,10 @@ namespace memory {
  * lives at least as long as the pool itself, and the pool itself should not
  * be destroyed as long as in_use() returns true.
  *
- * TODO templatize with mutexT
+ * TODO
+ * - templatize with mutexT
+ * - templatize with block size (default to sizeof(size_t) for best
+ *   alignment)
  **/
 class fixed_pool
 {
@@ -79,15 +82,66 @@ public:
 
 private:
 
-  inline void defragment_free_list();
+  /**
+   * Helper structure, that is the header of each free or allocated segment in
+   * the fixed_pool.
+   **/
+  struct segment
+  {
+    enum {
+      FREE      = 0,
+      ALLOCATED = ~char(0)
+    };
 
-  typedef std::multimap<std::size_t, void *>  free_list_t;
-  typedef std::map<void *, size_t>            alloc_list_t;
+    enum {
+      LAST_SEGMENT = std::size_t(0)
+    };
+
+    segment(std::size_t _size)
+      : size(_size - sizeof(segment))
+      , status(FREE)
+    {
+      marker = LAST_SEGMENT;
+    }
+
+    std::size_t size;
+    char        status;
+    union {
+      segment *   next;
+      std::size_t marker;
+    };
+  };
+
+  /**
+   * Helper struct for conveniently intepreting void * as char * and vice
+   * versa.
+   **/
+  struct pointer
+  {
+    pointer(void * ptr)
+    {
+      void_ptr = ptr;
+    }
+
+    union {
+      void * void_ptr;
+      char * char_ptr;
+    };
+  };
+
+
+  /**
+   * Finds and allocates a free segment of the given size, splitting larger
+   * segments if necessary.
+   **/
+  inline segment * allocate_segment(std::size_t size);
+
+  inline void defragment_free_list();
 
   void *        m_memblock;
   std::size_t   m_size;
-  free_list_t   m_free_list;
-  alloc_list_t  m_alloc_list;
+
+  segment *     m_start;
 };
 
 

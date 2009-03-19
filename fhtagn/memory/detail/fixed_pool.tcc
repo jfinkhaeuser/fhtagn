@@ -50,8 +50,77 @@ fixed_pool::fixed_pool(void * memblock, std::size_t size)
   : m_memblock(memblock)
   , m_size(size)
 {
-  m_free_list.insert(std::make_pair(m_size, m_memblock));
+  // Initialize the memblock with one free list entry spanning the whole block.
+  m_start = new (m_memblock) segment(m_size);
 }
+
+
+
+fixed_pool::segment *
+fixed_pool::allocate_segment(std::size_t size)
+{
+  // We search for a suitable segment in two passes. In the first pass, we try
+  // to find segments with exactly the requested size, so that we don't need to
+  // fragment our free memory further.
+  segment * seg = m_start;
+  while (seg->status == segment::ALLOCATED || seg->size != size) {
+    if (seg->marker == segment::LAST_SEGMENT) {
+      // Reached the end of the list, end now.
+      break;
+    }
+    seg = seg->next;
+  }
+
+  // If the segment we've ended up with is the exact size we want, let's use
+  // it!
+  if (seg->status == segment::FREE && seg->size == size) {
+    seg->status = segment::ALLOCATED;
+    return seg;
+  }
+
+  // If the segment isn't exactly the size we need, we'll try and find one that's
+  // larger, that we can then split in two.
+  //
+  // The size segment we're looking for is larger than the required size plus
+  // a header for the split off part.
+  // XXX There's a bit of an edge case here; if the segment we find is exactly
+  // full_size below, then on the one hand it'd make no sense to split off a
+  // zero-sized segment. On the other hand, doing so
+  //   a) keeps the free list accurate (even if it includes zero-sized
+  //      segments), and
+  //   b) avoids a third pass where we'd choose such a segment anyway because
+  //      it's our last chance for finding enough space.
+  // For the time being, we'll consider creating zero-sized segments the
+  // lesser evil.
+  std::size_t full_size = size + sizeof(segment);
+
+  seg = m_start;
+  while (seg->status == segment::ALLOCATED || seg->size < full_size) {
+    if (seg->marker == segment::LAST_SEGMENT) {
+      break;
+    }
+    seg = seg->next;
+  }
+
+  if (seg->status == segment::ALLOCATED || seg->size < full_size) {
+    // If this is still the case, we didn't find a suitably sized segment and
+    // need to give up.
+    return NULL;
+  }
+
+  // Create a new segment header for the part we split off.
+  void * new_seg_addr = pointer(seg).char_ptr + full_size;
+  segment * new_seg = new (new_seg_addr) segment(seg->size - size);
+
+  new_seg->next = seg->next;
+  seg->next = new_seg;
+
+  seg->status = segment::ALLOCATED;
+  seg->size = size;
+
+  return seg;
+}
+
 
 
 
@@ -62,35 +131,12 @@ fixed_pool::alloc(std::size_t size)
     return NULL;
   }
 
-  // Try to find a chunk of the free list that can accomodate the given size.
-  free_list_t::iterator chunk_iter = m_free_list.lower_bound(size);
-  if (chunk_iter == m_free_list.end()) {
-    // Possibly out of memory, but definitely out of chunks large enough.
+  segment * seg = allocate_segment(size);
+  if (!seg) {
     return NULL;
   }
 
-  // Remember chunk size and location.
-  free_list_t::value_type chunk = *chunk_iter;
-  std::cout << "found chunk of size " << chunk.first << " at 0x" << std::hex << (int) chunk.second
-    << " in block 0x" << (int) m_memblock << std::dec << " of size " << m_size << std::endl;
-
-  // Erase chunk from free list; it's going to be replaced by a smaller chunk
-  // and an entry in the alloc list.
-  m_free_list.erase(chunk_iter);
-
-  // Add new free chunk - but only if any amount of memory remains in this cunk
-  // after we've used up size bytes.
-  std::size_t new_entry_size = chunk.first - size;
-  if (new_entry_size) {
-    void * new_entry_ptr = static_cast<char *>(chunk.second) + size;
-    m_free_list.insert(std::make_pair(new_entry_size, new_entry_ptr));
-  }
-
-  // Add used chunk to alloc list.
-  m_alloc_list[chunk.second] = size;
-
-  // And finally, return a pointer to the allocated chunk.
-  return chunk.second;
+  return pointer(seg).char_ptr + sizeof(segment);
 }
 
 
@@ -106,6 +152,7 @@ fixed_pool::realloc(void * ptr, std::size_t new_size)
     return NULL;
   }
 
+
   // TODO
   return NULL;
 }
@@ -119,26 +166,38 @@ fixed_pool::free(void * ptr)
     return;
   }
 
-  std::cout << "asked to free 0x" << std::hex << (size_t) ptr << std::dec << std::endl;
-
-  // First check whether the pointer is actually known to us. If it's not,
-  // throw a std::logic_error - this is some bug in the caller code.
-  alloc_list_t::iterator alloc_iter = m_alloc_list.find(ptr);
-  if (alloc_iter == m_alloc_list.end()) {
+  void * end = pointer(m_memblock).char_ptr + m_size;
+  if (ptr < m_memblock || ptr >= end) {
     std::stringstream s;
-    s << "fixed_pool: can't free unknown pointer 0x" << std::hex
-      << (std::size_t) ptr << " in pool 0x" << (std::size_t) m_memblock
-      << " of size " << m_size;
+    s << "fixed_pool: can't free pointer " << std::hex << ptr
+      << ", it's not in pool " << m_memblock << " of size " << std::dec
+      << m_size;
     throw std::logic_error(s.str());
   }
 
-  // Remember data about the chunk of memory we're about to free, and remove it
-  // from the alloc list
-  alloc_list_t::value_type chunk = *alloc_iter;
-  m_alloc_list.erase(alloc_iter);
+  // We'll traverse the whole segment list for safety reasons: this lets us
+  // detect whether ptr is pointing to the start of a segment's data, as it
+  // always should.
+  segment * seg = m_start;
 
-  // Now add this chunk as a new entry to the free list.
-  m_free_list.insert(std::make_pair(chunk.second, chunk.first));
+  while (ptr != pointer(seg).char_ptr + sizeof(segment)) {
+    if (seg->marker == segment::LAST_SEGMENT) {
+      break;
+    }
+    seg = seg->next;
+  }
+
+  if (ptr != pointer(seg).char_ptr + sizeof(segment)) {
+    std::stringstream s;
+    s << "fixed_pool: can't free pointer " << std::hex << ptr
+      << "; it's in pool " << m_memblock << " of size " << std::dec << m_size
+      << " but not in any known segment.";
+    throw std::logic_error(s.str());
+  }
+
+  // So, seg is now pointing to the segment to be freed. Let's flip it's status,
+  // and we're done.
+  seg->status = segment::FREE;
 
   // Lastly, defragment the free list.
   defragment_free_list();
@@ -149,7 +208,8 @@ fixed_pool::free(void * ptr)
 bool
 fixed_pool::in_use() const
 {
-  return !m_alloc_list.empty();
+  // FIXME only correct if the free list is defragmented.
+  return (m_start->marker != segment::LAST_SEGMENT);
 }
 
 
