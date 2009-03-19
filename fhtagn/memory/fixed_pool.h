@@ -50,6 +50,37 @@ namespace fhtagn {
 namespace memory {
 
 /**
+ * Helper class, see fixed_pool documentation below. Exploits the fact that
+ * std::size_t is defined to be as large as a pointer.
+ **/
+template <
+  std::size_t T_BLOCK_SIZE = sizeof(std::size_t)
+>
+struct block_alignment
+{
+  enum {
+    BLOCK_SIZE = T_BLOCK_SIZE,
+  };
+
+  static inline std::size_t adjust_size(std::size_t size)
+  {
+    std::size_t remainder = size % BLOCK_SIZE;
+    if (!remainder) {
+      return size;
+    }
+
+    return size - remainder + BLOCK_SIZE;
+  }
+
+  static inline void * adjust_pointer(void * ptr)
+  {
+    return reinterpret_cast<void *>(
+        adjust_size(reinterpret_cast<std::size_t>(ptr)));
+  }
+};
+
+
+/**
  * The fixed_pool class implements a MemoryPool that allocates space from a
  * fixed-sized chunk of preallocated memory. fixed_pool does not allocate this
  * chunk of memory itself, nor frees it, but merely subdivides it.
@@ -63,12 +94,17 @@ namespace memory {
  * lives at least as long as the pool itself, and the pool itself should not
  * be destroyed as long as in_use() returns true.
  *
- * TODO
- * - templatize with block size (default to sizeof(size_t) for best
- *   alignment)
+ * And to mix things up a little, there's also the possibility to influence
+ * the alignment of memory allocated from the pool. Alignment is handled via
+ * a block size; essentially memory will internally always be allocated in
+ * multiples of this block size, and aligned on such a block boundary.
+ *
+ * In most cases, you don't need to change the block alignment, but if you feel
+ * the need to squeeze the last bytes out of things, feel free to do so.
  **/
 template <
-  typename mutexT = fhtagn::threads::fake_mutex
+  typename mutexT = fhtagn::threads::fake_mutex,
+  typename block_alignmentT = block_alignment<>
 >
 class fixed_pool
 {
@@ -76,7 +112,8 @@ public:
   /**
    * Convenience typedefs
    **/
-  typedef mutexT  mutex_t;
+  typedef mutexT            mutex_t;
+  typedef block_alignmentT  block_alignment_t;
 
   /**
    * The constructor accepts a pointer to a block of memory of the given size.
@@ -118,9 +155,14 @@ private:
       marker = LAST_SEGMENT;
     }
 
-    std::size_t full_size() const
+    inline std::size_t full_size() const
     {
       return size + sizeof(segment);
+    }
+
+    static inline std::size_t header_size()
+    {
+      return block_alignmentT::adjust_size(sizeof(segment));
     }
 
     std::size_t size;

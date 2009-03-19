@@ -46,12 +46,34 @@ namespace fhtagn {
 namespace memory {
 
 template <
-  typename mutexT
+  typename mutexT,
+  typename block_alignmentT
 >
-fixed_pool<mutexT>::fixed_pool(void * memblock, std::size_t size)
+fixed_pool<mutexT, block_alignmentT>::fixed_pool(void * memblock,
+    std::size_t size)
   : m_memblock(memblock)
   , m_size(size)
 {
+  // We don't really need to know the beginning of the memory block and it's
+  // full size; all we need is the block-aligned pointer, and a size that takes
+  // into account both a possibly shifted start pointer, and the size as
+  // multiples of blocks.
+  // |----|----|----|----|  | are block boundaries, - and x are bytes
+  // |---x|xxxx|xxxx|xx--|  input memory block
+  // |----|xxxx|xxxx|xx--|  memory block with adjusted start
+  // |----|xxxx|xxxx|----|  fully adjusted memory block
+
+  void * adjusted_start = block_alignment_t::adjust_pointer(m_memblock);
+  std::size_t size_diff = pointer(adjusted_start).char_ptr
+    - pointer(m_memblock).char_ptr;
+  std::size_t adjusted_size = m_size - size_diff;
+
+  size_diff = adjusted_size % block_alignment_t::BLOCK_SIZE;
+  adjusted_size -= size_diff;
+
+  m_memblock = adjusted_start;
+  m_size = adjusted_size;
+
   // Initialize the memblock with one free list entry spanning the whole block.
   m_start = new (m_memblock) segment(m_size);
 }
@@ -59,10 +81,11 @@ fixed_pool<mutexT>::fixed_pool(void * memblock, std::size_t size)
 
 
 template <
-  typename mutexT
+  typename mutexT,
+  typename block_alignmentT
 >
-typename fixed_pool<mutexT>::segment *
-fixed_pool<mutexT>::allocate_segment(std::size_t size)
+typename fixed_pool<mutexT, block_alignmentT>::segment *
+fixed_pool<mutexT, block_alignmentT>::allocate_segment(std::size_t size)
 {
   // We search for a suitable segment in two passes. In the first pass, we try
   // to find segments with exactly the requested size, so that we don't need to
@@ -97,7 +120,7 @@ fixed_pool<mutexT>::allocate_segment(std::size_t size)
   //      it's our last chance for finding enough space.
   // For the time being, we'll consider creating zero-sized segments the
   // lesser evil.
-  std::size_t full_size = size + sizeof(segment);
+  std::size_t full_size = size + segment::header_size();
 
   seg = m_start;
   while (seg->status == segment::ALLOCATED || seg->size < full_size) {
@@ -130,14 +153,17 @@ fixed_pool<mutexT>::allocate_segment(std::size_t size)
 
 
 template <
-  typename mutexT
+  typename mutexT,
+  typename block_alignmentT
 >
 void *
-fixed_pool<mutexT>::alloc(std::size_t size)
+fixed_pool<mutexT, block_alignmentT>::alloc(std::size_t size)
 {
   if (!size) {
     return NULL;
   }
+
+  size = block_alignmentT::adjust_size(size);
 
   typename mutex_t::scoped_lock lock(m_mutex);
 
@@ -146,20 +172,24 @@ fixed_pool<mutexT>::alloc(std::size_t size)
     return NULL;
   }
 
-  return pointer(seg).char_ptr + sizeof(segment);
+  return pointer(seg).char_ptr + segment::header_size();
 }
 
 
 
 template <
-  typename mutexT
+  typename mutexT,
+  typename block_alignmentT
 >
 void *
-fixed_pool<mutexT>::realloc(void * ptr, std::size_t new_size)
+fixed_pool<mutexT, block_alignmentT>::realloc(void * ptr,
+    std::size_t new_size)
 {
   if (!new_size) {
     return NULL;
   }
+
+  new_size = block_alignmentT::adjust_size(new_size);
 
   typename mutex_t::scoped_lock lock(m_mutex);
 
@@ -169,7 +199,7 @@ fixed_pool<mutexT>::realloc(void * ptr, std::size_t new_size)
       return NULL;
     }
 
-    return pointer(seg).char_ptr + sizeof(segment);
+    return pointer(seg).char_ptr + segment::header_size();
   }
 
   // Find segment for this pointer.
@@ -192,12 +222,12 @@ fixed_pool<mutexT>::realloc(void * ptr, std::size_t new_size)
       if (combined_size == new_size) {
         seg->size = new_size;
         seg->next = seg->next->next;
-        return pointer(seg).char_ptr + sizeof(segment);
+        return pointer(seg).char_ptr + segment::header_size();
       }
 
       // b) The combined size is large enough to fit the new_size and a new
       //    segment header, so we can split off unused memory.
-      if (combined_size - new_size > sizeof(segment)) {
+      if (combined_size - new_size > segment::header_size()) {
         seg->size = new_size;
 
         void * new_seg_addr = pointer(seg).char_ptr + seg->full_size();
@@ -207,7 +237,7 @@ fixed_pool<mutexT>::realloc(void * ptr, std::size_t new_size)
         seg->next = new_seg;
 
         defragment_free_list();
-        return pointer(seg).char_ptr + sizeof(segment);
+        return pointer(seg).char_ptr + segment::header_size();
       }
 
       // c) The combined size is large enough to fit new_size, but not large
@@ -216,7 +246,7 @@ fixed_pool<mutexT>::realloc(void * ptr, std::size_t new_size)
       //    as unused memory onto the current segment.
       seg->size = combined_size;
       seg->next = seg->next->next;
-      return pointer(seg).char_ptr + sizeof(segment);
+      return pointer(seg).char_ptr + segment::header_size();
     }
   }
 
@@ -231,8 +261,8 @@ fixed_pool<mutexT>::realloc(void * ptr, std::size_t new_size)
   // If alloc returned a new segment, we'll move over the old data and free the
   // old segment. Since freeing also defragments, there's no need to defragment
   // manually here.
-  void * old_data = pointer(seg).char_ptr + sizeof(segment);
-  void * new_data = pointer(new_seg).char_ptr + sizeof(segment);
+  void * old_data = pointer(seg).char_ptr + segment::header_size();
+  void * new_data = pointer(new_seg).char_ptr + segment::header_size();
 
   ::memcpy(new_data, old_data, seg->size);
 
@@ -246,10 +276,11 @@ fixed_pool<mutexT>::realloc(void * ptr, std::size_t new_size)
 
 
 template <
-  typename mutexT
+  typename mutexT,
+  typename block_alignmentT
 >
-typename fixed_pool<mutexT>::segment *
-fixed_pool<mutexT>::find_segment_for(void * ptr)
+typename fixed_pool<mutexT, block_alignmentT>::segment *
+fixed_pool<mutexT, block_alignmentT>::find_segment_for(void * ptr)
 {
   void * end = pointer(m_memblock).char_ptr + m_size;
   if (ptr < m_memblock || ptr >= end) {
@@ -265,14 +296,14 @@ fixed_pool<mutexT>::find_segment_for(void * ptr)
   // always should.
   segment * seg = m_start;
 
-  while (ptr != pointer(seg).char_ptr + sizeof(segment)) {
+  while (ptr != pointer(seg).char_ptr + segment::header_size()) {
     if (seg->marker == segment::LAST_SEGMENT) {
       break;
     }
     seg = seg->next;
   }
 
-  if (ptr != pointer(seg).char_ptr + sizeof(segment)) {
+  if (ptr != pointer(seg).char_ptr + segment::header_size()) {
     std::stringstream s;
     s << "fixed_pool: can't free pointer " << std::hex << ptr
       << "; it's in pool " << m_memblock << " of size " << std::dec << m_size
@@ -286,10 +317,11 @@ fixed_pool<mutexT>::find_segment_for(void * ptr)
 
 
 template <
-  typename mutexT
+  typename mutexT,
+  typename block_alignmentT
 >
 void
-fixed_pool<mutexT>::free(void * ptr)
+fixed_pool<mutexT, block_alignmentT>::free(void * ptr)
 {
   if (!ptr) {
     return;
@@ -308,10 +340,11 @@ fixed_pool<mutexT>::free(void * ptr)
 
 
 template <
-  typename mutexT
+  typename mutexT,
+  typename block_alignmentT
 >
 bool
-fixed_pool<mutexT>::in_use() const
+fixed_pool<mutexT, block_alignmentT>::in_use() const
 {
   typename mutex_t::scoped_lock lock(m_mutex);
 
@@ -321,10 +354,11 @@ fixed_pool<mutexT>::in_use() const
 
 
 template <
-  typename mutexT
+  typename mutexT,
+  typename block_alignmentT
 >
 void
-fixed_pool<mutexT>::defragment_free_list()
+fixed_pool<mutexT, block_alignmentT>::defragment_free_list()
 {
   // Since all fragments are in sequence, all we need to do is find two or more
   // free segments in a row, and merge them.
@@ -355,7 +389,7 @@ fixed_pool<mutexT>::defragment_free_list()
           // the size and next members of the first segment in the list.
           contiguous->next = seg;
           contiguous->size = (pointer(seg).char_ptr
-              - pointer(contiguous).char_ptr) - sizeof(segment);
+              - pointer(contiguous).char_ptr) - segment::header_size();
 
           contiguous = NULL;
         }
@@ -375,7 +409,7 @@ fixed_pool<mutexT>::defragment_free_list()
   if (contiguous) {
     contiguous->marker = segment::LAST_SEGMENT;
     contiguous->size = ((pointer(m_memblock).char_ptr + m_size)
-        - pointer(contiguous).char_ptr) - sizeof(segment);
+        - pointer(contiguous).char_ptr) - segment::header_size();
   }
 }
 

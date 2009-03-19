@@ -51,15 +51,48 @@ class AllocatorTest
 public:
     CPPUNIT_TEST_SUITE(AllocatorTest);
 
+      CPPUNIT_TEST(testBlockAlignment);
+
       CPPUNIT_TEST(testHeapMemoryPool);
       CPPUNIT_TEST(testFixedMemoryPool);
       CPPUNIT_TEST(testFixedPoolFragmentation);
 
-      CPPUNIT_TEST(testDefaults);
-      CPPUNIT_TEST(testPoolAllocator);
+      CPPUNIT_TEST(testDefaultAllocator);
+      CPPUNIT_TEST(testHeapPoolAllocator);
+      CPPUNIT_TEST(testFixedPoolAllocator);
 
     CPPUNIT_TEST_SUITE_END();
 private:
+
+    void testBlockAlignment()
+    {
+      namespace mem = fhtagn::memory;
+
+      char memory[200];
+      char * mem_offset = memory + 1;
+
+      // Test default block alignment. Given that memory allocated on the stack
+      // or heap should always be aligned properly, that size_t is the same
+      // size as a pointer, and that the default alignment assumes a block size
+      // of sizeof(size_t), this really should not have *any* effect
+      // whatsoever.
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(memory),
+          mem::block_alignment<>::adjust_pointer(memory));
+
+      // However, testing the offset memory pointer should indeed have an
+      // effect.
+      CPPUNIT_ASSERT(static_cast<void *>(mem_offset) !=
+          mem::block_alignment<>::adjust_pointer(mem_offset));
+
+      // If we're using a block size of sizeof(char), though, things shouldn't
+      // matter either way.
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(memory),
+          mem::block_alignment<sizeof(char)>::adjust_pointer(memory));
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(mem_offset),
+          mem::block_alignment<sizeof(char)>::adjust_pointer(mem_offset));
+    }
+
+
 
     template <
       typename poolT
@@ -99,7 +132,7 @@ private:
       namespace mem = fhtagn::memory;
 
       char memory[1024] = { 0 };
-      mem::fixed_pool<> p(memory, sizeof(memory));
+      mem::fixed_pool<> p(memory + 1, sizeof(memory) - 2);
 
       CPPUNIT_ASSERT_EQUAL(false, p.in_use());
       testMemoryPoolGeneric(p);
@@ -169,7 +202,7 @@ private:
     template <
       typename allocatorT
     >
-    void defaultTests()
+    void allocatorTests()
     {
       typedef std::vector<int, allocatorT> vector_t;
 
@@ -204,45 +237,47 @@ private:
 
 
 
-    void testDefaults()
+    void testDefaultAllocator()
     {
       // T is int in these tests.
-      defaultTests<fhtagn::memory::allocator<int> >();
+      allocatorTests<fhtagn::memory::allocator<int> >();
     }
 
 
 
-    void testPoolAllocator()
+    void testHeapPoolAllocator()
     {
        // T is int in these tests.
        namespace mem = fhtagn::memory;
 
        // heap_pool tests - should always succeed, unless the machine runs out of memory.
-       {
-         typedef mem::allocator<int, mem::pool_allocation_policy<int> > allocator_t;
+       typedef mem::allocator<int, mem::pool_allocation_policy<int> > allocator_t;
 
-         // Set global pool to be an instance of heap_pool. That'll be the simplest.
-         CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
-               allocator_t::memory_pool_ptr(new mem::heap_pool())));
+       // Set global pool to be an instance of heap_pool. That'll be the simplest.
+       CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
+             allocator_t::memory_pool_ptr(new mem::heap_pool())));
 
-         defaultTests<allocator_t>();
-       }
+       allocatorTests<allocator_t>();
+    }
+
+
+    void testFixedPoolAllocator()
+    {
+       namespace mem = fhtagn::memory;
 
        // fixed_pool tests - the first test tests using a small amount of stack
        // memory.
-       {
-         typedef mem::allocator<int, mem::pool_allocation_policy<int, mem::fixed_pool<> > > allocator_t;
+       typedef mem::allocator<int, mem::pool_allocation_policy<int, mem::fixed_pool<> > > allocator_t;
 
-         // Set global pool to be an instance of fixed_pool. That'll be the simplest.
-         char memory[200] = { 0 };
-         CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
-               allocator_t::memory_pool_ptr(
-                 new mem::fixed_pool<>(memory, sizeof(memory)))));
+       // Set global pool to be an instance of fixed_pool. That'll be the simplest.
+       char memory[200] = { 0 };
+       CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
+             allocator_t::memory_pool_ptr(
+               new mem::fixed_pool<>(memory, sizeof(memory)))));
 
-         defaultTests<allocator_t>();
+       allocatorTests<allocator_t>();
 
-         // FIXME test free throwing on unknown pointers. same for realloc
-       }
+       // FIXME test free throwing on unknown pointers. same for realloc
     }
 };
 
