@@ -66,6 +66,7 @@ public:
       CPPUNIT_TEST(testDefaultAllocator);
       CPPUNIT_TEST(testHeapPoolAllocator);
       CPPUNIT_TEST(testFixedPoolAllocator);
+      CPPUNIT_TEST(testDynamicPoolAllocator);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -399,6 +400,36 @@ private:
       CPPUNIT_ASSERT_EQUAL(false, fp->in_use());
     }
 
+
+    void testDynamicPoolAllocator()
+    {
+      namespace mem = fhtagn::memory;
+
+      // dynamic_pool tests
+      typedef mem::dynamic_pool<
+        mem::fixed_pool<>,
+        1024
+      > pool_t;
+
+      typedef mem::allocator<
+        int,
+        mem::pool_allocation_policy<
+          int,
+          pool_t
+        >
+      > allocator_t;
+
+      // Set global pool to be an instance of dynamic_pool. That'll be the simplest.
+      pool_t * p = new pool_t();
+      CPPUNIT_ASSERT_EQUAL(false, p->in_use());
+
+      allocator_t::memory_pool_ptr pool = allocator_t::memory_pool_ptr(p);
+      CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(pool));
+
+      CPPUNIT_ASSERT_EQUAL(false, p->in_use());
+      allocatorTests<allocator_t>();
+      CPPUNIT_ASSERT_EQUAL(false, p->in_use());
+    }
 
 
 

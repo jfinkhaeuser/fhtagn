@@ -137,6 +137,31 @@ template <
   int MEMORY_BLOCK_SIZE,
   typename mutexT
 >
+typename dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::pool_map_t::const_iterator
+dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::find_pool(void * ptr) const
+{
+  typename pool_map_t::const_iterator map_end = m_pool_map.end();
+  for (typename pool_map_t::const_iterator map_iter = m_pool_map.begin()
+      ; map_iter != map_end ; ++map_iter)
+  {
+    void * range_start = map_iter->first.first;
+    void * range_end = map_iter->first.second;
+    if (range_start <= ptr && ptr < range_end) {
+      // Found the pool.
+      return map_iter;
+    }
+  }
+
+  return map_end;
+}
+
+
+
+template <
+  typename poolT,
+  int MEMORY_BLOCK_SIZE,
+  typename mutexT
+>
 void *
 dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::realloc(void * ptr,
     std::size_t new_size)
@@ -245,10 +270,12 @@ dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::alloc_size(void * ptr) const
 
   typename mutex_t::scoped_lock lock(m_mutex);
 
-  pool_ptr pool = find_pool(ptr);
-  if (!pool) {
-    return;
+  typename pool_map_t::const_iterator iter = find_pool(ptr);
+  if (iter == m_pool_map.end()) {
+    // That's odd, apparently we weren't responsible.
+    return 0;
   }
+  pool_ptr pool = iter->second;
 
   return pool->alloc_size(ptr);
 }

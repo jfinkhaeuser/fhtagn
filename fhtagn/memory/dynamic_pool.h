@@ -107,6 +107,7 @@ private:
    * For a given pointer, returns the pool that should contain it.
    **/
   inline typename pool_map_t::iterator find_pool(void * ptr);
+  inline typename pool_map_t::const_iterator find_pool(void * ptr) const;
 
   /**
    * Lock-free version of alloc, used internally.
