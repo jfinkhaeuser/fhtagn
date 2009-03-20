@@ -1,0 +1,19 @@
+# Copyright (C) 2009 the authors.
+#
+# This file is part of the Fhtagn! C++ Library, and may be distributed under
+# the following license terms and conditions as set forth in the COPYING file
+# included in this source distribution.
+Import('env')
+import os.path
+
+SOURCES = [
+]
+
+HEADERS = [
+  'for.h',
+  os.path.join('detail', 'dynamic_for.tcc'),
+#  os.path.join('detail', 'static_for.tcc'),
+]
+
+env.addSources('fhtagn', SOURCES)
+env.addHeaders('fhtagn', HEADERS)

@@ -12,6 +12,7 @@ if env.has_key('FHTAGN_CPPUNIT_VERSION'):
     'transcoding_test.cpp',
     'allocator_test.cpp',
     'misc_test.cpp',
+    'meta_test.cpp',
     'testdriver.cpp',
   ]
 
