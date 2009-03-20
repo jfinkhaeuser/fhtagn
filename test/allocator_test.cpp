@@ -43,6 +43,7 @@
 #include <fhtagn/memory/pool_allocator.h>
 #include <fhtagn/memory/throw_pool.h>
 #include <fhtagn/memory/block_pool.h>
+#include <fhtagn/memory/dynamic_pool.h>
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE;
 
@@ -59,6 +60,7 @@ public:
       CPPUNIT_TEST(testFixedMemoryPool);
       CPPUNIT_TEST(testFixedPoolFragmentation);
       CPPUNIT_TEST(testBlockMemoryPool);
+      CPPUNIT_TEST(testDynamicMemoryPool);
       CPPUNIT_TEST(testThrowPool);
 
       CPPUNIT_TEST(testDefaultAllocator);
@@ -199,6 +201,43 @@ private:
       fourth = p.alloc(alloc_size);
       CPPUNIT_ASSERT(fourth);
       CPPUNIT_ASSERT_EQUAL(second_prev, fourth);
+    }
+
+
+    void testDynamicMemoryPool()
+    {
+      namespace mem = fhtagn::memory;
+
+      // Let's assume a block size of 1024, and a fixed_pool underlying the
+      // dynamic pool. With that, we should be able to create tests fairly easily
+      mem::dynamic_pool<mem::fixed_pool<>, 1024> p;
+
+      // Generic tests.
+      CPPUNIT_ASSERT_EQUAL(false, p.in_use());
+      testMemoryPoolGeneric(p);
+      CPPUNIT_ASSERT_EQUAL(false, p.in_use());
+
+      // Allocate five chunks a quarter the size of the fixed pool. That should
+      // create a second fixed pool, and prove the new pool creation mechanism.
+      void * p1 = p.alloc(256);
+      CPPUNIT_ASSERT(p1);
+      CPPUNIT_ASSERT_EQUAL(true, p.in_use());
+      void * p2 = p.alloc(256);
+      CPPUNIT_ASSERT(p2);
+      void * p3 = p.alloc(256);
+      CPPUNIT_ASSERT(p3);
+      void * p4 = p.alloc(256);
+      CPPUNIT_ASSERT(p4);
+      void * p5 = p.alloc(256);
+      CPPUNIT_ASSERT(p5);
+
+      CPPUNIT_ASSERT_EQUAL(true, p.in_use());
+      p.free(p1);
+      p.free(p2);
+      p.free(p3);
+      p.free(p4);
+      p.free(p5);
+      CPPUNIT_ASSERT_EQUAL(false, p.in_use());
     }
 
 
