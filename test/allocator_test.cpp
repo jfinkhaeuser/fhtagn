@@ -42,6 +42,7 @@
 #include <fhtagn/memory/fixed_pool.h>
 #include <fhtagn/memory/pool_allocator.h>
 #include <fhtagn/memory/throw_pool.h>
+#include <fhtagn/memory/block_pool.h>
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE;
 
@@ -57,6 +58,7 @@ public:
       CPPUNIT_TEST(testHeapMemoryPool);
       CPPUNIT_TEST(testFixedMemoryPool);
       CPPUNIT_TEST(testFixedPoolFragmentation);
+      CPPUNIT_TEST(testBlockMemoryPool);
       CPPUNIT_TEST(testThrowPool);
 
       CPPUNIT_TEST(testDefaultAllocator);
@@ -201,6 +203,56 @@ private:
 
 
 
+    void testBlockMemoryPool()
+    {
+      namespace mem = fhtagn::memory;
+
+      // 200 bytes memory should translate to
+      // - 47 entries, 188 bytes data
+      // - 3 size_t metadata
+      // - 0 bytes wasted
+      char memory[200] = { 0 };
+      mem::block_pool<sizeof(int)> p(memory, sizeof(memory));
+
+      CPPUNIT_ASSERT_EQUAL(false, p.in_use());
+
+      // Try to allocate something that's not sizeof(int). It must fail.
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(int) / 3));
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(int) * 3));
+
+      // On the other hand, allocating an int must succeed.
+      void * q = p.alloc(sizeof(int));
+      CPPUNIT_ASSERT(q);
+      CPPUNIT_ASSERT_EQUAL(true, p.in_use());
+
+      // Reallocation must fail, except if there's no size change.
+      CPPUNIT_ASSERT(p.realloc(q, sizeof(int)));
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.realloc(q, sizeof(int) / 3));
+
+      // If the above calculation about data + metadata size holds, then we
+      // should be able to allocate 46 more entries. The 47th from now on must
+      // fail.
+      for (int i = 0 ; i < 33 ; ++i) {
+        CPPUNIT_ASSERT(p.alloc(sizeof(int)));
+      }
+      // split in two; we want to remember a q from somewhere in the middle for
+      // later
+      q = p.alloc(sizeof(int));
+      CPPUNIT_ASSERT(q);
+      for (int i = 0 ; i < 12 ; ++i) {
+        CPPUNIT_ASSERT(p.alloc(sizeof(int)));
+      }
+
+      // Fail.
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(int)));
+
+      // Now free q - that should make room for one more allocation.
+      p.free(q);
+      CPPUNIT_ASSERT(p.alloc(sizeof(int)));
+    }
+
+
+
     void testThrowPool()
     {
       // The best way to test a throw pool is to allocate too much from a
@@ -307,6 +359,10 @@ private:
       allocatorTests<allocator_t>();
       CPPUNIT_ASSERT_EQUAL(false, fp->in_use());
     }
+
+
+
+
 };
 
 
