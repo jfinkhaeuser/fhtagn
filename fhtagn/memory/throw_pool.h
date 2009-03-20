@@ -108,6 +108,13 @@ struct throw_pool
     return m_pool.in_use();
   }
 
+
+
+  inline std::size_t alloc_size(void * ptr) const
+  {
+    return m_pool.alloc_size(ptr);
+  }
+
 private:
 
   memory_poolT &  m_pool;

@@ -39,6 +39,10 @@
 #error You are trying to include a C++ only header file
 #endif
 
+#if defined(HAVE_MALLOC_SIZE)
+#include <malloc/malloc.h>
+#endif
+
 namespace fhtagn {
 namespace memory {
 
@@ -83,6 +87,22 @@ bool
 heap_pool::in_use() const
 {
   return true;
+}
+
+
+
+std::size_t
+heap_pool::alloc_size(void * ptr) const
+{
+  if (!ptr) {
+    return 0;
+  }
+
+#if defined(HAVE_MALLOC_SIZE)
+  return malloc_size(ptr);
+#else
+  return 0;
+#endif
 }
 
 

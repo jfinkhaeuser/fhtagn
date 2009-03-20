@@ -98,6 +98,7 @@ public:
   inline void * realloc(void * ptr, std::size_t new_size);
   inline void free(void * ptr);
   inline bool in_use() const;
+  inline std::size_t alloc_size(void * ptr) const;
 
 private:
 
@@ -151,7 +152,7 @@ private:
    * Finds the segment in which ptr resides, or throws if the ptr can't be
    * found.
    **/
-  inline segment * find_segment_for(void * ptr);
+  inline segment * find_segment_for(void * ptr) const;
 
   /**
    * Merges contiguous free segments.

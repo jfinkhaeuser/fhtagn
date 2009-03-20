@@ -269,6 +269,30 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::in_use() const
 
 
 
+template <
+  std::size_t BLOCK_SIZE,
+  typename mutexT,
+  typename block_alignmentT
+>
+std::size_t
+block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc_size(void * ptr) const
+{
+  if (!ptr) {
+    return 0;
+  }
+
+  typename mutex_t::scoped_lock lock(m_mutex);
+
+  if (m_memblock > ptr || ptr >= m_metadata) {
+    // Invalid pointer, we don't handle it.
+    return 0;
+  }
+
+  return BLOCK_SIZE;
+}
+
+
+
 }} // namespace fhtagn::memory
 
 

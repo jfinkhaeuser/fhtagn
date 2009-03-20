@@ -90,6 +90,7 @@ public:
   inline void * realloc(void * ptr, std::size_t new_size);
   inline void free(void * ptr);
   inline bool in_use() const;
+  inline std::size_t alloc_size(void * ptr) const;
 
 private:
 

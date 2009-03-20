@@ -280,7 +280,7 @@ template <
   typename block_alignmentT
 >
 typename fixed_pool<mutexT, block_alignmentT>::segment *
-fixed_pool<mutexT, block_alignmentT>::find_segment_for(void * ptr)
+fixed_pool<mutexT, block_alignmentT>::find_segment_for(void * ptr) const
 {
   void * end = pointer(m_memblock).char_ptr + m_size;
   if (ptr < m_memblock || ptr >= end) {
@@ -413,6 +413,23 @@ fixed_pool<mutexT, block_alignmentT>::defragment_free_list()
   }
 }
 
+
+
+template <
+  typename mutexT,
+  typename block_alignmentT
+>
+std::size_t
+fixed_pool<mutexT, block_alignmentT>::alloc_size(void * ptr) const
+{
+  if (!ptr) {
+    return 0;
+  }
+
+  typename mutex_t::scoped_lock lock(m_mutex);
+  segment * seg = find_segment_for(ptr);
+  return seg->size;
+}
 
 }} // namespace fhtagn::memory
 

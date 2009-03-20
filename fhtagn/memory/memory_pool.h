@@ -77,6 +77,9 @@ struct MemoryPoolConcept
   {
     bool b = pool.in_use();
     boost::ignore_unused_variable_warning(b);
+
+    std::size_t s2 = pool.alloc_size(p);
+    boost::ignore_unused_variable_warning(s2);
   }
 
   std::size_t s;
@@ -135,6 +138,17 @@ struct heap_pool
    * calling code.
    **/
   inline bool in_use() const;
+
+  /**
+   * Returns the size of the memory block backing the pointer. In most cases,
+   * this will be at least the same size as the size requested when allocating
+   * the pointer.
+   *
+   * The exception to this is this heap_pool class - on many operating systems,
+   * this is not information the OS divulges. In those cases, and in case the
+   * pointer isnt' handled by the pool at all, a zero size is returned.
+   **/
+  inline std::size_t alloc_size(void * ptr) const;
 };
 
 
