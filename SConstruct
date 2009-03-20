@@ -73,6 +73,10 @@ class FhtagnEnvironment(ExtendedEnvironment):
       ('C++', 'int32_t', '#include <stdint.h>'),
     ]
 
+    optional_functions = [
+      ('C', 'malloc_size', '#include <stdlib.h>'),
+    ]
+
     boost_libs = [
       'signals',
       'thread',
@@ -99,6 +103,12 @@ class FhtagnEnvironment(ExtendedEnvironment):
       if len(info) == 3:
         header = info[2]
       conf.CheckType(info[1], includes = header, language = info[0]);
+
+    for info in optional_functions:
+      header = False;
+      if len(info) == 3:
+        header = info[2]
+      conf.CheckFunc(info[1], header = header, language = info[0]);
 
 
     # add version
