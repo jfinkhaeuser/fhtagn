@@ -205,6 +205,27 @@ fixed_pool<mutexT, block_alignmentT>::realloc(void * ptr,
   // Find segment for this pointer.
   segment * seg = find_segment_for(ptr);
 
+  // If the new size is smaller than the segment size, that'll mean we can
+  // serve the request from the segment itself.
+  if (new_size <= seg->size) {
+    // If the segment's use shrinks by a segment header size or more, we'll
+    // split the segment.
+    if (new_size <= seg->size - segment::header_size()) {
+
+      std::size_t new_seg_size = seg->size - new_size;
+      seg->size = new_size;
+
+      void * new_seg_addr = pointer(seg).char_ptr + seg->full_size();
+      segment * new_seg = new (new_seg_addr) segment(new_seg_size);
+
+      new_seg->next = seg->next;
+      seg->next = new_seg;
+
+      defragment_free_list();
+    }
+    return pointer(seg).char_ptr + segment::header_size();
+  }
+
   // The best case would be if ptr's segment was followed by a free segment
   // large enough to hold the new size. Given that free segments get
   // defragmented, we only need to check the following segment.
@@ -264,7 +285,7 @@ fixed_pool<mutexT, block_alignmentT>::realloc(void * ptr,
   void * old_data = pointer(seg).char_ptr + segment::header_size();
   void * new_data = pointer(new_seg).char_ptr + segment::header_size();
 
-  ::memcpy(new_data, old_data, seg->size);
+  ::memcpy(new_data, old_data, std::min(seg->size, new_size));
 
   // Same as free(), but without an additional lock.
   seg->status = segment::FREE;

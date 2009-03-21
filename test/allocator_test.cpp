@@ -113,12 +113,36 @@ private:
       char * p = static_cast<char *>(pool.alloc(42));
       CPPUNIT_ASSERT(p);
       CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
+      ::memset(p, 0x0f, 42);
 
       p = static_cast<char *>(pool.realloc(p, 666));
       CPPUNIT_ASSERT(p);
       CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
+      for (int i = 0 ; i < 42 ; ++i) {
+        CPPUNIT_ASSERT_EQUAL(static_cast<char>(0x0f), *(p + i));
+      }
+      ::memset(p, 0xf0, 666);
+
+      p = static_cast<char *>(pool.realloc(p, 123));
+      CPPUNIT_ASSERT(p);
+      CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
+      for (int i = 0 ; i < 123 ; ++i) {
+        CPPUNIT_ASSERT_EQUAL(static_cast<char>(0xf0), *(p + i));
+      }
+
+      // After splitting 123 of a 666 size'd segment, the next allocation of, say
+      // 200 bytes should be right behind the 123. If we then memset that, make
+      // sure that p is still intact.
+      char * p2 = static_cast<char *>(pool.alloc(200));
+      CPPUNIT_ASSERT(p);
+      CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
+      ::memset(p2, 0xea, 200);
+      for (int i = 0 ; i < 123 ; ++i) {
+        CPPUNIT_ASSERT_EQUAL(static_cast<char>(0xf0), *(p + i));
+      }
 
       pool.free(p);
+      pool.free(p2);
     }
 
 

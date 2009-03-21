@@ -202,7 +202,7 @@ dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::realloc(void * ptr,
 
   // Now copy the contents of the old pointer to the new pointer, then we can
   // free the old pointer.
-  ::memcpy(new_ptr, ptr, current_pool->alloc_size(ptr));
+  ::memcpy(new_ptr, ptr, std::min(current_pool->alloc_size(ptr), new_size));
   current_pool->free(ptr);
 
   return new_ptr;
