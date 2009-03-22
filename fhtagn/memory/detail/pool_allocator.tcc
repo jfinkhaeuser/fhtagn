@@ -51,9 +51,10 @@ namespace memory {
  **/
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
-pool_allocation_policy<T, memory_poolT>::pool_allocation_policy()
+pool_allocation_policy<T, memory_poolT, tagT>::pool_allocation_policy()
 {
   initialize_pool();
 }
@@ -62,9 +63,10 @@ pool_allocation_policy<T, memory_poolT>::pool_allocation_policy()
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
-pool_allocation_policy<T, memory_poolT>::~pool_allocation_policy()
+pool_allocation_policy<T, memory_poolT, tagT>::~pool_allocation_policy()
 {
 }
 
@@ -72,10 +74,11 @@ pool_allocation_policy<T, memory_poolT>::~pool_allocation_policy()
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
-pool_allocation_policy<T, memory_poolT>::pool_allocation_policy(
-    pool_allocation_policy<T, memory_poolT> const &)
+pool_allocation_policy<T, memory_poolT, tagT>::pool_allocation_policy(
+    pool_allocation_policy<T, memory_poolT, tagT> const &)
 {
   initialize_pool();
 }
@@ -84,12 +87,13 @@ pool_allocation_policy<T, memory_poolT>::pool_allocation_policy(
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 template <
   typename U
 >
-pool_allocation_policy<T, memory_poolT>::pool_allocation_policy(
+pool_allocation_policy<T, memory_poolT, tagT>::pool_allocation_policy(
     pool_allocation_policy<U> const &)
 {
   initialize_pool();
@@ -99,13 +103,14 @@ pool_allocation_policy<T, memory_poolT>::pool_allocation_policy(
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 template <
   typename U,
   typename other_poolT
 >
-pool_allocation_policy<T, memory_poolT>::pool_allocation_policy(
+pool_allocation_policy<T, memory_poolT, tagT>::pool_allocation_policy(
     pool_allocation_policy<U, other_poolT> const &)
 {
   initialize_pool();
@@ -115,10 +120,11 @@ pool_allocation_policy<T, memory_poolT>::pool_allocation_policy(
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 void
-pool_allocation_policy<T, memory_poolT>::initialize_pool()
+pool_allocation_policy<T, memory_poolT, tagT>::initialize_pool()
 {
   if (m_pool) {
     return;
@@ -129,22 +135,23 @@ pool_allocation_policy<T, memory_poolT>::initialize_pool()
     return;
   }
 
-  if (!pool_allocation_policy_base<memory_poolT>::global_memory_pool) {
+  if (!pool_allocation_policy_base<memory_poolT, tagT>::global_memory_pool) {
     throw std::logic_error("Constructing a pool_allocation_policy<T> without "
         "either a global pool or per-type pool set.");
   }
 
-  m_pool = pool_allocation_policy_base<memory_poolT>::global_memory_pool;
+  m_pool = pool_allocation_policy_base<memory_poolT, tagT>::global_memory_pool;
 }
 
 
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
-typename pool_allocation_policy<T, memory_poolT>::memory_pool_ptr
-pool_allocation_policy<T, memory_poolT>::get_memory_pool() const
+typename pool_allocation_policy<T, memory_poolT, tagT>::memory_pool_ptr
+pool_allocation_policy<T, memory_poolT, tagT>::get_memory_pool() const
 {
   return m_pool;
 }
@@ -153,11 +160,12 @@ pool_allocation_policy<T, memory_poolT>::get_memory_pool() const
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 bool
-pool_allocation_policy<T, memory_poolT>::set_memory_pool(
-    typename pool_allocation_policy<T, memory_poolT>::memory_pool_ptr new_pool)
+pool_allocation_policy<T, memory_poolT, tagT>::set_memory_pool(
+    typename pool_allocation_policy<T, memory_poolT, tagT>::memory_pool_ptr new_pool)
 {
   if (m_pool && m_pool->in_use()) {
     return false;
@@ -172,10 +180,11 @@ pool_allocation_policy<T, memory_poolT>::set_memory_pool(
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
-typename pool_allocation_policy<T, memory_poolT>::pointer
-pool_allocation_policy<T, memory_poolT>::allocate(size_type count,
+typename pool_allocation_policy<T, memory_poolT, tagT>::pointer
+pool_allocation_policy<T, memory_poolT, tagT>::allocate(size_type count,
     typename std::allocator<void>::const_pointer /* = 0 */)
 {
   return static_cast<T *>(m_pool->alloc(count * sizeof(T)));
@@ -185,10 +194,11 @@ pool_allocation_policy<T, memory_poolT>::allocate(size_type count,
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 void
-pool_allocation_policy<T, memory_poolT>::deallocate(pointer p, size_type)
+pool_allocation_policy<T, memory_poolT, tagT>::deallocate(pointer p, size_type)
 {
   m_pool->free(p);
 }
@@ -196,10 +206,11 @@ pool_allocation_policy<T, memory_poolT>::deallocate(pointer p, size_type)
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
-typename pool_allocation_policy<T, memory_poolT>::size_type
-pool_allocation_policy<T, memory_poolT>::max_size() const
+typename pool_allocation_policy<T, memory_poolT, tagT>::size_type
+pool_allocation_policy<T, memory_poolT, tagT>::max_size() const
 {
   return std::numeric_limits<size_type>::max();
 }
@@ -209,11 +220,12 @@ pool_allocation_policy<T, memory_poolT>::max_size() const
 
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 inline bool operator==(
-    pool_allocation_policy<T, memory_poolT> const & rhs,
-    pool_allocation_policy<T, memory_poolT> const & lhs)
+    pool_allocation_policy<T, memory_poolT, tagT> const & rhs,
+    pool_allocation_policy<T, memory_poolT, tagT> const & lhs)
 {
   // Same memory_poolT, so we can if it's also the same instance.
   return (rhs.get_memory_pool() == lhs.get_memory_pool());
@@ -224,7 +236,8 @@ inline bool operator==(
 template <
   typename T1,
   typename T2,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 inline bool operator==(
     pool_allocation_policy<T1, memory_poolT> const & rhs,
@@ -237,28 +250,13 @@ inline bool operator==(
 
 
 template <
-  typename T1,
-  typename memory_poolT1,
-  typename T2,
-  typename memory_poolT2
->
-inline bool operator==(
-    pool_allocation_policy<T1, memory_poolT1> const &,
-    pool_allocation_policy<T2, memory_poolT2> const &)
-{
-  // Different memory pool type - no, won't work.
-  return false;
-}
-
-
-
-template <
   typename T,
   typename memory_poolT,
+  typename tagT,
   typename other_allocatorT
 >
 inline bool operator==(
-    pool_allocation_policy<T, memory_poolT> const &,
+    pool_allocation_policy<T, memory_poolT, tagT> const &,
     other_allocatorT const &)
 {
   // No. In theory, it might actually be possible, but let's not risk it.

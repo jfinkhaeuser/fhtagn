@@ -79,14 +79,34 @@ namespace memory {
  * by design - it's simply not advisable to set memory pools at any point
  * other than program startup.
  *
+ * There is one problem with the constraints that STL imposes on allocators, as
+ * users never explicitly instanciate them - that is, you can construct an STL
+ * container to use a specific allocator class, but never to use a specific
+ * allocator instance. For some MemoryPools (see e.g. fixed_pool.h), that is
+ * unacceptable, as construction is non-trivial.
+ *
+ * So what are you to do if, for example, you want one vector of ints to use
+ * one instance of a pool_allocation_policy<int>, and another to use a different
+ * instance?
+ *
+ * The only way to achieve that is to turn this run-time difference into a
+ * compile-time difference. For that purpose alone, pool_allocation_policy
+ * receives a third template parameter, a tag type. It's completely unused, but
+ * lets you easily create multiple different pool_allocation_policy types for
+ * the same type of allocated object.
+ *
  * Note also that there is no specific MemoryPool class; MemoryPool is a
  * concept specified in memory_pool.h
  *
  * In order to intialize static members, you must also invoke the
  * FHTAGN_POOL_ALLOCATION_INITIALIZE macro once in your calling code.
  **/
+struct default_tag {};
+
+
 template <
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 class pool_allocation_policy_base
 {
@@ -111,17 +131,18 @@ public:
 
 template <
   typename T,
-  typename memory_poolT = ::fhtagn::memory::heap_pool
+  typename memory_poolT = ::fhtagn::memory::heap_pool,
+  typename tagT = ::fhtagn::memory::default_tag
 >
 class pool_allocation_policy
-  : public pool_allocation_policy_base<memory_poolT>
+  : public pool_allocation_policy_base<memory_poolT, tagT>
 {
 public:
   /**
    * Typedefs aliased from base
    **/
-  typedef typename pool_allocation_policy_base<memory_poolT>::memory_pool_t   memory_pool_t;
-  typedef typename pool_allocation_policy_base<memory_poolT>::memory_pool_ptr memory_pool_ptr;
+  typedef typename pool_allocation_policy_base<memory_poolT, tagT>::memory_pool_t   memory_pool_t;
+  typedef typename pool_allocation_policy_base<memory_poolT, tagT>::memory_pool_ptr memory_pool_ptr;
 
   /**
    * Typedefs - aliased by the allocator
@@ -158,6 +179,9 @@ public:
 
   template <typename U, typename other_poolT>
   inline explicit pool_allocation_policy(pool_allocation_policy<U, other_poolT> const &);
+
+  template <typename U, typename other_poolT, typename other_tagT>
+  inline explicit pool_allocation_policy(pool_allocation_policy<U, other_poolT, other_tagT> const &);
 
 
   /**
@@ -210,44 +234,35 @@ private:
  **/
 template <
   typename T,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 inline bool operator==(
-    pool_allocation_policy<T, memory_poolT> const & rhs,
-    pool_allocation_policy<T, memory_poolT> const & lhs);
+    pool_allocation_policy<T, memory_poolT, tagT> const & rhs,
+    pool_allocation_policy<T, memory_poolT, tagT> const & lhs);
 
 
 
 template <
   typename T1,
   typename T2,
-  typename memory_poolT
+  typename memory_poolT,
+  typename tagT
 >
 inline bool operator==(
-    pool_allocation_policy<T1, memory_poolT> const & rhs,
-    pool_allocation_policy<T2, memory_poolT> const & lhs);
-
-
-
-template <
-  typename T1,
-  typename memory_poolT1,
-  typename T2,
-  typename memory_poolT2
->
-inline bool operator==(
-    pool_allocation_policy<T1, memory_poolT1> const &,
-    pool_allocation_policy<T2, memory_poolT2> const &);
+    pool_allocation_policy<T1, memory_poolT, tagT> const & rhs,
+    pool_allocation_policy<T2, memory_poolT, tagT> const & lhs);
 
 
 
 template <
   typename T,
   typename memory_poolT,
+  typename tagT,
   typename other_allocatorT
 >
 inline bool operator==(
-    pool_allocation_policy<T, memory_poolT> const &,
+    pool_allocation_policy<T, memory_poolT, tagT> const &,
     other_allocatorT const &);
 
 
@@ -255,13 +270,13 @@ inline bool operator==(
 
 
 #define FHTAGN_POOL_ALLOCATION_INITIALIZE \
-  template <typename poolT>                                                     \
-  typename fhtagn::memory::pool_allocation_policy_base<poolT>::memory_pool_ptr  \
-  fhtagn::memory::pool_allocation_policy_base<poolT>::global_memory_pool;       \
-                                                                                \
-  template <typename T, typename poolT>                                         \
-  typename fhtagn::memory::pool_allocation_policy<T, poolT>::memory_pool_ptr    \
-  fhtagn::memory::pool_allocation_policy<T, poolT>::per_type_memory_pool;
+  template <typename poolT, typename tagT>                                            \
+  typename fhtagn::memory::pool_allocation_policy_base<poolT, tagT>::memory_pool_ptr  \
+  fhtagn::memory::pool_allocation_policy_base<poolT, tagT>::global_memory_pool;       \
+                                                                                      \
+  template <typename T, typename poolT, typename tagT>                                \
+  typename fhtagn::memory::pool_allocation_policy<T, poolT, tagT>::memory_pool_ptr    \
+  fhtagn::memory::pool_allocation_policy<T, poolT, tagT>::per_type_memory_pool;
 
 
 #include <fhtagn/memory/detail/pool_allocator.tcc>
