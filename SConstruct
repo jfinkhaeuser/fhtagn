@@ -149,6 +149,7 @@ SUBDIRS = [
   os.path.join('fhtagn', 'text', 'detail'),
   os.path.join('fhtagn', 'restrictions'),
   os.path.join('fhtagn', 'memory'),
+  os.path.join('fhtagn', 'meta'),
   'test',
 ]
 
