@@ -6,7 +6,7 @@
 Import('env')
 
 if env.has_key('FHTAGN_CPPUNIT_VERSION'):
-  SOURCES = [
+  TESTSUITE_SOURCES = [
     'pointers_test.cpp',
     'enhanced_types_test.cpp',
     'transcoding_test.cpp',
@@ -17,12 +17,19 @@ if env.has_key('FHTAGN_CPPUNIT_VERSION'):
   ]
 
   if env.has_key('FHTAGN_BOOST_VERSION'):
-    SOURCES += [
+    TESTSUITE_SOURCES += [
       'variant_test.cpp',
       'threads_test.cpp',
     ]
 
-  env.addSources('testsuite', SOURCES)
+  env.addSources('testsuite', TESTSUITE_SOURCES)
   env.addLibs('testsuite', ['fhtagn', 'fhtagn_util', 'cppunit'])
   if env.has_key('FHTAGN_BOOST_VERSION'):
     env.addLibs('testsuite', [('boost', 'signals'), ('boost', 'thread')])
+
+ALLOCSPEED_SOURCES = [
+  'allocspeed.cpp',
+]
+
+env.addSources('allocspeed', ALLOCSPEED_SOURCES)
+env.addLibs('allocspeed', ['fhtagn'])
