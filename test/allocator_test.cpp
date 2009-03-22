@@ -47,6 +47,12 @@
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE;
 
+namespace {
+
+typedef std::size_t uint32_t;
+
+} // anonymous namespace
+
 
 class AllocatorTest
     : public CppUnit::TestFixture
@@ -276,43 +282,43 @@ private:
       // - 3 size_t metadata
       // - 0 bytes wasted
       char memory[200] = { 0 };
-      mem::block_pool<sizeof(int)> p(memory, sizeof(memory));
+      mem::block_pool<sizeof(test_int_t)> p(memory, sizeof(memory));
 
       CPPUNIT_ASSERT_EQUAL(false, p.in_use());
 
-      // Try to allocate something that's not sizeof(int). It must fail.
-      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(int) / 3));
-      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(int) * 3));
+      // Try to allocate something that's not sizeof(test_int_t). It must fail.
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(test_int_t) / 3));
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(test_int_t) * 3));
 
-      // On the other hand, allocating an int must succeed.
-      void * q = p.alloc(sizeof(int));
+      // On the other hand, allocating an test_int_t must succeed.
+      void * q = p.alloc(sizeof(test_int_t));
       CPPUNIT_ASSERT(q);
       CPPUNIT_ASSERT_EQUAL(true, p.in_use());
 
       // Reallocation must fail, except if there's no size change.
-      CPPUNIT_ASSERT(p.realloc(q, sizeof(int)));
-      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.realloc(q, sizeof(int) / 3));
+      CPPUNIT_ASSERT(p.realloc(q, sizeof(test_int_t)));
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.realloc(q, sizeof(test_int_t) / 3));
 
       // If the above calculation about data + metadata size holds, then we
       // should be able to allocate 46 more entries. The 47th from now on must
       // fail.
       for (int i = 0 ; i < 33 ; ++i) {
-        CPPUNIT_ASSERT(p.alloc(sizeof(int)));
+        CPPUNIT_ASSERT(p.alloc(sizeof(test_int_t)));
       }
       // split in two; we want to remember a q from somewhere in the middle for
       // later
-      q = p.alloc(sizeof(int));
+      q = p.alloc(sizeof(test_int_t));
       CPPUNIT_ASSERT(q);
       for (int i = 0 ; i < 12 ; ++i) {
-        CPPUNIT_ASSERT(p.alloc(sizeof(int)));
+        CPPUNIT_ASSERT(p.alloc(sizeof(test_int_t)));
       }
 
       // Fail.
-      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(int)));
+      CPPUNIT_ASSERT_EQUAL(static_cast<void *>(NULL), p.alloc(sizeof(test_int_t)));
 
       // Now free q - that should make room for one more allocation.
       p.free(q);
-      CPPUNIT_ASSERT(p.alloc(sizeof(int)));
+      CPPUNIT_ASSERT(p.alloc(sizeof(test_int_t)));
     }
 
 
@@ -346,54 +352,54 @@ private:
     >
     void allocatorTests()
     {
-      typedef std::vector<int, allocatorT> vector_t;
+      typedef std::vector<test_int_t, allocatorT> vector_t;
 
       vector_t v;
       v.push_back(1);
 
       CPPUNIT_ASSERT(!v.empty());
       CPPUNIT_ASSERT_EQUAL(std::size_t(1), v.size());
-      CPPUNIT_ASSERT_EQUAL(int(1), v[0]);
+      CPPUNIT_ASSERT_EQUAL(test_int_t(1), v[0]);
 
       v.push_back(666);
       v.push_back(42);
       CPPUNIT_ASSERT_EQUAL(std::size_t(3), v.size());
-      CPPUNIT_ASSERT_EQUAL(int(666), v[1]);
-      CPPUNIT_ASSERT_EQUAL(int(42), v[2]);
+      CPPUNIT_ASSERT_EQUAL(test_int_t(666), v[1]);
+      CPPUNIT_ASSERT_EQUAL(test_int_t(42), v[2]);
 
       // remove entry 666
       typename vector_t::iterator iter = v.begin();
       ++iter;
       v.erase(iter);
       CPPUNIT_ASSERT_EQUAL(std::size_t(2), v.size());
-      CPPUNIT_ASSERT_EQUAL(int(1), v[0]);
-      CPPUNIT_ASSERT_EQUAL(int(42), v[1]);
+      CPPUNIT_ASSERT_EQUAL(test_int_t(1), v[0]);
+      CPPUNIT_ASSERT_EQUAL(test_int_t(42), v[1]);
 
       // Push back a new entry
       v.push_back(1234);
       CPPUNIT_ASSERT_EQUAL(std::size_t(3), v.size());
-      CPPUNIT_ASSERT_EQUAL(int(1), v[0]);
-      CPPUNIT_ASSERT_EQUAL(int(42), v[1]);
-      CPPUNIT_ASSERT_EQUAL(int(1234), v[2]);
+      CPPUNIT_ASSERT_EQUAL(test_int_t(1), v[0]);
+      CPPUNIT_ASSERT_EQUAL(test_int_t(42), v[1]);
+      CPPUNIT_ASSERT_EQUAL(test_int_t(1234), v[2]);
     }
 
 
 
     void testDefaultAllocator()
     {
-      // T is int in these tests.
-      allocatorTests<fhtagn::memory::allocator<int> >();
+      // T is test_int_t in these tests.
+      allocatorTests<fhtagn::memory::allocator<test_int_t> >();
     }
 
 
 
     void testHeapPoolAllocator()
     {
-       // T is int in these tests.
+       // T is test_int_t in these tests.
        namespace mem = fhtagn::memory;
 
        // heap_pool tests - should always succeed, unless the machine runs out of memory.
-       typedef mem::allocator<int, mem::pool_allocation_policy<int> > allocator_t;
+       typedef mem::allocator<test_int_t, mem::pool_allocation_policy<test_int_t> > allocator_t;
 
        // Set global pool to be an instance of heap_pool. That'll be the simplest.
        allocator_t::global_memory_pool = allocator_t::memory_pool_ptr(new mem::heap_pool());
@@ -408,7 +414,7 @@ private:
 
       // fixed_pool tests - the first test tests using a small amount of stack
       // memory.
-      typedef mem::allocator<int, mem::pool_allocation_policy<int, mem::fixed_pool<> > > allocator_t;
+      typedef mem::allocator<test_int_t, mem::pool_allocation_policy<test_int_t, mem::fixed_pool<> > > allocator_t;
 
       // Set global pool to be an instance of fixed_pool. That'll be the simplest.
       char memory[200] = { 0 };
@@ -434,9 +440,9 @@ private:
       > pool_t;
 
       typedef mem::allocator<
-        int,
+        test_int_t,
         mem::pool_allocation_policy<
-          int,
+          test_int_t,
           pool_t
         >
       > allocator_t;
