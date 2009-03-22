@@ -148,6 +148,7 @@ SUBDIRS = [
   os.path.join('fhtagn', 'text'),
   os.path.join('fhtagn', 'text', 'detail'),
   os.path.join('fhtagn', 'restrictions'),
+  os.path.join('fhtagn', 'memory'),
   'test',
 ]
 
@@ -218,6 +219,12 @@ testsuite = env.Program(testsuite_name, env.getSources('testsuite'),
     LIBS = env.getLibs('testsuite'))
 env.Alias('check', testsuite)
 env.Default(testsuite)
+
+
+allocspeed_name = os.path.join('#', env[env.BUILD_PREFIX], 'test', 'allocspeed')
+allocspeed = env.Program(allocspeed_name, env.getSources('allocspeed'),
+    LIBS = env.getLibs('allocspeed'))
+env.Default(allocspeed)
 
 
 if env.is_unix():
