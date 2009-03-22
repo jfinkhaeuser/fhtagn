@@ -41,6 +41,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <cmath>
 
 namespace fhtagn {
 namespace memory {
@@ -87,13 +88,13 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::block_pool(void * memblock,
   std::size_t assumed_size = adjusted_size / BLOCK_SIZE;
   std::size_t remainder = adjusted_size - (assumed_size * BLOCK_SIZE);
   std::size_t metadata_size = block_alignment<sizeof(std::size_t)>::adjust_size(
-      (assumed_size * 8) / BITS_PER_SIZE_T);
-  while (!remainder || metadata_size > remainder) {
+      std::ceil((assumed_size * 8) / float(BITS_PER_SIZE_T)));
+  do {
     --assumed_size;
     remainder = adjusted_size - (assumed_size * BLOCK_SIZE);
     metadata_size = block_alignment<sizeof(std::size_t)>::adjust_size(
-        (assumed_size * 8) / BITS_PER_SIZE_T);
-  }
+        std::ceil((assumed_size * 8) / float(BITS_PER_SIZE_T)));
+  } while (metadata_size > remainder);
 
   // Throw bad_alloc if we can't split off enough metadata.
   if (!metadata_size) {

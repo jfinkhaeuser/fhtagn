@@ -49,7 +49,7 @@ FHTAGN_POOL_ALLOCATION_INITIALIZE;
 
 namespace {
 
-typedef std::size_t uint32_t;
+typedef uint32_t test_int_t;
 
 } // anonymous namespace
 
@@ -277,11 +277,15 @@ private:
     {
       namespace mem = fhtagn::memory;
 
-      // 200 bytes memory should translate to
-      // - 47 entries, 188 bytes data
-      // - 3 size_t metadata
-      // - 0 bytes wasted
-      char memory[200] = { 0 };
+      // 300 bytes memory should translate to
+      // 32 bit:                                64 bit:
+      // - 70 entries, 280 bytes data           - 70 entries, 280 bytes data
+      // - 5 size_t metadata                    - 2 size_t metadata
+      // - 0 bytes wasted                       - 4 bytes wasted
+      char memory[300] = { 0 };
+      int const entries = 70;
+      int const entries_2_3rd = entries * 2 / 3;
+
       mem::block_pool<sizeof(test_int_t)> p(memory, sizeof(memory));
 
       CPPUNIT_ASSERT_EQUAL(false, p.in_use());
@@ -302,14 +306,14 @@ private:
       // If the above calculation about data + metadata size holds, then we
       // should be able to allocate 46 more entries. The 47th from now on must
       // fail.
-      for (int i = 0 ; i < 33 ; ++i) {
+      for (int i = 0 ; i < entries_2_3rd ; ++i) {
         CPPUNIT_ASSERT(p.alloc(sizeof(test_int_t)));
       }
       // split in two; we want to remember a q from somewhere in the middle for
       // later
       q = p.alloc(sizeof(test_int_t));
       CPPUNIT_ASSERT(q);
-      for (int i = 0 ; i < 12 ; ++i) {
+      for (int i = entries_2_3rd ; i < entries - 2 ; ++i) {
         CPPUNIT_ASSERT(p.alloc(sizeof(test_int_t)));
       }
 
