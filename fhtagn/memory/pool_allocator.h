@@ -32,8 +32,8 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-#ifndef FHTAGN_memory_POOL_ALLOCATOR_H
-#define FHTAGN_memory_POOL_ALLOCATOR_H
+#ifndef FHTAGN_MEMORY_POOL_ALLOCATOR_H
+#define FHTAGN_MEMORY_POOL_ALLOCATOR_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -57,19 +57,24 @@ namespace memory {
  * allocation work to a MemoryPool class that is type-agnostic, but merely
  * handles bytes.
  *
- * There is a global MemoryPool instance, and pool_allocation_policy<T> may
- * either use that global MemoryPool to allocate memory, or use a MemoryPool
- * that is unique for T.
+ * During construction of pool_allocation_policy, the MemoryPool from which
+ * objects are allocated is determined. If there is already a per-type
+ * MemoryPool set, that is used. If not and there is a global MemoryPool set,
+ * that is used. If neither is set, you must set the MemoryPool to be used by
+ * this instance of pool_allocation_policy via a manual set_memory_pool() call.
+ * If none of this happens, your application will crash.
  *
- * Given that MemoryPools may manage either dynamically or statically
- * allocated memory, it's up to the user to set the global and/or per-type
- * MemoryPools that the pool_allocation_policy should use. Calls to set
- * MemoryPools *must* occur before any pool_allocation_policy object is
- * constructed.
+ * Note that once a pool_allocation_policy has constructed objects,
+ * set_memory_pool() will fail until they are all destroyed again. Note also
+ * that neither of the functions for setting global, per-type or per-instance
+ * MemoryPools are thread-safe, and may conflict with any allocations or
+ * deallocations made.
  *
- * Note that a pool_allocation_policy<T> will use the global MemoryPool if
- * no type-specific memory pool for type T is set. If no global memory pool is
- * set either, your application will crash.
+ * It is therefore advisable to set the global and per-type MemoryPools (if
+ * applicable) before any pool_allocation_policy objects may be created in other
+ * threads. For per-instance MemoryPools, best make sure they're set before the
+ * container ultimately using them is used.
+ *
  * Please be aware that functions for setting memory pools are not thread-safe
  * by design - it's simply not advisable to set memory pools at any point
  * other than program startup.
@@ -96,19 +101,10 @@ public:
   typedef boost::shared_ptr<memory_pool_t>  memory_pool_ptr;
 
   /**
-   * Get the global memory pool currently in use.
+   * Global memory pool. While shared_ptr itself may be thread safe, access to
+   * this pointer by pool_allocation_policy<T> may not be.
    **/
-  static inline memory_pool_ptr get_global_memory_pool();
-
-  /**
-   * Set the global memory pool currently in use. Will return true on success,
-   * else false. If the current memory pool has allocated space to objects,
-   * this operation will fail.
-   **/
-  static inline bool set_global_memory_pool(memory_pool_ptr pool);
-
-protected:
-  static memory_pool_ptr  sm_global_pool;
+  static memory_pool_ptr  global_memory_pool;
 };
 
 
@@ -178,27 +174,29 @@ public:
    **/
   inline size_type max_size() const;
 
-
+  /**
+   * Per-T memory pool. See global_memory_pool in parent class and class
+   * documentation for information on thread-safety.
+   **/
+  static memory_pool_ptr  per_type_memory_pool;
 
   /**
-   * Get the per-T memory pool currently in use.
+   * Get the memory pool currently in use for this instance.
    **/
-  static inline memory_pool_ptr get_memory_pool();
+  inline memory_pool_ptr get_memory_pool() const;
 
   /**
-   * Set the per-T memory pool currently in use. Will return true on success,
-   * else false. If the current memory pool has allocated space to objects,
-   * this operation will fail.
+   * Set the memory pool currently in use for this instance. Will return true
+   * on success, else false. If the current memory pool has allocated space to
+   * objects, this operation will fail.
    **/
-  static inline bool set_memory_pool(memory_pool_ptr pool);
+  inline bool set_memory_pool(memory_pool_ptr pool);
+
 
 private:
   // Sets m_pool to either the type pool or the global pool. If neither is set,
   // a std::logic_error is thrown.
   inline void initialize_pool();
-
-  // per-T memory pool
-  static memory_pool_ptr  sm_type_pool;
 
   // The actuall memory pool currently used.
   memory_pool_ptr         m_pool;
@@ -259,11 +257,11 @@ inline bool operator==(
 #define FHTAGN_POOL_ALLOCATION_INITIALIZE \
   template <typename poolT>                                                     \
   typename fhtagn::memory::pool_allocation_policy_base<poolT>::memory_pool_ptr  \
-  fhtagn::memory::pool_allocation_policy_base<poolT>::sm_global_pool;           \
+  fhtagn::memory::pool_allocation_policy_base<poolT>::global_memory_pool;       \
                                                                                 \
   template <typename T, typename poolT>                                         \
   typename fhtagn::memory::pool_allocation_policy<T, poolT>::memory_pool_ptr    \
-  fhtagn::memory::pool_allocation_policy<T, poolT>::sm_type_pool;
+  fhtagn::memory::pool_allocation_policy<T, poolT>::per_type_memory_pool;
 
 
 #include <fhtagn/memory/detail/pool_allocator.tcc>

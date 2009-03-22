@@ -45,35 +45,6 @@
 namespace fhtagn {
 namespace memory {
 
-/*****************************************************************************
- * pool_allocation_policy_base
- **/
-template <
-  typename memory_poolT
->
-typename pool_allocation_policy_base<memory_poolT>::memory_pool_ptr
-pool_allocation_policy_base<memory_poolT>::get_global_memory_pool()
-{
-  return sm_global_pool;
-}
-
-
-
-template <
-  typename memory_poolT
->
-bool
-pool_allocation_policy_base<memory_poolT>::set_global_memory_pool(
-    typename pool_allocation_policy_base<memory_poolT>::memory_pool_ptr new_pool)
-{
-  if (sm_global_pool && sm_global_pool->in_use()) {
-    return false;
-  }
-
-  sm_global_pool = new_pool;
-  return true;
-}
-
 
 /*****************************************************************************
  * pool_allocation_policy
@@ -149,21 +120,21 @@ template <
 void
 pool_allocation_policy<T, memory_poolT>::initialize_pool()
 {
-  if (m_pool && m_pool->in_use()) {
+  if (m_pool) {
     return;
   }
 
-  if (sm_type_pool) {
-    m_pool = sm_type_pool;
+  if (per_type_memory_pool) {
+    m_pool = per_type_memory_pool;
     return;
   }
 
-  if (!pool_allocation_policy_base<memory_poolT>::sm_global_pool) {
+  if (!pool_allocation_policy_base<memory_poolT>::global_memory_pool) {
     throw std::logic_error("Constructing a pool_allocation_policy<T> without "
         "either a global pool or per-type pool set.");
   }
 
-  m_pool = pool_allocation_policy_base<memory_poolT>::sm_global_pool;
+  m_pool = pool_allocation_policy_base<memory_poolT>::global_memory_pool;
 }
 
 
@@ -173,9 +144,9 @@ template <
   typename memory_poolT
 >
 typename pool_allocation_policy<T, memory_poolT>::memory_pool_ptr
-pool_allocation_policy<T, memory_poolT>::get_memory_pool()
+pool_allocation_policy<T, memory_poolT>::get_memory_pool() const
 {
-  return sm_type_pool;
+  return m_pool;
 }
 
 
@@ -188,13 +159,14 @@ bool
 pool_allocation_policy<T, memory_poolT>::set_memory_pool(
     typename pool_allocation_policy<T, memory_poolT>::memory_pool_ptr new_pool)
 {
-  if (sm_type_pool && sm_type_pool->in_use()) {
+  if (m_pool && m_pool->in_use()) {
     return false;
   }
 
-  sm_type_pool = new_pool;
+  m_pool = new_pool;
   return true;
 }
+
 
 
 

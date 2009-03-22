@@ -396,8 +396,7 @@ private:
        typedef mem::allocator<int, mem::pool_allocation_policy<int> > allocator_t;
 
        // Set global pool to be an instance of heap_pool. That'll be the simplest.
-       CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(
-             allocator_t::memory_pool_ptr(new mem::heap_pool())));
+       allocator_t::global_memory_pool = allocator_t::memory_pool_ptr(new mem::heap_pool());
 
        allocatorTests<allocator_t>();
     }
@@ -416,8 +415,7 @@ private:
       mem::fixed_pool<> * fp = new mem::fixed_pool<>(memory, sizeof(memory));
       CPPUNIT_ASSERT_EQUAL(false, fp->in_use());
 
-      allocator_t::memory_pool_ptr pool = allocator_t::memory_pool_ptr(fp);
-      CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(pool));
+      allocator_t::global_memory_pool = allocator_t::memory_pool_ptr(fp);
 
       CPPUNIT_ASSERT_EQUAL(false, fp->in_use());
       allocatorTests<allocator_t>();
@@ -447,8 +445,7 @@ private:
       pool_t * p = new pool_t();
       CPPUNIT_ASSERT_EQUAL(false, p->in_use());
 
-      allocator_t::memory_pool_ptr pool = allocator_t::memory_pool_ptr(p);
-      CPPUNIT_ASSERT(allocator_t::set_global_memory_pool(pool));
+      allocator_t::global_memory_pool = allocator_t::memory_pool_ptr(p);
 
       CPPUNIT_ASSERT_EQUAL(false, p->in_use());
       allocatorTests<allocator_t>();
