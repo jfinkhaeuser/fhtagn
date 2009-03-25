@@ -44,6 +44,7 @@
 #include <fhtagn/memory/throw_pool.h>
 #include <fhtagn/memory/block_pool.h>
 #include <fhtagn/memory/dynamic_pool.h>
+#include <fhtagn/memory/size_based_pool.h>
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE;
 
@@ -68,11 +69,13 @@ public:
       CPPUNIT_TEST(testBlockMemoryPool);
       CPPUNIT_TEST(testDynamicMemoryPool);
       CPPUNIT_TEST(testThrowPool);
+      CPPUNIT_TEST(testSizeBasedMemoryPool);
 
       CPPUNIT_TEST(testDefaultAllocator);
       CPPUNIT_TEST(testHeapPoolAllocator);
       CPPUNIT_TEST(testFixedPoolAllocator);
       CPPUNIT_TEST(testDynamicPoolAllocator);
+      CPPUNIT_TEST(testSizeBasedPoolAllocator);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -351,6 +354,19 @@ private:
 
 
 
+    void testSizeBasedMemoryPool()
+    {
+      namespace mem = fhtagn::memory;
+
+      mem::size_based_pool<> p;
+
+      CPPUNIT_ASSERT_EQUAL(false, p.in_use());
+      testMemoryPoolGeneric(p);
+      CPPUNIT_ASSERT_EQUAL(false, p.in_use());
+    }
+
+
+
     template <
       typename allocatorT
     >
@@ -462,6 +478,26 @@ private:
       CPPUNIT_ASSERT_EQUAL(false, p->in_use());
     }
 
+
+    void testSizeBasedPoolAllocator()
+    {
+      // T is test_int_t in these tests.
+      namespace mem = fhtagn::memory;
+
+      // size_based_pool tests - should always succeed, unless the machine runs out of memory.
+      typedef mem::allocator<
+        test_int_t,
+        mem::pool_allocation_policy<
+          test_int_t,
+          mem::size_based_pool<>
+        >
+      > allocator_t;
+
+      // Set global pool to be an instance of size_based_pool. That'll be the simplest.
+      allocator_t::global_memory_pool = allocator_t::memory_pool_ptr(new mem::size_based_pool<>());
+
+      allocatorTests<allocator_t>();
+    }
 
 
 };
