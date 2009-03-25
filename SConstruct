@@ -74,7 +74,9 @@ class FhtagnEnvironment(ExtendedEnvironment):
     ]
 
     optional_functions = [
-      ('C', 'malloc_size', '#include <stdlib.h>'),
+      ('C', 'malloc_size'),
+      ('C', 'getrusage'),
+      ('C', 'gettimeofday'),
     ]
 
     boost_libs = [
@@ -98,17 +100,8 @@ class FhtagnEnvironment(ExtendedEnvironment):
         if not conf.CheckCXXHeader(info[1], include_quotes = '<>'):
           return False
 
-    for info in optional_types:
-      header = False
-      if len(info) == 3:
-        header = info[2]
-      conf.CheckType(info[1], includes = header, language = info[0]);
-
-    for info in optional_functions:
-      header = False;
-      if len(info) == 3:
-        header = info[2]
-      conf.CheckFunc(info[1], header = header, language = info[0]);
+    self.checkOptionalTypes(conf, optional_types)
+    self.checkOptionalFunctions(conf, optional_functions)
 
 
     # add version
