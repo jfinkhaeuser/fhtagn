@@ -58,7 +58,7 @@ installation paths.
     opts.Add(PathOption(opts.INSTALL_PREFIX, 'Base path for the installation.',
             defaults.get('INSTALL_PREFIX',
               os.path.join(os.path.sep, 'opt', 'local')),
-            PathOption.PathIsDirCreate))
+            PathOption.PathAccept))
 
     return opts
 
@@ -214,6 +214,8 @@ installation paths.
         install_dir = '/usr'
 
       lib_dir = os.path.join(install_dir, 'lib') # FIXME
+      if not os.path.exists(lib_dir):
+        continue
       entries = os.listdir(lib_dir)
       for lib, libpatterns in patterns.items():
         for pattern in libpatterns:
@@ -440,13 +442,15 @@ installation paths.
 
         if min_version:
           if self.compare_version(min_version, output_version) not in (-1, 0):
-            context.Result('required at least %s but only found %s' % ('.'.join(min_version),
-                  '.'.join(output_version)))
+            context.Result('required at least %s but only found %s' % (
+                  '.'.join([str(v) for v in min_version]),
+                  '.'.join([str(v) for v in output_version])))
             return 0
         if max_version:
           if self.compare_version(max_version, output_version) not in (1, 0):
-            context.Result('required at most %s but found %s' % ('.'.join(max_version),
-                  '.'.join(output_version)))
+            context.Result('required at most %s but found %s' % (
+                  '.'.join([str(v) for v in max_version]),
+                  '.'.join([str(v) for v in output_version])))
             return 0
 
         self[output_var] = output
