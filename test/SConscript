@@ -27,9 +27,12 @@ if env.has_key('FHTAGN_CPPUNIT_VERSION'):
   if env.has_key('FHTAGN_BOOST_VERSION'):
     env.addLibs('testsuite', [('boost', 'signals'), ('boost', 'thread')])
 
-ALLOCSPEED_SOURCES = [
-  'allocspeed.cpp',
-]
 
-env.addSources('allocspeed', ALLOCSPEED_SOURCES)
-env.addLibs('allocspeed', ['fhtagn'])
+if env.has_key('FHTAGN_BOOST_VERSION'):
+  ALLOCSPEED_SOURCES = [
+    'allocspeed.cpp',
+  ]
+
+  env.addSources('allocspeed', ALLOCSPEED_SOURCES)
+  env.addLibs('allocspeed', ['fhtagn', 'fhtagn_util', ('boost', 'thread'),
+      ('boost', 'program_options')])

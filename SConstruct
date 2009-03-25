@@ -82,6 +82,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
     boost_libs = [
       'signals',
       'thread',
+      'program_options',
     ]
     if not conf.BoostCheck(LIBS = boost_libs, min_version = (1, 35, 0)):
       print ">> Features depending on boost will not be built."

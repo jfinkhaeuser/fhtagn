@@ -38,25 +38,329 @@
 #include <iostream>
 #include <vector>
 
-unsigned long seed = 0xdeadbeef;
+#include <fhtagn/memory/allocator.h>
+#include <fhtagn/memory/pool_allocator.h>
+#include <fhtagn/memory/memory_pool.h>
+#include <fhtagn/memory/size_based_pool.h>
+
+#include <fhtagn/util/stopwatch.h>
+
+#include <boost/program_options.hpp>
+
+
+FHTAGN_POOL_ALLOCATION_INITIALIZE;
+
+
+
+#define PRINT_STOPWATCH_TIMES(times)                                \
+  std::cout << "wall: " << times.get<0>() << " usec     \t"         \
+               "sys:  " << times.get<1>() << " usec     \t"         \
+               "user: " << times.get<2>() << " usec" << std::endl;
+
+
+// With the randomly generated numbers, we establish a pattern of allocs/frees,
+// or rather inserts and erases from the test vector. To make this reproducible,
+// we explicitly seed the RNG.
+unsigned long g_seed = 0xdeadbeef;
+
+// Then, we pre-populate a list of allocs/erases. Odd-indexed entries denote
+// the number of allocations we're making, even-indexed entries denote the
+// number of erases we're making.
+std::vector<uint32_t> g_actions;
+
+// For allocations, we'll set the values we're adding to values from the random
+// pool. For erases, we'll take values from the random tool % the size of the
+// test vector, and erase the entry at that index.
+std::vector<uint32_t> g_random_pool;
+
+// Both g_action and g_random_pool are filled from this function. The size of
+// g_action is determined by the num_actions parameter, and g_random_pool is
+// filled to satsify the requirements of g_actions entries.
+void initRandomPool(uint32_t num_actions, uint32_t max_items_per_action,
+    bool verbose)
+{
+  if (verbose) {
+    std::cout << "Initializing random pool..." << std::endl;
+  }
+
+  fhtagn::util::stopwatch sw;
+
+  // Initialize RNG. We always want the same numbers.
+  ::srandom(g_seed);
+
+  g_actions.clear();
+  g_random_pool.clear();
+
+  for (uint32_t i = 0 ; i < num_actions ; ++i) {
+    // Determine the number of items for this action.
+    uint32_t items = ::random() % max_items_per_action;
+    g_actions.push_back(items);
+
+    // Fill random pool with enough numbers for this action.
+    for (uint32_t j = 0 ; j < items ; ++j) {
+      g_random_pool.push_back(::random());
+    }
+  }
+
+  fhtagn::util::stopwatch::times_t times = sw.get_times();
+  if (verbose) {
+    PRINT_STOPWATCH_TIMES(times);
+    std::cout << std::endl;
+  }
+}
+
+
+// A test type for larger memory blocks. The value array stays uninitalized -
+// it's only purpose is to represent memory of a certain size.
+template <
+  uint32_t SIZE
+>
+struct test_value
+{
+  enum {
+    ARRAY_SIZE = SIZE / sizeof(uint32_t),
+  };
+
+  test_value()
+  {
+  }
+
+  explicit test_value(uint32_t int_value)
+  {
+  }
+
+  uint32_t value[ARRAY_SIZE];
+};
 
 
 template <
   typename valueT,
-  template <typename> class allocatorT
+  typename allocatorT
 >
-void testAllocator()
+void testAllocator(bool verbose)
 {
-  // Initialize RNG. We always want the same numbers.
-  ::srandom(seed);
+  if (verbose) {
+    std::cout << "Running tests..." << std::endl;
+  }
 
-  typedef std::vector<valueT, allocatorT<valueT> > int_vector_t;
+  fhtagn::util::stopwatch sw;
 
+  typedef std::vector<valueT, allocatorT> test_vector_t;
+  test_vector_t test_vector;
+
+  // Alternately fill the test_vector and erase stuff from it.
+  uint32_t count = 0;
+  std::vector<uint32_t>::const_iterator action_end = g_actions.end();
+  for (std::vector<uint32_t>::const_iterator action_iter = g_actions.begin()
+      ; action_iter != action_end ; ++action_iter, ++count)
+  {
+    if (count % 2) {
+      // Free stuff!
+      for (uint32_t i = 0 ; i < *action_iter ; ++i) {
+        if (test_vector.empty()) {
+          break;
+        }
+
+        uint32_t index = g_random_pool.back() % test_vector.size();
+        g_random_pool.pop_back();
+
+        typename test_vector_t::iterator iter = test_vector.begin();
+        iter += index;
+        test_vector.erase(iter);
+      }
+    }
+    else {
+      // Allocate stuff!
+      for (uint32_t i = 0 ; i < *action_iter ; ++i) {
+        uint32_t random_value = g_random_pool.back();
+        g_random_pool.pop_back();
+
+        valueT value(random_value);
+        test_vector.push_back(value);
+      }
+    }
+  }
+
+  fhtagn::util::stopwatch::times_t times = sw.get_times();
+  PRINT_STOPWATCH_TIMES(times);
+  std::cout << std::endl;
+}
+
+
+template <
+  typename valueT
+>
+inline void
+runTests(std::string const & alloc, bool verbose)
+{
+  namespace mem = fhtagn::memory;
+
+  if (alloc == "std") {
+    testAllocator<valueT, std::allocator<valueT> >(verbose);
+  }
+  else if (alloc == "heap") {
+    typedef mem::allocator<
+      valueT,
+      mem::pool_allocation_policy<
+        valueT,
+        mem::heap_pool
+      >
+    > heap_allocator_t;
+
+    testAllocator<valueT, heap_allocator_t>(verbose);
+  }
+  else if (alloc == "size") {
+    typedef mem::allocator<
+      valueT,
+      mem::pool_allocation_policy<
+        valueT,
+        mem::size_based_pool<>
+      >
+    > size_based_allocator_t;
+
+    size_based_allocator_t::global_memory_pool = typename size_based_allocator_t::memory_pool_ptr(
+        new mem::size_based_pool<>());
+
+    testAllocator<valueT, size_based_allocator_t>(verbose);
+  }
+  else {
+    std::cout << "Invalid allocator" << std::endl;
+  }
+}
+
+
+
+inline void
+runTests(std::string const & alloc, uint32_t value_size, bool verbose)
+{
+  switch (value_size) {
+    case 4:
+      runTests<uint32_t>(alloc, verbose);
+      break;
+
+    case 8:
+      runTests<uint64_t>(alloc, verbose);
+      break;
+
+    case 16:
+      runTests<test_value<16> >(alloc, verbose);
+      break;
+
+    case 32:
+      runTests<test_value<32> >(alloc, verbose);
+      break;
+
+    case 64:
+      runTests<test_value<64> >(alloc, verbose);
+      break;
+
+    case 128:
+      runTests<test_value<128> >(alloc, verbose);
+      break;
+
+    case 256:
+      runTests<test_value<256> >(alloc, verbose);
+      break;
+
+    case 512:
+      runTests<test_value<512> >(alloc, verbose);
+      break;
+
+    case 1024:
+      runTests<test_value<1024> >(alloc, verbose);
+      break;
+
+    case 2048:
+      runTests<test_value<2048> >(alloc, verbose);
+      break;
+
+    case 4096:
+      runTests<test_value<4096> >(alloc, verbose);
+      break;
+
+    default:
+      std::cout << "Invalid value size" << std::endl;
+      break;
+  }
+}
+
+
+template <
+  typename allocatorT
+>
+inline void
+runTests(uint32_t value_size)
+{
+  std::cout << "woot!" << std::endl;
 }
 
 
 
 int main(int argc, char **argv)
 {
-  testAllocator<uint32_t, std::allocator>();
+  namespace po = boost::program_options;
+
+  po::options_description desc(
+    "Allocator speed tests.\n\n"
+    "This test times the speed of allocations and deallocations of different\n"
+    "allocators. Tests alternately fill and drain an STL vector of a certain\n"
+    "value type, and wall time, system time and user time is measured from the\n"
+    "start of the test to the end.\n\n"
+    "You can influence the following parameters:\n"
+    " - The allocator used. Possible allocators are\n"
+    "   1. std::allocator\n"
+    "   2. Fhtagn's allocator with a heap_pool\n"
+    "   3. Fhtagn's allocator with a size_based_pool, with default template\n"
+    "      parameter values.\n"
+    " - The size of the value type.\n"
+    " - The number of fill and drain cycles for the test, e.g. a value of 10\n"
+    "   would indicate 10 fill cycles alternating with 10 drain cycles.\n"
+    " - The maximum number of fills and drains per cycle. The actual number of\n"
+    "   fills and drains is semi-random per cycle. (Note: a RNG is used, but\n"
+    "   it's seeded to a compiled-in value.)\n\n"
+    "Command line arguments"
+  );
+
+  std::string allocator;
+  uint32_t num_cycles = 0;
+  uint32_t items_per_cycle = 0;
+  uint32_t value_size = 0;
+  bool verbose = true;
+
+  desc.add_options()
+    ("help", "Prints this help text and exits.")
+    ("allocator", po::value<std::string>(&allocator)->default_value("std"),
+        "Allocator used. Possible values are 'std' (referring to "
+        "std::allocator), 'heap' (referring to Fhtagn's heap_pool) or 'size' ("
+        "referring to Fhtagn's size_based_pool)")
+    ("num_cycles", po::value<uint32_t>(&num_cycles)->default_value(100),
+        "Number of fill/drain cycles.")
+    ("max_items", po::value<uint32_t>(&items_per_cycle)->default_value(10000),
+        "Maximum number of fills/drains per cycle.")
+    ("value_size", po::value<uint32_t>(&value_size)->default_value(4),
+        "Size of the value type in bytes. Possible values are 4, 8, 16, 32, 64,"
+        " 128, 256, 512, 1024, 2048 and 4096.")
+    ("verbose", po::value<bool>(&verbose)->default_value(true),
+        "Be verbose about the output (=1), or only display the results (=0).")
+  ;
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    std::cout << desc << "\n";
+    return 1;
+  }
+
+  if (verbose) {
+    std::cout << "Settings: " << std::endl
+              << "  allocator:  " << allocator << std::endl
+              << "  num_cycles: " << num_cycles << std::endl
+              << "  max_items:  " << items_per_cycle << std::endl
+              << "  value_size: " << value_size << std::endl << std::endl;
+  }
+
+  initRandomPool(num_cycles, items_per_cycle, verbose);
+  runTests(allocator, value_size, verbose);
 }
