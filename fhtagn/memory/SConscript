@@ -18,6 +18,7 @@ HEADERS = [
   'throw_pool.h',
   'block_pool.h',
   'dynamic_pool.h',
+  'size_based_pool.h',
   'pool_allocator.h',
   os.path.join('detail', 'concepts.h'),
   os.path.join('detail', 'allocator.tcc'),
@@ -26,6 +27,7 @@ HEADERS = [
   os.path.join('detail', 'fixed_pool.tcc'),
   os.path.join('detail', 'block_pool.tcc'),
   os.path.join('detail', 'dynamic_pool.tcc'),
+  os.path.join('detail', 'size_based_pool.tcc'),
   os.path.join('detail', 'pool_allocator.tcc'),
 ]
 
