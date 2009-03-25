@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -141,6 +141,87 @@ private:
 
     /** Maximum line size */
     uint32_t m_max_line;
+};
+
+
+/**
+ * The HTMLOutput class essentially provides the same functionality as
+ * VerboseOutput before, but outputs HTML rather than plain text.
+ *
+ * It's (nearly) fully customizable via CSS in that it draws plain HTML tables,
+ * with each element referring to a CSS class.
+ **/
+class HTMLOutput
+    : public CppUnit::TestListener
+{
+public:
+    /**
+     * Constructor
+     *
+     * @param os Output stream on which to produce verbose test output.
+     **/
+    HTMLOutput(std::ostream & os);
+
+private:
+    /**
+     * CppUnit distinguishes between tests that succeed, that fail (i.e. where
+     * an assertion is not fulfilled), and errors that were not expected by the
+     * test suite.
+     **/
+    enum status
+    {
+        OK,
+        FAILURE,
+        ERROR
+    };
+
+
+    /**
+     * Structure for counting successes/failures/errors of each test suite.
+     **/
+    struct results
+    {
+        uint32_t successes;
+        uint32_t failures;
+        uint32_t errors;
+    };
+
+
+    /** @see CppUnit::TestListener */
+    virtual void startTest(CppUnit::Test * test);
+
+    /** @see CppUnit::TestListener */
+    virtual void addFailure(CppUnit::TestFailure const & failure);
+
+    /** @see CppUnit::TestListener */
+    virtual void endTest(CppUnit::Test * test);
+
+    /** @see CppUnit::TestListener */
+    virtual void startSuite(CppUnit::Test * suite);
+
+    /** @see CppUnit::TestListener */
+    virtual void endSuite(CppUnit::Test * suite);
+
+    /** @see CppUnit::TestListener */
+    virtual void startTestRun(CppUnit::Test * test,
+            CppUnit::TestResult * eventManager);
+
+    /** @see CppUnit::TestListener */
+    virtual void endTestRun(CppUnit::Test * test,
+            CppUnit::TestResult * eventManager);
+
+
+    /** Used for counting results in each nested test suite. **/
+    std::stack<results> m_results;
+
+    /**
+     * Result of individual test runs; must be preserved across a few function
+     * calls.
+     **/
+    status m_status;
+
+    /** Stream to push output to. **/
+    std::ostream & m_os;
 };
 
 }} // namespace fhtagn::util

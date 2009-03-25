@@ -36,6 +36,7 @@
 #include <fhtagn/util/stopwatch.h>
 
 #include <errno.h>
+#include <string.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 

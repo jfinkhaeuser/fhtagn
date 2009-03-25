@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2007 the authors.
+ * Copyright (C) 2007,2008 the authors.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -110,7 +110,9 @@ struct line
 } // anonymous namespace
 
 
-
+/*****************************************************************************
+ * VerboseOutput implementation
+ **/
 
 VerboseOutput::VerboseOutput(std::ostream & os,
         uint32_t indent_by /* = 2 */, uint32_t max_line /* = 79 */)
@@ -225,5 +227,138 @@ VerboseOutput::endTestRun(CppUnit::Test * test,
             << std::endl << std::endl;
     }
 }
+
+
+/*****************************************************************************
+ * HTMLOutput implementation
+ **/
+
+
+HTMLOutput::HTMLOutput(std::ostream & os)
+    : m_results()
+    , m_status(OK)
+    , m_os(os)
+{
+    results tmp = { 0, 0, 0 };
+    m_results.push(tmp);
+}
+
+
+
+// Called when just before a TestCase is run.
+void
+HTMLOutput::startTest(CppUnit::Test * test)
+{
+    // FIXME div around name?
+    m_os << "<table class=\"test-run\"><tr class=\"test-run\">" << std::endl;
+    m_os << "<td class=\"test-label\">Running " << test->getName() << "...</td>" << std::endl;
+    m_os << "<td class=\"test-output\"><pre class=\"test-output\">";
+}
+
+
+// Called when a failure occurs while running a test.
+void
+HTMLOutput::addFailure(CppUnit::TestFailure const & failure)
+{
+    m_status = (failure.isError() ? ERROR : FAILURE);
+}
+
+
+// Called just after a TestCase was run (even if a failure occured).
+void
+HTMLOutput::endTest(CppUnit::Test * test)
+{
+    // close test output
+    m_os << "</pre></td>" << std::endl;
+
+    switch (m_status) {
+        case OK:
+            m_os << "<td class=\"test-success\">OK</td>" << std::endl;
+            ++(m_results.top().successes);
+            break;
+        case FAILURE:
+            m_os << "<td class=\"test-failure\">FAILURE</td>" << std::endl;
+            ++(m_results.top().failures);
+            break;
+        case ERROR:
+            m_os << "<td class=\"test-error\">ERROR</td>" << std::endl;
+            ++(m_results.top().errors);
+            break;
+        default:
+            assert(0);
+    }
+    m_os << "</tr></table>" << std::endl;
+
+    m_status = OK;
+}
+
+
+// Called by a TestComposite just before running its child tests.
+void
+HTMLOutput::startSuite(CppUnit::Test * suite)
+{
+    m_os << "<table class=\"suite\">" << std::endl;
+    m_os << "<tr class=\"suite-header\">" << std::endl;
+    m_os << "<th class=\"suite-header\">" << std::endl;
+    m_os << "Starting test suite <a class=\"suite-title\" href=\"#\">"
+        << suite->getName() << "</a> with " << suite->getChildTestCount()
+        << " children" << std::endl
+        << "</th>" << std::endl
+        << "</tr>" << std::endl;
+
+    m_os << "<tr class=\"suite-content\">" << std::endl;
+
+    results tmp = { 0, 0, 0 };
+    m_results.push(tmp);
+}
+
+// Called by a TestComposite after running its child tests.
+void
+HTMLOutput::endSuite(CppUnit::Test * suite)
+{
+    results suite_results = m_results.top();
+    m_results.pop();
+
+    m_os << "</tr>" << std::endl;
+
+    m_os << "<tr class=\"suite-summary\">" << std::endl
+         << "<td class=\"suite-summary\"><table class=\"suite-summary\"><tr class=\"suite-summary-inner\">" << std::endl;
+    m_os << "<td class=\"suite-summary-label\">Suite <a class=\"suite-title\" href=\"#\">" << suite->getName()
+         << "</a></td>" << std::endl
+         << "<td class=\"suite-summary-total-label\">Total:</td>" << std::endl
+         << "<td class=\"suite-summary-total\">" << (suite_results.successes + suite_results.failures + suite_results.errors) << "</td>" << std::endl
+         << "<td class=\"suite-summary-success-label\">Success:</td>" << std::endl
+         << "<td class=\"suite-summary-success\">" << suite_results.successes << "</td>" << std::endl
+         << "<td class=\"suite-summary-failure-label\">Failure:</td>" << std::endl
+         << "<td class=\"suite-summary-failure\">" << suite_results.failures << "</td>" << std::endl
+         << "<td class=\"suite-summary-error-label\">Error:</td>" << std::endl
+         << "<td class=\"suite-summary-error\">" << suite_results.errors << "</td>" << std::endl
+         ;
+    m_os << "</tr></table></td>" << std::endl;
+    m_os << "</tr>" << std::endl;
+
+    m_results.top().successes += suite_results.successes;
+    m_results.top().failures += suite_results.failures;
+    m_results.top().errors += suite_results.errors;
+}
+
+
+// Called by a TestRunner before running the test.
+void
+HTMLOutput::startTestRun(CppUnit::Test * test,
+        CppUnit::TestResult * eventManager)
+{
+}
+
+
+// Called by a TestRunner after running the test.
+void
+HTMLOutput::endTestRun(CppUnit::Test * test,
+        CppUnit::TestResult * eventManager)
+{
+    m_os << "Details of errors and failures follow:" << std::endl;
+}
+
+
 
 }} // namespace fhtagn::util
