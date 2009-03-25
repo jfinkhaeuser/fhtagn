@@ -78,6 +78,32 @@ struct dec_once : public decrement<CURRENT, 1>
 };
 
 
+template <int CURRENT, int FACTOR>
+struct multiply
+{
+  enum {
+    value = CURRENT * FACTOR,
+  };
+};
+
+
+template <int CURRENT>
+struct multi_double : public multiply<CURRENT, 2>
+{
+};
+
+
+template <int CURRENT, int DIVISOR>
+struct divide
+{
+  enum {
+    value = CURRENT / DIVISOR,
+  };
+};
+
+
+
+
 
 /**
  * Of all metaprogramming techniques, a compile-time for loop is probably the
