@@ -674,3 +674,24 @@ installation paths.
         result.append(p)
     return result
 
+
+  def checkOptionalTypes(self, conf, optional_types):
+    for info in optional_types:
+      header = False
+      if len(info) == 3:
+        header = info[2]
+      res = conf.CheckType(info[1], includes = header, language = info[0])
+      if res:
+        have_var = 'HAVE_%s' % info[1].upper()
+        self[have_var] = 1
+
+  def checkOptionalFunctions(self, conf, optional_functions):
+    for info in optional_functions:
+      header = False;
+      if len(info) == 3:
+        header = info[2]
+      res = conf.CheckFunc(info[1], header = header, language = info[0])
+      if res:
+        have_var = 'HAVE_%s' % info[1].upper()
+        self[have_var] = 1
+
