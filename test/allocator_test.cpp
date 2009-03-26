@@ -46,13 +46,25 @@
 #include <fhtagn/memory/dynamic_pool.h>
 #include <fhtagn/memory/size_based_pool.h>
 
-FHTAGN_POOL_ALLOCATION_INITIALIZE;
-
-namespace {
 
 typedef uint32_t test_int_t;
 
-} // anonymous namespace
+typedef fhtagn::memory::dynamic_pool<
+  fhtagn::memory::fixed_pool<>,
+  1024
+> dynamic_pool_t;
+
+
+
+FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(fhtagn::memory::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(fhtagn::memory::fixed_pool<>);
+FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(dynamic_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(fhtagn::memory::size_based_pool<>);
+
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_int_t, fhtagn::memory::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_int_t, fhtagn::memory::fixed_pool<>);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_int_t, dynamic_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_int_t, fhtagn::memory::size_based_pool<>);
 
 
 class AllocatorTest
@@ -454,21 +466,16 @@ private:
       namespace mem = fhtagn::memory;
 
       // dynamic_pool tests
-      typedef mem::dynamic_pool<
-        mem::fixed_pool<>,
-        1024
-      > pool_t;
-
       typedef mem::allocator<
         test_int_t,
         mem::pool_allocation_policy<
           test_int_t,
-          pool_t
+          dynamic_pool_t
         >
       > allocator_t;
 
       // Set global pool to be an instance of dynamic_pool. That'll be the simplest.
-      pool_t * p = new pool_t();
+      dynamic_pool_t * p = new dynamic_pool_t();
       CPPUNIT_ASSERT_EQUAL(false, p->in_use());
 
       allocator_t::global_memory_pool = allocator_t::memory_pool_ptr(p);

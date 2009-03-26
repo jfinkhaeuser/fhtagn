@@ -269,14 +269,27 @@ inline bool operator==(
 }} // namespace fhtagn::memory
 
 
-#define FHTAGN_POOL_ALLOCATION_INITIALIZE \
-  template <typename poolT, typename tagT>                                            \
-  typename fhtagn::memory::pool_allocation_policy_base<poolT, tagT>::memory_pool_ptr  \
-  fhtagn::memory::pool_allocation_policy_base<poolT, tagT>::global_memory_pool;       \
-                                                                                      \
-  template <typename T, typename poolT, typename tagT>                                \
-  typename fhtagn::memory::pool_allocation_policy<T, poolT, tagT>::memory_pool_ptr    \
-  fhtagn::memory::pool_allocation_policy<T, poolT, tagT>::per_type_memory_pool;
+#define FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(POOL_T) \
+  FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE_TAG(POOL_T, fhtagn::memory::default_tag)
+
+#define FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE_TAG(POOL_T, TAG_T)     \
+  namespace fhtagn { namespace memory {                               \
+    template <>                                                       \
+    pool_allocation_policy_base<POOL_T, TAG_T>::memory_pool_ptr       \
+    pool_allocation_policy_base<POOL_T, TAG_T>::global_memory_pool =  \
+    pool_allocation_policy_base<POOL_T, TAG_T>::memory_pool_ptr();    \
+  }}
+
+#define FHTAGN_POOL_ALLOCATION_INITIALIZE(T, POOL_T) \
+  FHTAGN_POOL_ALLOCATION_INITIALIZE_TAG(T, POOL_T, fhtagn::memory::default_tag)
+
+#define FHTAGN_POOL_ALLOCATION_INITIALIZE_TAG(T, POOL_T, TAG_T)       \
+  namespace fhtagn { namespace memory {                               \
+    template <>                                                       \
+    pool_allocation_policy<T, POOL_T, TAG_T>::memory_pool_ptr         \
+    pool_allocation_policy<T, POOL_T, TAG_T>::per_type_memory_pool =  \
+    pool_allocation_policy<T, POOL_T, TAG_T>::memory_pool_ptr();      \
+  }}
 
 
 #include <fhtagn/memory/detail/pool_allocator.tcc>

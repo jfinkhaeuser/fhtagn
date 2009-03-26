@@ -47,9 +47,52 @@
 
 #include <boost/program_options.hpp>
 
+namespace mem = fhtagn::memory;
 
-FHTAGN_POOL_ALLOCATION_INITIALIZE;
 
+// A test type for larger memory blocks. The value array stays uninitalized -
+// it's only purpose is to represent memory of a certain size.
+template <
+  uint32_t SIZE
+>
+struct test_value
+{
+  enum {
+    ARRAY_SIZE = SIZE / sizeof(uint32_t),
+  };
+
+  test_value()
+  {
+  }
+
+  explicit test_value(uint32_t int_value)
+  {
+  }
+
+  uint32_t value[ARRAY_SIZE];
+};
+
+
+typedef mem::size_based_pool<256, 1, 32>  size_based_pool_t;
+
+
+FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(mem::heap_pool);
+
+FHTAGN_POOL_ALLOCATION_INITIALIZE(uint32_t, mem::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(uint64_t, mem::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<16>, mem::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<32>, mem::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<64>, mem::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<128>, mem::heap_pool);
+
+FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(size_based_pool_t);
+
+FHTAGN_POOL_ALLOCATION_INITIALIZE(uint32_t, size_based_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(uint64_t, size_based_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<16>, size_based_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<32>, size_based_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<64>, size_based_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<128>, size_based_pool_t);
 
 
 #define PRINT_STOPWATCH_TIMES(times)                                \
@@ -110,28 +153,6 @@ void initRandomPool(uint32_t num_actions, uint32_t max_items_per_action,
 }
 
 
-// A test type for larger memory blocks. The value array stays uninitalized -
-// it's only purpose is to represent memory of a certain size.
-template <
-  uint32_t SIZE
->
-struct test_value
-{
-  enum {
-    ARRAY_SIZE = SIZE / sizeof(uint32_t),
-  };
-
-  test_value()
-  {
-  }
-
-  explicit test_value(uint32_t int_value)
-  {
-  }
-
-  uint32_t value[ARRAY_SIZE];
-};
-
 
 template <
   typename valueT,
@@ -183,7 +204,6 @@ void testAllocator(bool verbose)
 
   fhtagn::util::stopwatch::times_t times = sw.get_times();
   PRINT_STOPWATCH_TIMES(times);
-  std::cout << std::endl;
 }
 
 
@@ -193,7 +213,6 @@ template <
 inline void
 runTests(std::string const & alloc, bool verbose)
 {
-  namespace mem = fhtagn::memory;
 
   if (alloc == "std") {
     testAllocator<valueT, std::allocator<valueT> >(verbose);
@@ -207,19 +226,23 @@ runTests(std::string const & alloc, bool verbose)
       >
     > heap_allocator_t;
 
+    heap_allocator_t::global_memory_pool = typename heap_allocator_t::memory_pool_ptr(
+        new mem::heap_pool());
+
     testAllocator<valueT, heap_allocator_t>(verbose);
   }
   else if (alloc == "size") {
+    typedef mem::pool_allocation_policy<
+      valueT,
+      size_based_pool_t
+    > alloc_policy_t;
     typedef mem::allocator<
       valueT,
-      mem::pool_allocation_policy<
-        valueT,
-        mem::size_based_pool<>
-      >
+      alloc_policy_t
     > size_based_allocator_t;
 
-    size_based_allocator_t::global_memory_pool = typename size_based_allocator_t::memory_pool_ptr(
-        new mem::size_based_pool<>());
+    alloc_policy_t::global_memory_pool = typename alloc_policy_t::memory_pool_ptr(
+        new size_based_pool_t());
 
     testAllocator<valueT, size_based_allocator_t>(verbose);
   }
@@ -258,26 +281,6 @@ runTests(std::string const & alloc, uint32_t value_size, bool verbose)
       runTests<test_value<128> >(alloc, verbose);
       break;
 
-    case 256:
-      runTests<test_value<256> >(alloc, verbose);
-      break;
-
-    case 512:
-      runTests<test_value<512> >(alloc, verbose);
-      break;
-
-    case 1024:
-      runTests<test_value<1024> >(alloc, verbose);
-      break;
-
-    case 2048:
-      runTests<test_value<2048> >(alloc, verbose);
-      break;
-
-    case 4096:
-      runTests<test_value<4096> >(alloc, verbose);
-      break;
-
     default:
       std::cout << "Invalid value size" << std::endl;
       break;
@@ -310,8 +313,9 @@ int main(int argc, char **argv)
     " - The allocator used. Possible allocators are\n"
     "   1. std::allocator\n"
     "   2. Fhtagn's allocator with a heap_pool\n"
-    "   3. Fhtagn's allocator with a size_based_pool, with default template\n"
-    "      parameter values.\n"
+    "   3. Fhtagn's allocator with a size_based_pool, with pools for objects of\n"
+    "      size 1 to 32 - that is, objects of size 64 or 128 will be allocated.\n"
+    "      from the heap.\n"
     " - The size of the value type.\n"
     " - The number of fill and drain cycles for the test, e.g. a value of 10\n"
     "   would indicate 10 fill cycles alternating with 10 drain cycles.\n"
@@ -339,7 +343,7 @@ int main(int argc, char **argv)
         "Maximum number of fills/drains per cycle.")
     ("value_size", po::value<uint32_t>(&value_size)->default_value(4),
         "Size of the value type in bytes. Possible values are 4, 8, 16, 32, 64,"
-        " 128, 256, 512, 1024, 2048 and 4096.")
+        " 128.")
     ("verbose", po::value<bool>(&verbose)->default_value(true),
         "Be verbose about the output (=1), or only display the results (=0).")
   ;
