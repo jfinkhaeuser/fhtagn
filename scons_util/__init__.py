@@ -25,6 +25,11 @@ installation paths.
 
     opts = Options(file_name)
 
+    opts.Add('CXX', 'C++ compiler to use',
+        defaults.get('CXX', None))
+    opts.Add('CC', 'C compiler to use',
+        defaults.get('CXX', None))
+
     opts.Add('CXXFLAGS', 'Flags for the C++ compiler',
         defaults.get('CXXFLAGS',
           '-ansi -std=c++98 -Wall -Wsign-promo -fstrict-aliasing -Wstrict-aliasing'))
@@ -108,7 +113,9 @@ installation paths.
         if type(v) == type(dict()):
           self[k].update(v)
         elif type(v) == type(list()):
-          self[k].extend(v)
+          for x in v:
+            if x not in self[k]:
+              self[k].insert(0, x)
         else:
           self[k] += v
 
