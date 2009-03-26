@@ -145,6 +145,7 @@ SUBDIRS = [
   os.path.join('fhtagn', 'memory'),
   os.path.join('fhtagn', 'meta'),
   os.path.join('fhtagn', 'patterns'),
+  os.path.join('fhtagn', 'util'),
   'test',
 ]
 
@@ -152,11 +153,6 @@ if env.has_key('FHTAGN_BOOST_VERSION'):
   SUBDIRS += [
     os.path.join('fhtagn', 'xml'),
     os.path.join('fhtagn', 'threads'),
-  ]
-
-if env.has_key('FHTAGN_CPPUNIT_VERSION'):
-  SUBDIRS += [
-    os.path.join('fhtagn', 'util'),
   ]
 
 import os.path
@@ -210,17 +206,19 @@ if env['BUILD_LIB_TYPE'] in ('static', 'both'):
   env.Default(fhtagn_util_static_lib)
 
 
-testsuite_name = os.path.join('#', env[env.BUILD_PREFIX], 'test', 'testsuite')
-testsuite = env.Program(testsuite_name, env.getSources('testsuite'),
-    LIBS = env.getLibs('testsuite'))
-env.Alias('check', testsuite)
-env.Default(testsuite)
+if env.getSources('testsuite'):
+  testsuite_name = os.path.join('#', env[env.BUILD_PREFIX], 'test', 'testsuite')
+  testsuite = env.Program(testsuite_name, env.getSources('testsuite'),
+      LIBS = env.getLibs('testsuite'))
+  env.Alias('check', testsuite)
+  env.Default(testsuite)
 
 
-allocspeed_name = os.path.join('#', env[env.BUILD_PREFIX], 'test', 'allocspeed')
-allocspeed = env.Program(allocspeed_name, env.getSources('allocspeed'),
-    LIBS = env.getLibs('allocspeed'))
-env.Default(allocspeed)
+if env.getSources('allocspeed'):
+  allocspeed_name = os.path.join('#', env[env.BUILD_PREFIX], 'test', 'allocspeed')
+  allocspeed = env.Program(allocspeed_name, env.getSources('allocspeed'),
+      LIBS = env.getLibs('allocspeed'))
+  env.Default(allocspeed)
 
 
 if env.is_unix():
