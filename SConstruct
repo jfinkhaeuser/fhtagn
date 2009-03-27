@@ -57,6 +57,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
     mandatory_headers = [
       # C headers
       ('C', 'stdint.h'),
+      ('C', 'unistd.h'),
 
       # C++ headers (representing STL)
       ('C++', 'cmath'),
@@ -71,6 +72,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
     optional_types = [
       ('C++', 'int64_t', '#include <stdint.h>'),
       ('C++', 'int32_t', '#include <stdint.h>'),
+      ('C', 'ssize_t', '#include <unistd.h>'),
     ]
 
     optional_functions = [

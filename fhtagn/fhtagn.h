@@ -41,6 +41,66 @@
 
 #include <fhtagn/fhtagn-config.h>
 
-// Project global defines go here
+#if defined(HAVE_STDINT_H)
+#include <stdint.h>
+#endif
+
+#if defined(HAVE_UNISTD_H)
+#include <unistd.h>
+#endif
+
+namespace fhtagn {
+
+/**
+ * Define size_t again, just to have a ssize_t and size_t in the same
+ * namespace
+ **/
+typedef ::size_t size_t;
+
+/**
+ * Define ssize_t, if it doesn't exist yet.
+ **/
+#if defined(HAVE_SSIZE_T)
+
+typedef ::ssize_t ssize_t;
+
+#else
+
+namespace detail {
+
+template <int SIZE_T_SIZE>
+struct ssize_t_size_detector
+{
+};
+
+template <>
+struct ssize_t_size_detector<2>
+{
+  typedef int16_t ssize_t;
+};
+
+#if defined(HAVE_INT32_T)
+template <>
+struct ssize_t_size_detector<4>
+{
+  typedef int32_t ssize_t;
+};
+#endif
+
+#if defined(HAVE_INT64_T)
+template <>
+struct ssize_t_size_detector<8>
+{
+  typedef int32_t ssize_t;
+};
+#endif
+
+} // namespace detail
+
+typedef detail::ssize_t_size_detector<sizeof(size_t)>::ssize_t ssize_t;
+
+#endif
+
+} // namespace fhtagn
 
 #endif // guard
