@@ -131,6 +131,7 @@ tasklet::reset()
 
       case RUNNING:
       case STOPPED:
+      case SLEEPING:
         return false;
         break;
 
