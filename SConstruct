@@ -140,7 +140,6 @@ if not env.GetOption('clean'):
 
 SUBDIRS = [
   'fhtagn',
-  os.path.join('fhtagn', 'detail'),
   os.path.join('fhtagn', 'text'),
   os.path.join('fhtagn', 'text', 'detail'),
   os.path.join('fhtagn', 'restrictions'),

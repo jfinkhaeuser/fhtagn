@@ -20,6 +20,8 @@ HEADERS = [
   'restricted.h',
   'restrictions.h',
   'byteorder.h',
+  'compressed_value.h',
+  os.path.join('detail', 'compressed_value.tcc')
 ]
 
 

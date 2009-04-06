@@ -37,6 +37,7 @@
 
 #include <fhtagn/byteorder.h>
 #include <fhtagn/patterns/singleton.h>
+#include <fhtagn/compressed_value.h>
 
 namespace {
 
@@ -106,6 +107,19 @@ struct manual_creator
 
 
 
+struct large_value_t
+{
+  large_value_t()
+    : p1(NULL)
+    , v()
+  {
+  }
+
+  void * p1;
+  uint8_t v;
+};
+
+
 
 
 } // anonymous namespace
@@ -120,6 +134,7 @@ public:
 
         CPPUNIT_TEST(testByteOrder);
         CPPUNIT_TEST(testSingleton);
+        CPPUNIT_TEST(testCompressedValue);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -192,6 +207,36 @@ private:
         singleton::shared_ptr s2 = singleton::instance();
         CPPUNIT_ASSERT_EQUAL(false, creator->created);
       }
+
+    }
+
+
+
+    void testCompressedValue()
+    {
+      // It's a very simple test, really. We just assert that regardless of the
+      // size of the value type, the size of the compressed_value is
+      // smaller or equal to a pointer size.
+      typedef uint8_t small_value_t;
+
+      fhtagn::compressed_value<small_value_t> cv1;
+      CPPUNIT_ASSERT(sizeof(cv1) <= sizeof(void *));
+      CPPUNIT_ASSERT_EQUAL(uint8_t(0), *cv1);
+      *cv1 = 123;
+      CPPUNIT_ASSERT_EQUAL(uint8_t(123), *cv1);
+
+      fhtagn::compressed_value<large_value_t> cv2;
+      CPPUNIT_ASSERT(sizeof(cv2) <= sizeof(void *));
+      CPPUNIT_ASSERT_EQUAL(uint8_t(0), cv2->v);
+      cv2->v = 123;
+      CPPUNIT_ASSERT_EQUAL(uint8_t(123), cv2->v);
+
+      // And now we'll test copy construction and assignment, and we're done.
+      fhtagn::compressed_value<small_value_t> cv3(cv1);
+      CPPUNIT_ASSERT_EQUAL(uint8_t(123), *cv3);
+      *cv1 = 666;
+      cv3 = cv1;
+      CPPUNIT_ASSERT_EQUAL(uint8_t(666), *cv3);
 
     }
 };
