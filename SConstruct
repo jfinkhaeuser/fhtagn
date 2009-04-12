@@ -45,6 +45,8 @@ class FhtagnEnvironment(ExtendedEnvironment):
 
 
   def configure(self):
+    if self.GetOption('clean') or self.GetOption('help'):
+      return True
 
     import os.path
     conf = self.Configure(
