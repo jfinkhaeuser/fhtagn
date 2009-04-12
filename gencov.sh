@@ -53,7 +53,6 @@ for cov_dir in $(find "$top_builddir" -type d -name \*.gcda) ; do
     cov_dir_name=$(echo "$cov_dir_name" | sed 's:\.gcda$::g')
     target="$top_builddir/coverage/$cov_dir_name"
     mv "$cov_dir" "$target"
-    echo $cov_dir $target
 done
 
 echo "Cleaning up..."
