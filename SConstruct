@@ -21,6 +21,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
     config_file = os.environ.get('SCONS_CONF', 'fhtagn.conf')
     print 'Using config file "%s"...' % config_file
     opts = self.Options(config_file)
+    opts.Add(BoolOption('GCOV', 'Create code coverage files', 'no'))
 
     self.register_check(checks.BoostCheck, opts)
     self.register_check(checks.CppUnitCheck, opts)
@@ -94,6 +95,14 @@ class FhtagnEnvironment(ExtendedEnvironment):
     if not conf.CppUnitCheck():
       print ">> CppUnit extensions will not be built."
       print ">> Unit tests will not be built."
+
+    if not conf.CheckLib('gcov'):
+      print ">> No code coverage files will be generated."
+      env['GCOV'] = False
+    elif env.get('GCOV', False):
+      env.Append(CFLAGS = ['-fprofile-arcs', '-ftest-coverage'])
+      env.Append(CXXFLAGS = ['-fprofile-arcs', '-ftest-coverage'])
+
 
     for info in mandatory_headers:
       if info[0] == 'C':
