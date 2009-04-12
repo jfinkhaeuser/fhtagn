@@ -1,10 +1,9 @@
 #! /bin/sh
 
-top_srcdir="$1"
-top_builddir="$2"
+top_builddir="$1"
 
-if test x"$top_builddir" = x -o x"$top_srcdir" = x ; then
-    echo "usage: $0 <top_srcdir> <top_builddir>" >&2
+if test x"$top_builddir" = x ; then
+    echo "usage: $0 <top_builddir>" >&2
     exit 1
 fi
 
@@ -15,14 +14,11 @@ for gcda_file in $(find "$top_builddir" -type f -name \*.gcda) ; do
     echo "  Processing '$gcda_file'..."
     have_gcda=1
     gcda_dir=$(dirname "$gcda_file")
-    trunc_dir=$(echo "$gcda_dir" | sed 's:/\.libs$::g')
-    remain_dir=".$(echo "$gcda_dir" | sed "s:$trunc_dir::g")"
     gcda_filename=$(echo $gcda_file | sed "s:$gcda_dir/::g")
 
     cwd=$(pwd)
-    cd "$trunc_dir"
-    gcov -p -o "$remain_dir" "$gcda_filename" >/dev/null
-    mkdir -p "$remain_dir/coverage/$gcda_filename"
+    gcov -p -o "$gcda_dir" "$gcda_filename" >/dev/null
+    mkdir -p "$gcda_dir/coverage/$gcda_filename"
     # collect and prune gcov files
     for gcov_file in $(find . -type f -name \*.gcov) ; do
         # skip files collected into a coverage subdir
@@ -37,7 +33,8 @@ for gcda_file in $(find "$top_builddir" -type f -name \*.gcda) ; do
             rm -f "$gcov_file"
             continue
         fi
-        mv "$gcov_file" "$remain_dir/coverage/$gcda_filename"
+
+        mv "$gcov_file" "$gcda_dir/coverage/$gcda_filename"
     done
     cd "$cwd"
 done
@@ -56,6 +53,7 @@ for cov_dir in $(find "$top_builddir" -type d -name \*.gcda) ; do
     cov_dir_name=$(echo "$cov_dir_name" | sed 's:\.gcda$::g')
     target="$top_builddir/coverage/$cov_dir_name"
     mv "$cov_dir" "$target"
+    echo $cov_dir $target
 done
 
 echo "Cleaning up..."
