@@ -33,6 +33,11 @@ installation paths.
     opts.Add('CXXFLAGS', 'Flags for the C++ compiler',
         defaults.get('CXXFLAGS',
           '-ansi -std=c++98 -Wall -Wsign-promo -fstrict-aliasing -Wstrict-aliasing'))
+    opts.Add('CFLAGS', 'Flags for the C compiler',
+        defaults.get('CFLAGS',
+          '-ansi -std=c99 -Wall -Wsign-promo -fstrict-aliasing -Wstrict-aliasing'))
+    opts.Add('LINKFLAGS', 'Flags for the linker',
+        defaults.get('LINKFLAGS', ''))
 
     self.BUILD_CONFIGS = {
       'debug': {
@@ -105,6 +110,8 @@ installation paths.
 
     ### Fixup Options
     self['CXXFLAGS'] = self['CXXFLAGS'].split()
+    self['CFLAGS'] = self['CFLAGS'].split()
+    self['LINKFLAGS'] = self['LINKFLAGS'].split()
 
     for k, v in self.BUILD_CONFIGS[self['BUILD_CONFIG']].items():
       if not self.has_key(k):
