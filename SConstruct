@@ -90,7 +90,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
       print ">> Features depending on boost will not be built."
     else:
       if self.is_unix():
-      	self['CXXFLAGS'] += ['-pthread']
+        self['CXXFLAGS'] += ['-pthread']
 
     if not conf.CppUnitCheck():
       print ">> CppUnit extensions will not be built."
