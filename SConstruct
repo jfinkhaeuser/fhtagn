@@ -294,12 +294,9 @@ env.Package(
   PACKAGETYPE     = 'src_targz',
   source          = all_sources,
 )
-
-#  env.Package(
-#    NAME            = 'fhtagn',
-#    VERSION         = package_version,
-#    PACKAGETYPE     = 'targz',
-#    PACKAGEROOT     = '.',
-#    source          = env.FindInstalledFiles(),
-#  )
-
+env.Package(
+  NAME            = 'fhtagn',
+  VERSION         = package_version,
+  PACKAGETYPE     = 'src_tarbz2',
+  source          = all_sources,
+)
