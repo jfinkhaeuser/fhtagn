@@ -957,7 +957,7 @@ private:
             t::utf8_decoder decoder;
             while (iter != source.end()) {
                 t::utf32_char_t buf[4] = { 0 };
-                ssize_t bufsize = 4;
+                fhtagn::ssize_t bufsize = 4;
                 iter = t::decode(decoder, iter, source.end(), buf, bufsize);
                 target.append(buf, bufsize);
             }
@@ -974,7 +974,7 @@ private:
             t::utf8_decoder decoder;
             while (iter != source.end()) {
                 t::utf32_char_t buf;
-                ssize_t bufsize = 1;
+                fhtagn::ssize_t bufsize = 1;
                 iter = t::decode(decoder, iter, source.end(), &buf, bufsize);
                 target.append(&buf, bufsize);
             }
@@ -993,7 +993,7 @@ private:
             t::utf8_encoder encoder;
             while (iter != target.end()) {
                 char buf[4] = { 0 };
-                ssize_t bufsize = 4;
+                fhtagn::ssize_t bufsize = 4;
                 iter = t::encode(encoder, iter, target.end(), buf, bufsize);
                 CPPUNIT_ASSERT(bufsize <= 4);
                 output.append(buf, bufsize);
