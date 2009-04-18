@@ -58,9 +58,6 @@ class FhtagnEnvironment(ExtendedEnvironment):
       )
 
     mandatory_headers = [
-      # C headers
-      ('C', 'stdint.h'),
-      ('C', 'unistd.h'),
 
       # C++ headers (representing STL)
       ('C++', 'cmath'),
@@ -68,14 +65,14 @@ class FhtagnEnvironment(ExtendedEnvironment):
       ('C++', 'utility'),
 
       # C++ headers (representing boost)
+      ('C++', 'boost/cstdint.hpp'),
       ('C++', 'boost/shared_ptr.hpp'),
       ('C++', 'boost/integer_traits.hpp'),
     ]
 
     optional_types = [
-      ('C++', 'int64_t', '#include <stdint.h>'),
-      ('C++', 'int32_t', '#include <stdint.h>'),
-      ('C', 'ssize_t', '#include <unistd.h>'),
+      ['C++', 'boost::int64_t', '#include <boost/cstdint.hpp>'],
+      ['C++', 'boost::int32_t', '#include <boost/cstdint.hpp>'],
     ]
 
     optional_functions = [
@@ -92,7 +89,8 @@ class FhtagnEnvironment(ExtendedEnvironment):
     if not conf.BoostCheck(LIBS = boost_libs, min_version = (1, 35, 0)):
       print ">> Features depending on boost will not be built."
     else:
-      self['CXXFLAGS'] += ['-pthread']
+      if self.is_unix():
+      	self['CXXFLAGS'] += ['-pthread']
 
     if not conf.CppUnitCheck():
       print ">> CppUnit extensions will not be built."
@@ -106,13 +104,8 @@ class FhtagnEnvironment(ExtendedEnvironment):
       env.Append(CXXFLAGS = ['-fprofile-arcs', '-ftest-coverage'])
 
 
-    for info in mandatory_headers:
-      if info[0] == 'C':
-        if not conf.CheckCHeader(info[1], include_quotes = '<>'):
-          return False
-      elif info[0] == 'C++':
-        if not conf.CheckCXXHeader(info[1], include_quotes = '<>'):
-          return False
+    if not self.checkMandatoryHeaders(conf, mandatory_headers):
+      return False
 
     self.checkOptionalTypes(conf, optional_types)
     self.checkOptionalFunctions(conf, optional_functions)
