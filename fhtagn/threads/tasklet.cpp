@@ -164,7 +164,7 @@ tasklet::alive() const
 
 
 tasklet::state
-tasklet::sleep(uint32_t usecs /* = 0 */)
+tasklet::sleep(boost::uint32_t usecs /* = 0 */)
 {
     // Prepare xtime to sleep until
     boost::xtime t;

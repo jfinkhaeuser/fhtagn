@@ -98,7 +98,7 @@ variant::operator=(variant const & other)
 
 
 variant &
-variant::operator[](uint32_t index)
+variant::operator[](fhtagn::size_t index)
 {
     switch (m_state) {
         case IS_INVALID:
@@ -129,7 +129,7 @@ variant::operator[](uint32_t index)
 
 
 variant const &
-variant::operator[](uint32_t index) const
+variant::operator[](fhtagn::size_t index) const
 {
     switch (m_state) {
         case IS_INVALID:

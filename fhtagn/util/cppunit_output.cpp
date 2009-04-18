@@ -48,7 +48,7 @@ namespace {
 /** Helper struct to produce padding on an output stream. **/
 struct pad
 {
-    pad(uint32_t pad_length, char pad_char = ' ')
+    pad(boost::uint32_t pad_length, char pad_char = ' ')
         : m_pad_length(pad_length)
         , m_pad_char(pad_char)
     {
@@ -60,7 +60,7 @@ struct pad
 
     virtual void output(std::ostream & os) const
     {
-        for (uint32_t i = 0 ; i < m_pad_length ; ++i) {
+        for (boost::uint32_t i = 0 ; i < m_pad_length ; ++i) {
             os << m_pad_char;
         }
     }
@@ -71,8 +71,8 @@ struct pad
         return os;
     }
 
-    uint32_t  m_pad_length;
-    char      m_pad_char;
+    boost::uint32_t m_pad_length;
+    char            m_pad_char;
 };
 
 
@@ -80,7 +80,7 @@ struct pad
 struct indent
     : public pad
 {
-    indent(uint32_t indent_level, uint32_t pad_size)
+    indent(boost::uint32_t indent_level, boost::uint32_t pad_size)
         : pad(indent_level * pad_size)
     {
     }
@@ -94,8 +94,8 @@ struct indent
 struct line
     : public indent
 {
-    line(uint32_t indent_level, uint32_t pad_size, char line_char,
-            uint32_t max_line)
+    line(boost::uint32_t indent_level, boost::uint32_t pad_size, char line_char,
+            boost::uint32_t max_line)
         : indent(indent_level, pad_size)
     {
         m_pad_length = max_line - m_pad_length;
@@ -115,7 +115,7 @@ struct line
  **/
 
 VerboseOutput::VerboseOutput(std::ostream & os,
-        uint32_t indent_by /* = 2 */, uint32_t max_line /* = 79 */)
+        boost::uint32_t indent_by /* = 2 */, boost::uint32_t max_line /* = 79 */)
     : m_results()
     , m_status(OK)
     , m_os(os)
@@ -133,7 +133,7 @@ void
 VerboseOutput::startTest(CppUnit::Test * test)
 {
     std::string label = "Running `" + test->getName() + "'";
-    uint32_t pad_size = m_max_line - label.size() - INDENT.m_pad_length - 12;
+    boost::uint32_t pad_size = m_max_line - label.size() - INDENT.m_pad_length - 12;
     if (pad_size > m_max_line) {
         pad_size = 1;
     }

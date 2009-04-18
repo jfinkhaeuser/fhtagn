@@ -41,8 +41,6 @@
 
 #include <fhtagn/fhtagn.h>
 
-#include <stdint.h>
-
 #include <utility>
 
 namespace fhtagn {
@@ -62,7 +60,7 @@ namespace fhtagn {
  * value's "first" member contains the major version number, the "second"
  * member the minor version number.
  **/
-std::pair<uint16_t, uint16_t> version();
+std::pair<boost::uint16_t, boost::uint16_t> version();
 
 
 /**

@@ -141,11 +141,11 @@ private:
                 std::back_insert_iterator<t::utf32_string>(target));
 
         CPPUNIT_ASSERT_EQUAL(source.size(), target.size());
-        for (uint32_t i = 0 ; i < source.size() ; ++i) {
+        for (boost::uint32_t i = 0 ; i < source.size() ; ++i) {
             // assign to uint32_t to ensure that comparison is fair, without
             // the same signedness, etc.
-            uint32_t expected = static_cast<unsigned char>(source[i]);
-            uint32_t got = target[i];
+            boost::uint32_t expected = static_cast<unsigned char>(source[i]);
+            boost::uint32_t got = target[i];
             CPPUNIT_ASSERT_EQUAL(expected, got);
         }
     }
@@ -473,11 +473,11 @@ private:
                 std::back_insert_iterator<std::string>(target));
 
         CPPUNIT_ASSERT_EQUAL(source.size(), target.size());
-        for (uint32_t i = 0 ; i < source.size() ; ++i) {
+        for (boost::uint32_t i = 0 ; i < source.size() ; ++i) {
             // assign to uint32_t to ensure that comparison is fair, without
             // the same signedness, etc.
-            uint32_t expected = source[i];
-            uint32_t got = static_cast<unsigned char>(target[i]);
+            boost::uint32_t expected = source[i];
+            boost::uint32_t got = static_cast<unsigned char>(target[i]);
             CPPUNIT_ASSERT_EQUAL(expected, got);
         }
     }
@@ -853,7 +853,7 @@ private:
             char buf[sizeof(be_source)] = { 0 };
             t::encode(encoder, source_string.begin(), source_string.end(), buf);
 
-            for (uint32_t i = 0 ; i < sizeof(be_source) - 4 ; ++i) {
+            for (boost::uint32_t i = 0 ; i < sizeof(be_source) - 4 ; ++i) {
                 CPPUNIT_ASSERT_EQUAL(be_source[i + 4], buf[i]);
             }
         }
@@ -864,7 +864,7 @@ private:
             char buf[sizeof(be_source)] = { 0 };
             t::encode(encoder, source_string.begin(), source_string.end(), buf);
 
-            for (uint32_t i = 0 ; i < sizeof(le_source) - 4 ; ++i) {
+            for (boost::uint32_t i = 0 ; i < sizeof(le_source) - 4 ; ++i) {
                 CPPUNIT_ASSERT_EQUAL(le_source[i + 4], buf[i]);
             }
         }
@@ -884,7 +884,7 @@ private:
                 expected = le_source + 4;
             }
 
-            for (uint32_t i = 0 ; i < sizeof(be_source) - 4 ; ++i) {
+            for (boost::uint32_t i = 0 ; i < sizeof(be_source) - 4 ; ++i) {
                 CPPUNIT_ASSERT_EQUAL(expected[i], buf[i]);
             }
         }

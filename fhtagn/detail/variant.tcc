@@ -208,7 +208,7 @@ variant::variant(T const & other)
 
 
 template <typename T>
-variant::variant &
+variant &
 variant::operator=(T const & other)
 {
     if (this == reinterpret_cast<variant const *>(&other)) {

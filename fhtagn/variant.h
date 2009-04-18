@@ -469,10 +469,10 @@ public:
      * container, or (depending on the container semantics) the element does
      * not exist, an invalid variant is returned.
      **/
-    variant & operator[](uint32_t index);
+    variant & operator[](fhtagn::size_t index);
     variant & operator[](std::string const & key);
 
-    variant const & operator[](uint32_t index) const;
+    variant const & operator[](fhtagn::size_t index) const;
     variant const & operator[](std::string const & key) const;
 
     /**

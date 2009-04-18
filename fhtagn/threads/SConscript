@@ -20,4 +20,7 @@ HEADERS = [
 
 env.addSources('fhtagn', SOURCES)
 env.addHeaders('fhtagn', HEADERS)
-env.addLibs('fhtagn', [('boost', 'thread'), ('boost', 'signals')])
+env.addLibs('fhtagn', [('boost', 'signals')])
+if env.is_unix():
+  # XXX boost_thread somehow gets pulled automatically on win32. Weird.
+  env.addLibs('fhtagn', [('boost', 'thread')])

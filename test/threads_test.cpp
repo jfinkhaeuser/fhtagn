@@ -349,8 +349,8 @@ private:
             CPPUNIT_ASSERT(task.wait());
             boost::xtime_get(&t2, boost::TIME_UTC);
 
-            uint64_t st1 = (t1.sec * 1000000000) + t1.nsec;
-            uint64_t st2 = (t2.sec * 1000000000) + t2.nsec;
+            boost::uint64_t st1 = (t1.sec * 1000000000) + t1.nsec;
+            boost::uint64_t st2 = (t2.sec * 1000000000) + t2.nsec;
 
             // The time difference must always be lower than the 1000 msecs
             // (1000000 nsecs) we specified as the sleep time.
@@ -372,8 +372,8 @@ private:
             CPPUNIT_ASSERT(task.wait());
             boost::xtime_get(&t2, boost::TIME_UTC);
 
-            uint64_t st1 = (t1.sec * 1000000000) + t1.nsec;
-            uint64_t st2 = (t2.sec * 1000000000) + t2.nsec;
+            boost::uint64_t st1 = (t1.sec * 1000000000) + t1.nsec;
+            boost::uint64_t st2 = (t2.sec * 1000000000) + t2.nsec;
 
             // The time difference must always be larger than the sleep time of
             // 500 msec

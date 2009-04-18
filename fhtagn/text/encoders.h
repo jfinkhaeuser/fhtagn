@@ -166,7 +166,7 @@ struct iso8859_encoder_base
     /**
      * When encoding unknown characters, the default is to skip these characters.
      **/
-    explicit iso8859_encoder_base(uint32_t subencoding)
+    explicit iso8859_encoder_base(fhtagn::size_t subencoding)
         : transcoder_base(true, '\0')
         , m_subencoding(subencoding)
         , m_byte(0)
@@ -207,13 +207,13 @@ struct iso8859_encoder_base
             }
         } else {
             // compute offset into mapping table
-            uint32_t offset = m_subencoding - 2;
+            boost::uint32_t offset = m_subencoding - 2;
             if (m_subencoding > 11) {
                 --offset;
             }
             offset *= 96; // number of characters special to each subencoding
 
-            for (uint32_t i = offset ; i < offset + 96 ; ++i) {
+            for (boost::uint32_t i = offset ; i < offset + 96 ; ++i) {
                 if (detail::iso8859_mapping[i] == ch) {
                     m_byte = i - offset + 160;
                     return true;
@@ -226,9 +226,9 @@ struct iso8859_encoder_base
         return false;
     }
 
-    uint32_t  m_subencoding;
-    char      m_byte;
-    bool      m_valid;
+    fhtagn::size_t  m_subencoding;
+    char            m_byte;
+    bool            m_valid;
 };
 
 
@@ -302,7 +302,7 @@ struct cp1252_encoder
             return true;
         }
 
-        for (uint32_t i = 0 ; i < 32 ; ++i) {
+        for (boost::uint32_t i = 0 ; i < 32 ; ++i) {
             if (detail::cp1252_mapping[i] == ch) {
                 m_byte = i + 0x80;
                 m_flag = true;
@@ -359,7 +359,7 @@ struct mac_roman_encoder
             m_flag = true;
         }
 
-        for (uint32_t i = 0 ; i < 128 ; ++i) {
+        for (boost::uint32_t i = 0 ; i < 128 ; ++i) {
             if (detail::mac_roman_mapping[i] == ch) {
                 m_byte = i + 0x80;
                 m_flag = true;
@@ -408,7 +408,7 @@ struct utf8_encoder
             0x00, 0xc0, 0xe0, 0xf0,
         };
 
-        uint8_t size = 0;
+        boost::uint8_t size = 0;
         if (ch < 0x80) {
           size = 1;
         } else if (ch < 0x800) {

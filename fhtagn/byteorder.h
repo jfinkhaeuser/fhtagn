@@ -41,8 +41,6 @@
 
 #include <fhtagn/fhtagn.h>
 
-#include <stdint.h>
-
 /**
  * If we can grab the byte order from the compiler, do that - if not, try to
  * use boost's facilities.
@@ -173,18 +171,18 @@ inline endian opposite(int arg)
 /**
  * Swap byte order of various integer sizes.
  **/
-inline uint16_t swap(uint16_t const & orig)
+inline boost::uint16_t swap(boost::uint16_t const & orig)
 {
     return ((orig & 0xff00) >> 8) |
            ((orig & 0x00ff) << 8);
 }
 
-inline int16_t swap(int16_t const & orig)
+inline boost::int16_t swap(boost::int16_t const & orig)
 {
-    return swap(static_cast<uint16_t>(orig));
+    return swap(static_cast<boost::uint16_t>(orig));
 }
 
-inline uint32_t swap(uint32_t const & orig)
+inline boost::uint32_t swap(boost::uint32_t const & orig)
 {
     return ((orig & 0xff000000UL) >> 24) |
            ((orig & 0x00ff0000UL) >> 8)  |
@@ -192,27 +190,27 @@ inline uint32_t swap(uint32_t const & orig)
            ((orig & 0x000000ffUL) << 24);
 }
 
-inline int32_t swap(int32_t const & orig)
+inline boost::int32_t swap(boost::int32_t const & orig)
 {
-    return swap(static_cast<uint32_t>(orig));
+    return swap(static_cast<boost::uint32_t>(orig));
 }
 
-inline uint64_t swap(uint64_t const & orig)
+inline boost::uint64_t swap(boost::uint64_t const & orig)
 {
-    return ((orig & ((uint64_t) 0xff << 56)) >> 56) |
-           ((orig & ((uint64_t) 0xff << 48)) >> 40) |
-           ((orig & ((uint64_t) 0xff << 40)) >> 24) |
-           ((orig & ((uint64_t) 0xff << 32)) >> 8)  |
-           ((orig & ((uint64_t) 0xff << 24)) >> 8)  |
-           ((orig & ((uint64_t) 0xff << 16)) >> 24) |
-           ((orig & ((uint64_t) 0xff <<  8)) << 40) |
-           ((orig &  (uint64_t) 0xff       ) << 56);
+    return ((orig & ((boost::uint64_t) 0xff << 56)) >> 56) |
+           ((orig & ((boost::uint64_t) 0xff << 48)) >> 40) |
+           ((orig & ((boost::uint64_t) 0xff << 40)) >> 24) |
+           ((orig & ((boost::uint64_t) 0xff << 32)) >> 8)  |
+           ((orig & ((boost::uint64_t) 0xff << 24)) >> 8)  |
+           ((orig & ((boost::uint64_t) 0xff << 16)) >> 24) |
+           ((orig & ((boost::uint64_t) 0xff <<  8)) << 40) |
+           ((orig &  (boost::uint64_t) 0xff       ) << 56);
 
 }
 
-inline int64_t swap(int64_t const & orig)
+inline boost::int64_t swap(boost::int64_t const & orig)
 {
-    return swap(static_cast<uint64_t>(orig));
+    return swap(static_cast<boost::uint64_t>(orig));
 }
 
 

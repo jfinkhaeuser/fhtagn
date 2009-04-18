@@ -53,23 +53,23 @@ namespace mem = fhtagn::memory;
 // A test type for larger memory blocks. The value array stays uninitalized -
 // it's only purpose is to represent memory of a certain size.
 template <
-  uint32_t SIZE
+  boost::uint32_t SIZE
 >
 struct test_value
 {
   enum {
-    ARRAY_SIZE = SIZE / sizeof(uint32_t),
+    ARRAY_SIZE = SIZE / sizeof(boost::uint32_t),
   };
 
   test_value()
   {
   }
 
-  explicit test_value(uint32_t int_value)
+  explicit test_value(boost::uint32_t int_value)
   {
   }
 
-  uint32_t value[ARRAY_SIZE];
+  boost::uint32_t value[ARRAY_SIZE];
 };
 
 
@@ -78,8 +78,8 @@ typedef mem::size_based_pool<256, 1, 32>  size_based_pool_t;
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(mem::heap_pool);
 
-FHTAGN_POOL_ALLOCATION_INITIALIZE(uint32_t, mem::heap_pool);
-FHTAGN_POOL_ALLOCATION_INITIALIZE(uint64_t, mem::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(boost::uint32_t, mem::heap_pool);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(boost::uint64_t, mem::heap_pool);
 FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<16>, mem::heap_pool);
 FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<32>, mem::heap_pool);
 FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<64>, mem::heap_pool);
@@ -87,8 +87,8 @@ FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<128>, mem::heap_pool);
 
 FHTAGN_POOL_ALLOCATION_INITIALIZE_BASE(size_based_pool_t);
 
-FHTAGN_POOL_ALLOCATION_INITIALIZE(uint32_t, size_based_pool_t);
-FHTAGN_POOL_ALLOCATION_INITIALIZE(uint64_t, size_based_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(boost::uint32_t, size_based_pool_t);
+FHTAGN_POOL_ALLOCATION_INITIALIZE(boost::uint64_t, size_based_pool_t);
 FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<16>, size_based_pool_t);
 FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<32>, size_based_pool_t);
 FHTAGN_POOL_ALLOCATION_INITIALIZE(test_value<64>, size_based_pool_t);
@@ -109,17 +109,17 @@ unsigned long g_seed = 0xdeadbeef;
 // Then, we pre-populate a list of allocs/erases. Odd-indexed entries denote
 // the number of allocations we're making, even-indexed entries denote the
 // number of erases we're making.
-std::vector<uint32_t> g_actions;
+std::vector<boost::uint32_t> g_actions;
 
 // For allocations, we'll set the values we're adding to values from the random
 // pool. For erases, we'll take values from the random tool % the size of the
 // test vector, and erase the entry at that index.
-std::vector<uint32_t> g_random_pool;
+std::vector<boost::uint32_t> g_random_pool;
 
 // Both g_action and g_random_pool are filled from this function. The size of
 // g_action is determined by the num_actions parameter, and g_random_pool is
 // filled to satsify the requirements of g_actions entries.
-void initRandomPool(uint32_t num_actions, uint32_t max_items_per_action,
+void initRandomPool(boost::uint32_t num_actions, boost::uint32_t max_items_per_action,
     bool verbose)
 {
   if (verbose) {
@@ -134,13 +134,13 @@ void initRandomPool(uint32_t num_actions, uint32_t max_items_per_action,
   g_actions.clear();
   g_random_pool.clear();
 
-  for (uint32_t i = 0 ; i < num_actions ; ++i) {
+  for (boost::uint32_t i = 0 ; i < num_actions ; ++i) {
     // Determine the number of items for this action.
-    uint32_t items = ::random() % max_items_per_action;
+    boost::uint32_t items = ::random() % max_items_per_action;
     g_actions.push_back(items);
 
     // Fill random pool with enough numbers for this action.
-    for (uint32_t j = 0 ; j < items ; ++j) {
+    for (boost::uint32_t j = 0 ; j < items ; ++j) {
       g_random_pool.push_back(::random());
     }
   }
@@ -170,19 +170,19 @@ void testAllocator(bool verbose)
   test_vector_t test_vector;
 
   // Alternately fill the test_vector and erase stuff from it.
-  uint32_t count = 0;
-  std::vector<uint32_t>::const_iterator action_end = g_actions.end();
-  for (std::vector<uint32_t>::const_iterator action_iter = g_actions.begin()
+  boost::uint32_t count = 0;
+  std::vector<boost::uint32_t>::const_iterator action_end = g_actions.end();
+  for (std::vector<boost::uint32_t>::const_iterator action_iter = g_actions.begin()
       ; action_iter != action_end ; ++action_iter, ++count)
   {
     if (count % 2) {
       // Free stuff!
-      for (uint32_t i = 0 ; i < *action_iter ; ++i) {
+      for (boost::uint32_t i = 0 ; i < *action_iter ; ++i) {
         if (test_vector.empty()) {
           break;
         }
 
-        uint32_t index = g_random_pool.back() % test_vector.size();
+        boost::uint32_t index = g_random_pool.back() % test_vector.size();
         g_random_pool.pop_back();
 
         typename test_vector_t::iterator iter = test_vector.begin();
@@ -192,8 +192,8 @@ void testAllocator(bool verbose)
     }
     else {
       // Allocate stuff!
-      for (uint32_t i = 0 ; i < *action_iter ; ++i) {
-        uint32_t random_value = g_random_pool.back();
+      for (boost::uint32_t i = 0 ; i < *action_iter ; ++i) {
+        boost::uint32_t random_value = g_random_pool.back();
         g_random_pool.pop_back();
 
         valueT value(random_value);
@@ -254,15 +254,15 @@ runTests(std::string const & alloc, bool verbose)
 
 
 inline void
-runTests(std::string const & alloc, uint32_t value_size, bool verbose)
+runTests(std::string const & alloc, boost::uint32_t value_size, bool verbose)
 {
   switch (value_size) {
     case 4:
-      runTests<uint32_t>(alloc, verbose);
+      runTests<boost::uint32_t>(alloc, verbose);
       break;
 
     case 8:
-      runTests<uint64_t>(alloc, verbose);
+      runTests<boost::uint64_t>(alloc, verbose);
       break;
 
     case 16:
@@ -292,7 +292,7 @@ template <
   typename allocatorT
 >
 inline void
-runTests(uint32_t value_size)
+runTests(boost::uint32_t value_size)
 {
   std::cout << "woot!" << std::endl;
 }
@@ -326,9 +326,9 @@ int main(int argc, char **argv)
   );
 
   std::string allocator;
-  uint32_t num_cycles = 0;
-  uint32_t items_per_cycle = 0;
-  uint32_t value_size = 0;
+  boost::uint32_t num_cycles = 0;
+  boost::uint32_t items_per_cycle = 0;
+  boost::uint32_t value_size = 0;
   bool verbose = true;
 
   desc.add_options()
@@ -337,11 +337,11 @@ int main(int argc, char **argv)
         "Allocator used. Possible values are 'std' (referring to "
         "std::allocator), 'heap' (referring to Fhtagn's heap_pool) or 'size' ("
         "referring to Fhtagn's size_based_pool)")
-    ("num_cycles", po::value<uint32_t>(&num_cycles)->default_value(100),
+    ("num_cycles", po::value<boost::uint32_t>(&num_cycles)->default_value(100),
         "Number of fill/drain cycles.")
-    ("max_items", po::value<uint32_t>(&items_per_cycle)->default_value(10000),
+    ("max_items", po::value<boost::uint32_t>(&items_per_cycle)->default_value(10000),
         "Maximum number of fills/drains per cycle.")
-    ("value_size", po::value<uint32_t>(&value_size)->default_value(4),
+    ("value_size", po::value<boost::uint32_t>(&value_size)->default_value(4),
         "Size of the value type in bytes. Possible values are 4, 8, 16, 32, 64,"
         " 128.")
     ("verbose", po::value<bool>(&verbose)->default_value(true),

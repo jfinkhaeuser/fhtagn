@@ -83,11 +83,11 @@ extern char const utf8_bom[3];
  * Some basic type definitions. Of course, instead of utf8_string you could just
  * use std::string, but where's the fun in that?
  **/
-typedef char      utf8_char_t;
+typedef char            utf8_char_t;
 typedef std::basic_string<utf8_char_t>  utf8_string;
-typedef uint16_t  utf16_char_t;
+typedef boost::uint16_t utf16_char_t;
 typedef std::basic_string<utf16_char_t> utf16_string;
-typedef uint32_t  utf32_char_t;
+typedef boost::uint32_t utf32_char_t;
 typedef std::basic_string<utf32_char_t> utf32_string;
 
 

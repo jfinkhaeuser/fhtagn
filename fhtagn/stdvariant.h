@@ -42,8 +42,6 @@
 
 #include <fhtagn/fhtagn.h>
 
-#include <stdint.h>
-
 #include <string>
 
 #include <fhtagn/variant.h>
@@ -52,14 +50,25 @@
 FHTAGN_VARIANT_SPECIALIZE(bool)
 
 // specializations for builtin integer types
-FHTAGN_VARIANT_SPECIALIZE(int8_t)
-FHTAGN_VARIANT_SPECIALIZE(uint8_t)
-FHTAGN_VARIANT_SPECIALIZE(int16_t)
-FHTAGN_VARIANT_SPECIALIZE(uint16_t)
-FHTAGN_VARIANT_SPECIALIZE(int32_t)
-FHTAGN_VARIANT_SPECIALIZE(uint32_t)
-FHTAGN_VARIANT_SPECIALIZE(int64_t)
-FHTAGN_VARIANT_SPECIALIZE(uint64_t)
+FHTAGN_VARIANT_SPECIALIZE(boost::int8_t)
+FHTAGN_VARIANT_SPECIALIZE(boost::uint8_t)
+FHTAGN_VARIANT_SPECIALIZE(boost::int16_t)
+FHTAGN_VARIANT_SPECIALIZE(boost::uint16_t)
+#if defined(HAVE_BOOST__INT32_T)
+FHTAGN_VARIANT_SPECIALIZE(boost::int32_t)
+FHTAGN_VARIANT_SPECIALIZE(boost::uint32_t)
+#endif
+#if defined(HAVE_BOOST__INT64_T)
+FHTAGN_VARIANT_SPECIALIZE(boost::int64_t)
+FHTAGN_VARIANT_SPECIALIZE(boost::uint64_t)
+#endif
+
+#ifdef _WIN32
+// On win32, int appears to be none of the above
+FHTAGN_VARIANT_SPECIALIZE(signed int)
+FHTAGN_VARIANT_SPECIALIZE(unsigned int)
+#endif
+
 
 // floating point types
 FHTAGN_VARIANT_SPECIALIZE(float)
@@ -81,6 +90,13 @@ namespace fhtagn {
     {
         typedef std::string holder_type;
     };
+
+    template <int N>
+    struct variant::specialization_traits<const char [N]>
+    {
+        typedef std::string holder_type;
+    };
+
 } // namespace fhtagn
 
 #endif // guard

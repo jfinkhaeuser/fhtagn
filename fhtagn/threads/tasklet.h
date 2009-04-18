@@ -199,7 +199,7 @@ public:
      *      but can only be broken by a call to stop().
      * @return The current tasklet state.
      **/
-    state sleep(uint32_t usecs = 0);
+    state sleep(boost::uint32_t usecs = 0);
 
 
     /**

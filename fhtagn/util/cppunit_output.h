@@ -42,8 +42,6 @@
 
 #include <fhtagn/fhtagn.h>
 
-#include <stdint.h>
-
 #include <iostream>
 #include <stack>
 
@@ -72,8 +70,8 @@ public:
      *    value is a hint for laying out the output, but lines may still exceed
      *    this limit in extreme cases.
      **/
-    VerboseOutput(std::ostream & os, uint32_t indent_by = 2,
-            uint32_t max_line = 79);
+    VerboseOutput(std::ostream & os, boost::uint32_t indent_by = 2,
+            boost::uint32_t max_line = 79);
 
 private:
     /**
@@ -94,9 +92,9 @@ private:
      **/
     struct results
     {
-        uint32_t successes;
-        uint32_t failures;
-        uint32_t errors;
+        boost::uint32_t successes;
+        boost::uint32_t failures;
+        boost::uint32_t errors;
     };
 
 
@@ -137,10 +135,10 @@ private:
     std::ostream & m_os;
 
     /** Indentation depth **/
-    uint32_t m_indent_by;
+    boost::uint32_t m_indent_by;
 
     /** Maximum line size */
-    uint32_t m_max_line;
+    boost::uint32_t m_max_line;
 };
 
 
@@ -181,9 +179,9 @@ private:
      **/
     struct results
     {
-        uint32_t successes;
-        uint32_t failures;
-        uint32_t errors;
+        boost::uint32_t successes;
+        boost::uint32_t failures;
+        boost::uint32_t errors;
     };
 
 

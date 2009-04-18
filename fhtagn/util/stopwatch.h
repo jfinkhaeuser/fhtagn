@@ -41,8 +41,6 @@
 
 #include <fhtagn/fhtagn.h>
 
-#include <stdint.h>
-
 #include <boost/tuple/tuple.hpp>
 
 namespace fhtagn {
@@ -62,10 +60,10 @@ public:
    * int32_t to exist. That may not be utterly portable, but it's still fairly
    * reasonable for utility code.
    **/
-#if HAVE_INT64_T
-  typedef int64_t usec_t;
+#if HAVE_BOOST__INT64_T
+  typedef boost::int64_t usec_t;
 #else
-  typedef int32_t usec_t;
+  typedef boost::int32_t usec_t;
 #endif
 
   /**

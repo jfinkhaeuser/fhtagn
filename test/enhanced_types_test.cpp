@@ -128,7 +128,8 @@ private:
     {
         int ret = 0;
         CPPUNIT_ASSERT_THROW(mandatory_function(), std::logic_error);
-        CPPUNIT_ASSERT_NO_THROW(fhtagn::ignore_return_value(mandatory_function()));
+        CPPUNIT_ASSERT_NO_THROW(static_cast<fhtagn::ignore_return_value>(
+              mandatory_function()));
         CPPUNIT_ASSERT_NO_THROW(ret = mandatory_function());
 
         ret = mandatory_function();

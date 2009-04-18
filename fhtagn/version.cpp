@@ -62,10 +62,10 @@
 namespace fhtagn {
 
 
-std::pair<uint16_t, uint16_t>
+std::pair<boost::uint16_t, boost::uint16_t>
 version()
 {
-    return std::make_pair<uint16_t, uint16_t>(FHTAGN_MAJOR, FHTAGN_MINOR);
+    return std::make_pair<boost::uint16_t, boost::uint16_t>(FHTAGN_MAJOR, FHTAGN_MINOR);
 }
 
 

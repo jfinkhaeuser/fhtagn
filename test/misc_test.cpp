@@ -116,7 +116,7 @@ struct large_value_t
   }
 
   void * p1;
-  uint8_t v;
+  boost::uint8_t v;
 };
 
 
@@ -143,19 +143,19 @@ private:
     {
         namespace b = fhtagn::byte_order;
 
-        uint16_t x = 1234;
+        boost::uint16_t x = 1234;
         CPPUNIT_ASSERT_EQUAL(x, b::convert<>::ntoh(b::convert<>::hton(x)));
-        uint32_t y = 1234;
+        boost::uint32_t y = 1234;
         CPPUNIT_ASSERT_EQUAL(y, b::convert<>::ntoh(b::convert<>::hton(y)));
-        uint64_t z = 1234;
+        boost::uint64_t z = 1234;
         CPPUNIT_ASSERT_EQUAL(z, b::convert<>::ntoh(b::convert<>::hton(z)));
 
         if (b::host_byte_order() == b::FHTAGN_BIG_ENDIAN) {
-            CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(1234), b::to_host(x, b::FHTAGN_BIG_ENDIAN));
-            CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(53764), b::to_host(x, b::FHTAGN_LITTLE_ENDIAN));
+            CPPUNIT_ASSERT_EQUAL(static_cast<boost::uint16_t>(1234), b::to_host(x, b::FHTAGN_BIG_ENDIAN));
+            CPPUNIT_ASSERT_EQUAL(static_cast<boost::uint16_t>(53764), b::to_host(x, b::FHTAGN_LITTLE_ENDIAN));
         } else {
-            CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(53764), b::to_host(x, b::FHTAGN_BIG_ENDIAN));
-            CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(1234), b::to_host(x, b::FHTAGN_LITTLE_ENDIAN));
+            CPPUNIT_ASSERT_EQUAL(static_cast<boost::uint16_t>(53764), b::to_host(x, b::FHTAGN_BIG_ENDIAN));
+            CPPUNIT_ASSERT_EQUAL(static_cast<boost::uint16_t>(1234), b::to_host(x, b::FHTAGN_LITTLE_ENDIAN));
         }
     }
 
@@ -217,26 +217,26 @@ private:
       // It's a very simple test, really. We just assert that regardless of the
       // size of the value type, the size of the compressed_value is
       // smaller or equal to a pointer size.
-      typedef uint8_t small_value_t;
+      typedef boost::uint8_t small_value_t;
 
       fhtagn::compressed_value<small_value_t> cv1;
       CPPUNIT_ASSERT(sizeof(cv1) <= sizeof(void *));
-      CPPUNIT_ASSERT_EQUAL(uint8_t(0), *cv1);
+      CPPUNIT_ASSERT_EQUAL(boost::uint8_t(0), *cv1);
       *cv1 = 123;
-      CPPUNIT_ASSERT_EQUAL(uint8_t(123), *cv1);
+      CPPUNIT_ASSERT_EQUAL(boost::uint8_t(123), *cv1);
 
       fhtagn::compressed_value<large_value_t> cv2;
       CPPUNIT_ASSERT(sizeof(cv2) <= sizeof(void *));
-      CPPUNIT_ASSERT_EQUAL(uint8_t(0), cv2->v);
+      CPPUNIT_ASSERT_EQUAL(boost::uint8_t(0), cv2->v);
       cv2->v = 123;
-      CPPUNIT_ASSERT_EQUAL(uint8_t(123), cv2->v);
+      CPPUNIT_ASSERT_EQUAL(boost::uint8_t(123), cv2->v);
 
       // And now we'll test copy construction and assignment, and we're done.
       fhtagn::compressed_value<small_value_t> cv3(cv1);
-      CPPUNIT_ASSERT_EQUAL(uint8_t(123), *cv3);
+      CPPUNIT_ASSERT_EQUAL(boost::uint8_t(123), *cv3);
       *cv1 = 666;
       cv3 = cv1;
-      CPPUNIT_ASSERT_EQUAL(uint8_t(666), *cv3);
+      CPPUNIT_ASSERT_EQUAL(boost::uint8_t(666), *cv3);
 
     }
 };

@@ -158,7 +158,7 @@ struct ascii_decoder
 struct iso8859_decoder_base
     : public transcoder_base
 {
-    iso8859_decoder_base(uint32_t subencoding)
+    iso8859_decoder_base(fhtagn::size_t subencoding)
         : transcoder_base()
         , m_subencoding(subencoding)
         , m_byte(0)
@@ -209,7 +209,7 @@ struct iso8859_decoder_base
             return tmp;
         }
 
-        uint32_t offset = m_subencoding - 2;
+        boost::uint32_t offset = m_subencoding - 2;
         if (m_subencoding > 11) {
             --offset;
         }
@@ -218,7 +218,7 @@ struct iso8859_decoder_base
         return detail::iso8859_mapping[offset];
     }
 
-    uint32_t            m_subencoding;
+    fhtagn::size_t      m_subencoding;
     unsigned char       m_byte;
     bool                m_empty;
 };
@@ -446,7 +446,7 @@ struct utf8_decoder
 
         utf32_char_t result = static_cast<unsigned char>(m_buffer[0])
                 - modifier_table[m_size - 1];
-        for (uint8_t i = 1 ; i < m_size ; ++i) {
+        for (boost::uint8_t i = 1 ; i < m_size ; ++i) {
             result *= (1 << 6);
             result += static_cast<unsigned char>(m_buffer[i]) - 0x80;
         }
@@ -454,9 +454,9 @@ struct utf8_decoder
         return result;
     }
 
-    uint8_t       m_size;
-    unsigned char m_buffer[4];
-    uint8_t       m_buffer_used;
+    boost::uint8_t  m_size;
+    unsigned char   m_buffer[4];
+    boost::uint8_t  m_buffer_used;
 };
 
 
@@ -490,12 +490,12 @@ struct utf16_decoder
             return false;
         }
 
-        uint16_t & next_word = m_buffer[m_buffer_used / 2];
+        boost::uint16_t & next_word = m_buffer[m_buffer_used / 2];
 
         // if we're reading the first byte of either word that can make up a
         // UTF-16 sequence we /always/ need another byte.
         if (m_buffer_used == 0 || m_buffer_used == 2) {
-            next_word = (static_cast<uint16_t>(byte) << 8);
+            next_word = (static_cast<boost::uint16_t>(byte) << 8);
             ++m_buffer_used;
             return true;
         }
@@ -579,12 +579,12 @@ struct utf16_decoder
     }
 
     byte_order::endian  m_endian;
-    uint16_t            m_buffer[2];
+    boost::uint16_t     m_buffer[2];
 
     /** bytes used in m_buffer (not words) */
-    uint8_t             m_buffer_used;
+    boost::uint8_t      m_buffer_used;
     /** word size of the character */
-    uint8_t             m_size;
+    boost::uint8_t      m_size;
 };
 
 
@@ -693,10 +693,10 @@ struct utf32_decoder
 
 
     byte_order::endian  m_endian;
-    uint32_t            m_buffer;
+    boost::uint32_t     m_buffer;
 
     /** bytes used in m_buffer (not words) */
-    uint8_t             m_buffer_used;
+    boost::uint8_t      m_buffer_used;
 };
 
 

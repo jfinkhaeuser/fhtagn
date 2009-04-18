@@ -47,7 +47,7 @@
 #include <fhtagn/memory/size_based_pool.h>
 
 
-typedef uint32_t test_int_t;
+typedef boost::uint32_t test_int_t;
 
 typedef fhtagn::memory::dynamic_pool<
   fhtagn::memory::fixed_pool<>,
