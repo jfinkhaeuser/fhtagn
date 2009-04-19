@@ -47,6 +47,14 @@
 
 #include <boost/program_options.hpp>
 
+#ifdef _WIN32
+#define random_func   rand
+#define srandom_func  srand
+#else
+#define random_func   random
+#define srandom_func  srandom
+#endif
+
 namespace mem = fhtagn::memory;
 
 
@@ -129,19 +137,19 @@ void initRandomPool(boost::uint32_t num_actions, boost::uint32_t max_items_per_a
   fhtagn::util::stopwatch sw;
 
   // Initialize RNG. We always want the same numbers.
-  ::srandom(g_seed);
+  srandom_func(g_seed);
 
   g_actions.clear();
   g_random_pool.clear();
 
   for (boost::uint32_t i = 0 ; i < num_actions ; ++i) {
     // Determine the number of items for this action.
-    boost::uint32_t items = ::random() % max_items_per_action;
+    boost::uint32_t items = random_func() % max_items_per_action;
     g_actions.push_back(items);
 
     // Fill random pool with enough numbers for this action.
     for (boost::uint32_t j = 0 ; j < items ; ++j) {
-      g_random_pool.push_back(::random());
+      g_random_pool.push_back(random_func());
     }
   }
 
