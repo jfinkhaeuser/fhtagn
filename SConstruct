@@ -86,14 +86,17 @@ class FhtagnEnvironment(ExtendedEnvironment):
       'thread',
       'program_options',
     ]
-    if not conf.BoostCheck(LIBS = boost_libs, min_version = (1, 35, 0)):
+    if not conf.BoostCheck(LIBS = boost_libs, min_version = (1, 35, 0), prefer_static = True):
       print ">> Features depending on boost will not be built."
     else:
+      self['CXXFLAGS'] += [ '/DBOOST_THREAD_USE_LIB' ]
+      self['CFLAGS'] += [ '/DBOOST_THREAD_USE_LIB' ]
       if self.is_unix():
         self['CXXFLAGS'] += ['-pthread']
+        self['CFLAGS'] += ['-pthread']
       else:
-        self['CXXFLAGS'] += ['/MT', '/DBOOST_THREAD_USE_LIB=1']
-        self['CFLAGS'] += ['/MT', '/DBOOST_THREAD_USE_LIB=1']
+        self['CXXFLAGS'] += ['/MT']
+        self['CFLAGS'] += ['/MT']
 
     if not conf.CppUnitCheck():
       print ">> CppUnit extensions will not be built."
