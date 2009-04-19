@@ -43,6 +43,8 @@
 
 #include <stdexcept>
 
+#include <boost/noncopyable.hpp>
+
 namespace fhtagn {
 
 /**
@@ -53,10 +55,11 @@ namespace fhtagn {
  *
  *    throw_if_unchecked<int> foo() {...}
  *
- *    foo(); // throws
- *    throw_if_unchecked<int> ret = foo(); // throws
- *    int ret = foo(); // doesn't throw, return value has been 'used'
- *    ignore_return_value(foo()); // doesn't throw, explicitly ignored
+ *    foo();                                    // throws
+ *    throw_if_unchecked<int> ret = foo();      // throws
+ *    int ret = foo();                          // doesn't throw, value is 'used'
+ *    static_cast<ignore_return_value>(foo());  // doesn't throw, discarded
+ *    ignore_return_value x = foo();            // doesn't throw, discarded
  *
  * The error thrown in the cases marked above are std::logic_error.
  **/
@@ -70,31 +73,41 @@ template <
 class throw_if_unchecked
 {
 public:
-    throw_if_unchecked(wrappedT const & retval)
+    inline throw_if_unchecked(wrappedT const & retval)
         : m_throw(true)
         , m_retval(retval)
     {
     }
 
-    ~throw_if_unchecked()
+    inline throw_if_unchecked(throw_if_unchecked const & other)
+        : m_throw(other.m_throw)
+        , m_retval(other.m_retval)
+    {
+    }
+
+    inline ~throw_if_unchecked()
     {
         if (m_throw) {
-            throw std::logic_error("Ignored return value that should not be ignored!");
+            throw std::logic_error("Ignored return value that must not be ignored!");
         }
     }
 
-    operator wrappedT() const
+    inline operator wrappedT() const
     {
         m_throw = false;
         return m_retval;
     }
 
-    operator ignore_return_value() const
+    inline operator ignore_return_value() const
     {
+        m_throw = false;
         return ignore_return_value();
     }
 
 private:
+    // No default construction
+    throw_if_unchecked();
+
     mutable bool m_throw;
     wrappedT     m_retval;
 };
