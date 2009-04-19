@@ -91,6 +91,9 @@ class FhtagnEnvironment(ExtendedEnvironment):
     else:
       if self.is_unix():
         self['CXXFLAGS'] += ['-pthread']
+      else:
+        self['CXXFLAGS'] += ['/MT', '/DBOOST_THREAD_USE_LIB=1']
+        self['CFLAGS'] += ['/MT', '/DBOOST_THREAD_USE_LIB=1']
 
     if not conf.CppUnitCheck():
       print ">> CppUnit extensions will not be built."
@@ -212,10 +215,19 @@ if env['BUILD_LIB_TYPE'] in ('static', 'both'):
   env.Default(fhtagn_util_static_lib)
 
 
+EXECUTABLE_EXTRA_LINKFLAGS = []
+if not env.is_unix():
+  EXECUTABLE_EXTRA_LINKFLAGS = [
+    '/SUBSYSTEM:CONSOLE',
+    '/NODEFAULTLIB:LIBCMT.lib',
+    '/NODEFAULTLIB:MSVCPRT.lib'
+  ]
+
 if env.getSources('testsuite'):
   testsuite_name = os.path.join('#', env[env.BUILD_PREFIX], 'test', 'testsuite')
   testsuite = env.Program(testsuite_name, env.getSources('testsuite'),
-      LIBS = env.getLibs('testsuite'))
+      LIBS = env.getLibs('testsuite'),
+      LINKFLAGS = env['LINKFLAGS'] + EXECUTABLE_EXTRA_LINKFLAGS)
   env.Alias('check', testsuite)
   env.Default(testsuite)
 
@@ -223,7 +235,8 @@ if env.getSources('testsuite'):
 if env.getSources('allocspeed'):
   allocspeed_name = os.path.join('#', env[env.BUILD_PREFIX], 'test', 'allocspeed')
   allocspeed = env.Program(allocspeed_name, env.getSources('allocspeed'),
-      LIBS = env.getLibs('allocspeed'))
+      LIBS = env.getLibs('allocspeed'),
+      LINKFLAGS = env['LINKFLAGS'] + EXECUTABLE_EXTRA_LINKFLAGS)
   env.Default(allocspeed)
 
 
