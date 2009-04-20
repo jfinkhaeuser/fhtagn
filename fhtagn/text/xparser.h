@@ -224,8 +224,9 @@ private:
  * want to switch the encoding back and forth at runtime, you need to create
  * several char_parser_factories.
  **/
-struct char_parser_factory
+class char_parser_factory
 {
+public:
     char_parser_factory(char_encoding_type input_encoding = ISO_8859_1)
         : anychar_p(this)
         , decoder(input_encoding)

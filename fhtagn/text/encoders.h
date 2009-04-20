@@ -47,7 +47,7 @@
  * The character value 159 is not a valid character in ASCII or ISO-8859-*
  * encodings.
  **/
-#define FHTAGN_TEXT_INVALID_CHAR static_cast<char>(159)
+#define FHTAGN_TEXT_INVALID_CHAR char(159)
 
 namespace fhtagn {
 namespace text {
@@ -207,15 +207,15 @@ struct iso8859_encoder_base
             }
         } else {
             // compute offset into mapping table
-            boost::uint32_t offset = m_subencoding - 2;
+            fhtagn::size_t offset = m_subencoding - 2;
             if (m_subencoding > 11) {
                 --offset;
             }
             offset *= 96; // number of characters special to each subencoding
 
-            for (boost::uint32_t i = offset ; i < offset + 96 ; ++i) {
+            for (fhtagn::size_t i = offset ; i < offset + 96 ; ++i) {
                 if (detail::iso8859_mapping[i] == ch) {
-                    m_byte = i - offset + 160;
+                    m_byte = static_cast<char>(i - offset + 160);
                     return true;
                 }
             }
@@ -304,7 +304,7 @@ struct cp1252_encoder
 
         for (boost::uint32_t i = 0 ; i < 32 ; ++i) {
             if (detail::cp1252_mapping[i] == ch) {
-                m_byte = i + 0x80;
+                m_byte = static_cast<char>(i + 0x80);
                 m_flag = true;
                 return true;
             }
@@ -361,7 +361,7 @@ struct mac_roman_encoder
 
         for (boost::uint32_t i = 0 ; i < 128 ; ++i) {
             if (detail::mac_roman_mapping[i] == ch) {
-                m_byte = i + 0x80;
+                m_byte = static_cast<char>(i + 0x80);
                 m_flag = true;
                 return true;
             }
@@ -427,16 +427,16 @@ struct utf8_encoder
         switch (size) {
           // everything falls through
           case 4:
-            *--offset = (ch | 0x80) & 0xbf;
+            *--offset = static_cast<char>((ch | 0x80) & 0xbf);
             ch >>= 6;
           case 3:
-            *--offset = (ch | 0x80) & 0xbf;
+            *--offset = static_cast<char>((ch | 0x80) & 0xbf);
             ch >>= 6;
           case 2:
-            *--offset = (ch | 0x80) & 0xbf;
+            *--offset = static_cast<char>((ch | 0x80) & 0xbf);
             ch >>= 6;
           case 1:
-            *--offset = ch | modifier_table[size - 1];
+            *--offset = static_cast<char>(ch | modifier_table[size - 1]);
         }
         return true;
     }
@@ -485,7 +485,7 @@ struct utf16_encoder
                 return false;
             }
 
-            m_buffer[0] = ch;
+            m_buffer[0] = static_cast<utf16_char_t>(ch);
             m_buffer[0] = byte_order::from_host(m_buffer[0], m_endian);
 
             m_end = reinterpret_cast<char *>(&m_buffer[1]);
@@ -500,9 +500,9 @@ struct utf16_encoder
         }
 
         ch -= 0x00010000UL;
-        m_buffer[0] = (ch >> 10) + 0xd800;
+        m_buffer[0] = static_cast<utf16_char_t>((ch >> 10) + 0xd800);
         m_buffer[0] = byte_order::from_host(m_buffer[0], m_endian);
-        m_buffer[1] = (ch & 0x03ff) + 0xdc00;
+        m_buffer[1] = static_cast<utf16_char_t>((ch & 0x03ff) + 0xdc00);
         m_buffer[1] = byte_order::from_host(m_buffer[1], m_endian);
 
         m_end = reinterpret_cast<char *>(&m_buffer[2]);

@@ -209,7 +209,7 @@ struct iso8859_decoder_base
             return tmp;
         }
 
-        boost::uint32_t offset = m_subencoding - 2;
+        fhtagn::size_t offset = m_subencoding - 2;
         if (m_subencoding > 11) {
             --offset;
         }

@@ -1022,7 +1022,7 @@ private:
                     std::back_insert_iterator<std::string>(target));
 
             CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(15), target.size());
-            CPPUNIT_ASSERT_EQUAL(static_cast<std::string::value_type>(0xa4), target[7]);
+            CPPUNIT_ASSERT_EQUAL(std::string::value_type(0xa4), target[7]);
         }
 
         // transcode with an illegal input character

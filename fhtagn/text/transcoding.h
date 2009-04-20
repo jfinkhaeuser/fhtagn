@@ -367,9 +367,9 @@ template <
 >
 inline input_iterT
 decode(decoderT & decoder, input_iterT first, input_iterT last,
-        output_iterT result, ssize_t & output_size)
+        output_iterT result, fhtagn::ssize_t & output_size)
 {
-    ssize_t used_output = 0;
+    fhtagn::ssize_t used_output = 0;
 
 #if defined(HAVE_BOOST)
     // ensure that decoderT is a valid charcter decoder
@@ -436,7 +436,7 @@ inline input_iterT
 decode(decoderT & decoder, input_iterT first, input_iterT last,
         output_iterT result)
 {
-    ssize_t output_size = -1;
+    fhtagn::ssize_t output_size = -1;
     return decode(decoder, first, last, result, output_size);
 }
 
@@ -530,9 +530,9 @@ template <
 >
 inline input_iterT
 encode(encoderT & encoder, input_iterT first, input_iterT last,
-        output_iterT result, ssize_t & output_size)
+        output_iterT result, fhtagn::ssize_t & output_size)
 {
-    ssize_t used_output = 0;
+    typename std::iterator_traits<input_iterT>::difference_type used_output = 0;
 
 #if defined(HAVE_BOOST)
     // ensure that encoderT is a valid character encoder
@@ -571,7 +571,7 @@ encode(encoderT & encoder, input_iterT first, input_iterT last,
         }
     }
 
-    output_size = used_output;
+    output_size = static_cast<fhtagn::ssize_t>(used_output);
     return iter;
 }
 
@@ -585,7 +585,7 @@ inline input_iterT
 encode(encoderT & encoder, input_iterT first, input_iterT last,
         output_iterT result)
 {
-    ssize_t output_size = -1;
+    fhtagn::ssize_t output_size = -1;
     return encode(encoder, first, last, result, output_size);
 }
 
@@ -603,9 +603,9 @@ template <
 >
 inline input_iterT
 transcode(decoderT & decoder, input_iterT first, input_iterT last,
-        encoderT & encoder, output_iterT result, ssize_t & output_size)
+        encoderT & encoder, output_iterT result, fhtagn::ssize_t & output_size)
 {
-    ssize_t used_output = 0;
+    fhtagn::ssize_t used_output = 0;
 
     input_iterT input_iter = first;
     output_iterT output_iter = result;
@@ -613,7 +613,7 @@ transcode(decoderT & decoder, input_iterT first, input_iterT last,
             && (output_size == -1 || used_output <= output_size))
     {
         utf32_char_t buffer;
-        ssize_t bufsize = 1;
+        fhtagn::ssize_t bufsize = 1;
 
         // first, decode a chunk of the input.
         input_iterT tmp_iter = decode(decoder, input_iter, last, &buffer, bufsize);
@@ -624,7 +624,7 @@ transcode(decoderT & decoder, input_iterT first, input_iterT last,
         }
 
         // now encode the chunk using the output encoding.
-        ssize_t remaining = output_size == -1 ? -1 : output_size - used_output;
+        fhtagn::ssize_t remaining = output_size == -1 ? -1 : output_size - used_output;
         encode(encoder, &buffer, &buffer + 1, output_iter, remaining);
         if (!remaining) {
             // Again, no output has been produced
@@ -651,7 +651,7 @@ inline input_iterT
 transcode(decoderT & decoder, input_iterT first, input_iterT last,
         encoderT & encoder, output_iterT result)
 {
-    ssize_t output_size = -1;
+    fhtagn::ssize_t output_size = -1;
     return transcode<decoderT, input_iterT, encoderT, output_iterT>(
             decoder, first, last, encoder, result, output_size);
 }
