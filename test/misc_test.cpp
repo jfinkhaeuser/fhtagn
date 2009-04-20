@@ -234,9 +234,9 @@ private:
       // And now we'll test copy construction and assignment, and we're done.
       fhtagn::compressed_value<small_value_t> cv3(cv1);
       CPPUNIT_ASSERT_EQUAL(boost::uint8_t(123), *cv3);
-      *cv1 = 666;
+      *cv1 = 42;
       cv3 = cv1;
-      CPPUNIT_ASSERT_EQUAL(boost::uint8_t(666), *cv3);
+      CPPUNIT_ASSERT_EQUAL(boost::uint8_t(42), *cv3);
 
     }
 };

@@ -70,8 +70,8 @@ public:
      *    value is a hint for laying out the output, but lines may still exceed
      *    this limit in extreme cases.
      **/
-    VerboseOutput(std::ostream & os, boost::uint32_t indent_by = 2,
-            boost::uint32_t max_line = 79);
+    VerboseOutput(std::ostream & os, fhtagn::size_t indent_by = 2,
+            fhtagn::size_t max_line = 79);
 
 private:
     /**
@@ -135,10 +135,10 @@ private:
     std::ostream & m_os;
 
     /** Indentation depth **/
-    boost::uint32_t m_indent_by;
+    fhtagn::size_t m_indent_by;
 
     /** Maximum line size */
-    boost::uint32_t m_max_line;
+    fhtagn::size_t m_max_line;
 };
 
 

@@ -48,7 +48,7 @@ namespace {
 /** Helper struct to produce padding on an output stream. **/
 struct pad
 {
-    pad(boost::uint32_t pad_length, char pad_char = ' ')
+    pad(fhtagn::size_t pad_length, char pad_char = ' ')
         : m_pad_length(pad_length)
         , m_pad_char(pad_char)
     {
@@ -60,7 +60,7 @@ struct pad
 
     virtual void output(std::ostream & os) const
     {
-        for (boost::uint32_t i = 0 ; i < m_pad_length ; ++i) {
+        for (fhtagn::size_t i = 0 ; i < m_pad_length ; ++i) {
             os << m_pad_char;
         }
     }
@@ -71,7 +71,7 @@ struct pad
         return os;
     }
 
-    boost::uint32_t m_pad_length;
+    fhtagn::size_t  m_pad_length;
     char            m_pad_char;
 };
 
@@ -80,7 +80,7 @@ struct pad
 struct indent
     : public pad
 {
-    indent(boost::uint32_t indent_level, boost::uint32_t pad_size)
+    indent(fhtagn::size_t indent_level, fhtagn::size_t pad_size)
         : pad(indent_level * pad_size)
     {
     }
@@ -94,8 +94,8 @@ struct indent
 struct line
     : public indent
 {
-    line(boost::uint32_t indent_level, boost::uint32_t pad_size, char line_char,
-            boost::uint32_t max_line)
+    line(fhtagn::size_t indent_level, fhtagn::size_t pad_size, char line_char,
+            fhtagn::size_t max_line)
         : indent(indent_level, pad_size)
     {
         m_pad_length = max_line - m_pad_length;
@@ -115,7 +115,7 @@ struct line
  **/
 
 VerboseOutput::VerboseOutput(std::ostream & os,
-        boost::uint32_t indent_by /* = 2 */, boost::uint32_t max_line /* = 79 */)
+        fhtagn::size_t indent_by /* = 2 */, fhtagn::size_t max_line /* = 79 */)
     : m_results()
     , m_status(OK)
     , m_os(os)
@@ -133,7 +133,7 @@ void
 VerboseOutput::startTest(CppUnit::Test * test)
 {
     std::string label = "Running `" + test->getName() + "'";
-    boost::uint32_t pad_size = m_max_line - label.size() - INDENT.m_pad_length - 12;
+    fhtagn::size_t pad_size = m_max_line - label.size() - INDENT.m_pad_length - 12;
     if (pad_size > m_max_line) {
         pad_size = 1;
     }

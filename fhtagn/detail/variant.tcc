@@ -281,7 +281,7 @@ variant::check(variant const & var)
 {
     try {
         return var.is<T>();
-    } catch (error const & ex) {
+    } catch (error const &) {
         return false;
     }
 }
