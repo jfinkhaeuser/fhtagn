@@ -151,34 +151,34 @@ struct one_of
 
         try {
             return restrict0T::check(value);
-        } catch (violation_error const & ex) {
+        } catch (violation_error const &) {
             try {
                 return restrict1T::check(value);
-            } catch (violation_error const & ex) {
+            } catch (violation_error const &) {
                 try {
                     return restrict2T::check(value);
-                } catch (violation_error const & ex) {
+                } catch (violation_error const &) {
                     try {
                         return restrict3T::check(value);
-                    } catch (violation_error const & ex) {
+                    } catch (violation_error const &) {
                         try {
                             return restrict4T::check(value);
-                        } catch (violation_error const & ex) {
+                        } catch (violation_error const &) {
                             try {
                                 return restrict5T::check(value);
-                            } catch (violation_error const & ex) {
+                            } catch (violation_error const &) {
                                 try {
                                     return restrict6T::check(value);
-                                } catch (violation_error const & ex) {
+                                } catch (violation_error const &) {
                                     try {
                                         return restrict7T::check(value);
-                                    } catch (violation_error const & ex) {
+                                    } catch (violation_error const &) {
                                         try {
                                             return restrict8T::check(value);
-                                        } catch (violation_error const & ex) {
+                                        } catch (violation_error const &) {
                                             try {
                                                 return restrict9T::check(value);
-                                            } catch (violation_error const & ex) {
+                                            } catch (violation_error const &) {
                                                 return never<valueT>::check(value);
                                             }
                                         }

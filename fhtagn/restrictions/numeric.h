@@ -107,7 +107,7 @@ struct even
 
         try {
             divisible<valueT, 2>::check(value);
-        } catch (violation_error const & ex) {
+        } catch (violation_error const &) {
             // catch exception to transform it to something more specific
             throw violation_error("fhtagn::restrictions::even failed!");
         }

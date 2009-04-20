@@ -214,8 +214,9 @@ private:
       // after all.
       const double percentage = 0.2;
 
-      long ms = std::max(plain_time, no_restrict_time).total_microseconds();
-      long diff_ms = std::labs(
+      bpt::time_duration::tick_type ms = std::max(plain_time, no_restrict_time)
+        .total_microseconds();
+      bpt::time_duration::tick_type diff_ms = std::labs(
           (plain_time - no_restrict_time).total_microseconds());
       CPPUNIT_ASSERT(diff_ms < (ms * percentage));
 
