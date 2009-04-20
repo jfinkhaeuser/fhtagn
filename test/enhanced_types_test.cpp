@@ -168,6 +168,9 @@ private:
         CPPUNIT_ASSERT_NO_THROW(std::swap(a, b));
         CPPUNIT_ASSERT_EQUAL(2, static_cast<int>(a));
         CPPUNIT_ASSERT_EQUAL(4, static_cast<int>(b));
+
+        // Silly thing, really... test that assigning to even_int_t returns a value.
+        CPPUNIT_ASSERT(a = 6);
     }
 
 
