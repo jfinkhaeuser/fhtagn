@@ -47,7 +47,7 @@ namespace fhtagn {
 namespace memory {
 
 void *
-heap_pool::alloc(std::size_t size)
+heap_pool::alloc(fhtagn::size_t size)
 {
   if (!size) {
     return NULL;
@@ -60,7 +60,7 @@ heap_pool::alloc(std::size_t size)
 
 
 void *
-heap_pool::realloc(void * ptr, std::size_t new_size)
+heap_pool::realloc(void * ptr, fhtagn::size_t new_size)
 {
   if (!new_size) {
     return NULL;
@@ -91,7 +91,7 @@ heap_pool::in_use() const
 
 
 
-std::size_t
+fhtagn::size_t
 heap_pool::alloc_size(void * ptr) const
 {
   if (!ptr) {

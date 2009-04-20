@@ -78,9 +78,9 @@ namespace memory {
  * pool than the specified number.
  **/
 template <
-  std::size_t OBJECTS_PER_POOL = 256,
-  std::size_t MIN_OBJECT_SIZE = 1,
-  std::size_t MAX_OBJECT_SIZE = 256,
+  fhtagn::size_t OBJECTS_PER_POOL = 256,
+  fhtagn::size_t MIN_OBJECT_SIZE = 1,
+  fhtagn::size_t MAX_OBJECT_SIZE = 256,
   template <int> class incrementorT = ::fhtagn::meta::multi_double,
   typename mutexT = ::fhtagn::threads::fake_mutex
 >
@@ -90,11 +90,11 @@ struct size_based_pool
 
   inline size_based_pool();
 
-  inline void * alloc(std::size_t size);
-  inline void * realloc(void * ptr, std::size_t new_size);
+  inline void * alloc(fhtagn::size_t size);
+  inline void * realloc(void * ptr, fhtagn::size_t new_size);
   inline void free(void * ptr);
   inline bool in_use() const;
-  inline std::size_t alloc_size(void * ptr) const;
+  inline fhtagn::size_t alloc_size(void * ptr) const;
 
 private:
 
@@ -102,24 +102,24 @@ private:
   {
     virtual ~virtual_pool_base() {};
 
-    virtual void * alloc(std::size_t size) = 0;
-    virtual void * realloc(void * ptr, std::size_t new_size) = 0;
+    virtual void * alloc(fhtagn::size_t size) = 0;
+    virtual void * realloc(void * ptr, fhtagn::size_t new_size) = 0;
     virtual void free(void * ptr) = 0;
     virtual bool in_use() const = 0;
-    virtual std::size_t alloc_size(void * ptr) const = 0;
+    virtual fhtagn::size_t alloc_size(void * ptr) const = 0;
   };
 
-  template <std::size_t OBJECT_SIZE>
+  template <fhtagn::size_t OBJECT_SIZE>
   struct virtual_pool : virtual_pool_base
   {
     virtual ~virtual_pool() {};
 
-    virtual void * alloc(std::size_t size)
+    virtual void * alloc(fhtagn::size_t size)
     {
       return m_pool.alloc(size);
     }
 
-    virtual void * realloc(void * ptr, std::size_t new_size)
+    virtual void * realloc(void * ptr, fhtagn::size_t new_size)
     {
       return m_pool.realloc(ptr, new_size);
     }
@@ -134,7 +134,7 @@ private:
       return m_pool.in_use();
     }
 
-    virtual std::size_t alloc_size(void * ptr) const
+    virtual fhtagn::size_t alloc_size(void * ptr) const
     {
       return m_pool.alloc_size(ptr);
     }
@@ -147,8 +147,8 @@ private:
 
 
   typedef boost::shared_ptr<virtual_pool_base>      virtual_pool_ptr;
-  typedef std::map<std::size_t, virtual_pool_ptr>   pool_map_t;
-  typedef std::map<void *, std::size_t>             pointer_size_map_t;
+  typedef std::map<fhtagn::size_t, virtual_pool_ptr>   pool_map_t;
+  typedef std::map<void *, fhtagn::size_t>             pointer_size_map_t;
 
   template <int I>
   struct pool_creator
@@ -159,7 +159,7 @@ private:
     }
   };
 
-  inline std::size_t pool_size(std::size_t in_size) const;
+  inline fhtagn::size_t pool_size(fhtagn::size_t in_size) const;
 
 
   pool_map_t          m_pool_map;

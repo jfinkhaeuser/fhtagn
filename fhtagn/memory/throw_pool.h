@@ -74,7 +74,7 @@ struct throw_pool
 
 
 
-  inline void * alloc(std::size_t size)
+  inline void * alloc(fhtagn::size_t size)
   {
     void * ret = m_pool.alloc(size);
     if (!ret) {
@@ -85,7 +85,7 @@ struct throw_pool
 
 
 
-  inline void * realloc(void * ptr, std::size_t new_size)
+  inline void * realloc(void * ptr, fhtagn::size_t new_size)
   {
     void * ret = m_pool.realloc(ptr, new_size);
     if (!ret) {
@@ -110,7 +110,7 @@ struct throw_pool
 
 
 
-  inline std::size_t alloc_size(void * ptr) const
+  inline fhtagn::size_t alloc_size(void * ptr) const
   {
     return m_pool.alloc_size(ptr);
   }

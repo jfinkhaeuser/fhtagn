@@ -89,16 +89,16 @@ public:
    * yourself that the memory lives at least as long as this fixed_pool
    * instance.
    **/
-  inline fixed_pool(void * memblock, std::size_t size);
+  inline fixed_pool(void * memblock, fhtagn::size_t size);
 
   /**
    * API - see memory_pool.h for details
    **/
-  inline void * alloc(std::size_t size);
-  inline void * realloc(void * ptr, std::size_t new_size);
+  inline void * alloc(fhtagn::size_t size);
+  inline void * realloc(void * ptr, fhtagn::size_t new_size);
   inline void free(void * ptr);
   inline bool in_use() const;
-  inline std::size_t alloc_size(void * ptr) const;
+  inline fhtagn::size_t alloc_size(void * ptr) const;
 
 private:
 
@@ -114,31 +114,31 @@ private:
     };
 
     enum {
-      LAST_SEGMENT = std::size_t(0)
+      LAST_SEGMENT = fhtagn::size_t(0)
     };
 
-    segment(std::size_t _size)
+    segment(fhtagn::size_t _size)
       : size(_size - sizeof(segment))
       , status(FREE)
     {
       marker = LAST_SEGMENT;
     }
 
-    inline std::size_t full_size() const
+    inline fhtagn::size_t full_size() const
     {
       return size + sizeof(segment);
     }
 
-    static inline std::size_t header_size()
+    static inline fhtagn::size_t header_size()
     {
       return block_alignmentT::adjust_size(sizeof(segment));
     }
 
-    std::size_t size;
-    char        status;
+    fhtagn::size_t  size;
+    char            status;
     union {
-      segment *   next;
-      std::size_t marker;
+      segment *       next;
+      fhtagn::size_t  marker;
     };
   };
 
@@ -146,7 +146,7 @@ private:
    * Finds and allocates a free segment of the given size, splitting larger
    * segments if necessary.
    **/
-  inline segment * allocate_segment(std::size_t size);
+  inline segment * allocate_segment(fhtagn::size_t size);
 
   /**
    * Finds the segment in which ptr resides, or throws if the ptr can't be
@@ -160,7 +160,7 @@ private:
   inline void defragment_free_list();
 
   void *          m_memblock;
-  std::size_t     m_size;
+  fhtagn::size_t  m_size;
 
   segment *       m_start;
 

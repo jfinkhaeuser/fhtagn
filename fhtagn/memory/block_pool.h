@@ -62,7 +62,7 @@ namespace memory {
  * aligned at some definable block boundary.
  **/
 template <
-  std::size_t BLOCK_SIZE,
+  fhtagn::size_t BLOCK_SIZE,
   typename mutexT = fhtagn::threads::fake_mutex,
   typename block_alignmentT = block_alignment<>
 >
@@ -81,28 +81,28 @@ public:
    * yourself that the memory lives at least as long as this block_pool
    * instance.
    **/
-  inline block_pool(void * memblock, std::size_t size);
+  inline block_pool(void * memblock, fhtagn::size_t size);
 
   /**
    * API - see memory_pool.h for details
    **/
-  inline void * alloc(std::size_t size);
-  inline void * realloc(void * ptr, std::size_t new_size);
+  inline void * alloc(fhtagn::size_t size);
+  inline void * realloc(void * ptr, fhtagn::size_t new_size);
   inline void free(void * ptr);
   inline bool in_use() const;
-  inline std::size_t alloc_size(void * ptr) const;
+  inline fhtagn::size_t alloc_size(void * ptr) const;
 
 private:
 
   enum {
-    BITS_PER_SIZE_T = sizeof(std::size_t) * 8,
+    BITS_PER_SIZE_T = sizeof(fhtagn::size_t) * 8,
   };
 
-  void *          m_memblock;
-  std::size_t *   m_metadata;
-  std::size_t     m_size;
+  void *            m_memblock;
+  fhtagn::size_t *  m_metadata;
+  fhtagn::size_t    m_size;
 
-  mutable mutex_t m_mutex;
+  mutable mutex_t   m_mutex;
 };
 
 

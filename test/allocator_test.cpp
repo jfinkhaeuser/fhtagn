@@ -140,7 +140,7 @@ private:
       CPPUNIT_ASSERT(p);
       CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
       for (int i = 0 ; i < 42 ; ++i) {
-        CPPUNIT_ASSERT_EQUAL(static_cast<char>(0x0f), *(p + i));
+        CPPUNIT_ASSERT_EQUAL(char(0x0f), *(p + i));
       }
       ::memset(p, 0xf0, 666);
 
@@ -148,7 +148,7 @@ private:
       CPPUNIT_ASSERT(p);
       CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
       for (int i = 0 ; i < 123 ; ++i) {
-        CPPUNIT_ASSERT_EQUAL(static_cast<char>(0xf0), *(p + i));
+        CPPUNIT_ASSERT_EQUAL(char(0xf0), *(p + i));
       }
 
       // After splitting 123 of a 666 size'd segment, the next allocation of, say
@@ -159,7 +159,7 @@ private:
       CPPUNIT_ASSERT_EQUAL(true, pool.in_use());
       ::memset(p2, 0xea, 200);
       for (int i = 0 ; i < 123 ; ++i) {
-        CPPUNIT_ASSERT_EQUAL(static_cast<char>(0xf0), *(p + i));
+        CPPUNIT_ASSERT_EQUAL(char(0xf0), *(p + i));
       }
 
       pool.free(p);

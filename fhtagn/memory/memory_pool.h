@@ -78,11 +78,11 @@ struct MemoryPoolConcept
     bool b = pool.in_use();
     boost::ignore_unused_variable_warning(b);
 
-    std::size_t s2 = pool.alloc_size(p);
+    fhtagn::size_t s2 = pool.alloc_size(p);
     boost::ignore_unused_variable_warning(s2);
   }
 
-  std::size_t s;
+  fhtagn::size_t s;
   void * p;
   poolT & pool;
 };
@@ -108,7 +108,7 @@ struct heap_pool
    *
    * A size of zero will always cause NULL to be returned.
    **/
-  inline void * alloc(std::size_t size);
+  inline void * alloc(fhtagn::size_t size);
 
   /**
    * Reallocates the given pointer to a new size, and returns a new pointer to
@@ -120,7 +120,7 @@ struct heap_pool
    *
    * A size of zero will always cause NULL to be returned.
    **/
-  inline void * realloc(void * ptr, std::size_t new_size);
+  inline void * realloc(void * ptr, fhtagn::size_t new_size);
 
   /**
    * Frees the memory pointed to by the pointer parameter. If the pointer
@@ -148,7 +148,7 @@ struct heap_pool
    * this is not information the OS divulges. In those cases, and in case the
    * pointer isnt' handled by the pool at all, a zero size is returned.
    **/
-  inline std::size_t alloc_size(void * ptr) const;
+  inline fhtagn::size_t alloc_size(void * ptr) const;
 };
 
 

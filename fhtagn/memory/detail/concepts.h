@@ -78,7 +78,8 @@ struct AllocationPolicyConcept
 
     // check for allocate/deallocate
     p = p1.allocate(s);
-    p = p1.allocate(s, reinterpret_cast<std::allocator<void>::const_pointer>(0xdeadbeef));
+    p = p1.allocate(s, reinterpret_cast<std::allocator<void>::const_pointer>(
+          fhtagn::size_t(0xdeadbeef)));
     p1.deallocate(p, s);
 
     // check for max_size()

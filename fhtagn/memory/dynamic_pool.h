@@ -91,11 +91,11 @@ public:
   /**
    * API - see memory_pool.h for details
    **/
-  inline void * alloc(std::size_t size);
-  inline void * realloc(void * ptr, std::size_t new_size);
+  inline void * alloc(fhtagn::size_t size);
+  inline void * realloc(void * ptr, fhtagn::size_t new_size);
   inline void free(void * ptr);
   inline bool in_use() const;
-  inline std::size_t alloc_size(void * ptr) const;
+  inline fhtagn::size_t alloc_size(void * ptr) const;
 
 private:
 
@@ -112,7 +112,7 @@ private:
   /**
    * Lock-free version of alloc, used internally.
    **/
-  inline void * lockfree_alloc(std::size_t size);
+  inline void * lockfree_alloc(fhtagn::size_t size);
 
   pool_map_t      m_pool_map;
   mutable mutex_t m_mutex;

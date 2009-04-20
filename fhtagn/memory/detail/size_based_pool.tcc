@@ -45,9 +45,9 @@ namespace memory {
 
 
 template <
-  std::size_t OBJECTS_PER_POOL,
-  std::size_t MIN_OBJECT_SIZE,
-  std::size_t MAX_OBJECT_SIZE,
+  fhtagn::size_t OBJECTS_PER_POOL,
+  fhtagn::size_t MIN_OBJECT_SIZE,
+  fhtagn::size_t MAX_OBJECT_SIZE,
   template <int> class incrementorT,
   typename mutexT
 >
@@ -62,17 +62,17 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
 
 
 template <
-  std::size_t OBJECTS_PER_POOL,
-  std::size_t MIN_OBJECT_SIZE,
-  std::size_t MAX_OBJECT_SIZE,
+  fhtagn::size_t OBJECTS_PER_POOL,
+  fhtagn::size_t MIN_OBJECT_SIZE,
+  fhtagn::size_t MAX_OBJECT_SIZE,
   template <int> class incrementorT,
   typename mutexT
 >
-std::size_t
+fhtagn::size_t
 size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
-    incrementorT, mutexT>::pool_size(std::size_t in_size) const
+    incrementorT, mutexT>::pool_size(fhtagn::size_t in_size) const
 {
-  std::size_t s = MIN_OBJECT_SIZE;
+  fhtagn::size_t s = MIN_OBJECT_SIZE;
   for ( ; s < (MAX_OBJECT_SIZE * 2) ; s *= 2) {
     if (s >= in_size) {
       break;
@@ -84,15 +84,15 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
 
 
 template <
-  std::size_t OBJECTS_PER_POOL,
-  std::size_t MIN_OBJECT_SIZE,
-  std::size_t MAX_OBJECT_SIZE,
+  fhtagn::size_t OBJECTS_PER_POOL,
+  fhtagn::size_t MIN_OBJECT_SIZE,
+  fhtagn::size_t MAX_OBJECT_SIZE,
   template <int> class incrementorT,
   typename mutexT
 >
 void *
 size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
-    incrementorT, mutexT>::alloc(std::size_t size)
+    incrementorT, mutexT>::alloc(fhtagn::size_t size)
 {
   if (!size) {
     return NULL;
@@ -101,7 +101,7 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
 
   typename mutexT::scoped_lock lock(m_mutex);
 
-  std::size_t adjusted_size = pool_size(size);
+  fhtagn::size_t adjusted_size = pool_size(size);
 
   if (adjusted_size) {
     void * result = m_pool_map[adjusted_size]->alloc(adjusted_size);
@@ -121,15 +121,15 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
 
 
 template <
-  std::size_t OBJECTS_PER_POOL,
-  std::size_t MIN_OBJECT_SIZE,
-  std::size_t MAX_OBJECT_SIZE,
+  fhtagn::size_t OBJECTS_PER_POOL,
+  fhtagn::size_t MIN_OBJECT_SIZE,
+  fhtagn::size_t MAX_OBJECT_SIZE,
   template <int> class incrementorT,
   typename mutexT
 >
 void *
 size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
-    incrementorT, mutexT>::realloc(void * ptr, std::size_t new_size)
+    incrementorT, mutexT>::realloc(void * ptr, fhtagn::size_t new_size)
 {
   if (!ptr) {
     return alloc(new_size);
@@ -139,7 +139,7 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
     return NULL;
   }
 
-  std::size_t adjusted_size = pool_size(new_size);
+  fhtagn::size_t adjusted_size = pool_size(new_size);
 
   typename mutexT::scoped_lock lock(m_mutex);
 
@@ -182,7 +182,7 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
   // Now release the old pointer.
   m_pointer_size_map.erase(iter);
 
-  std::size_t old_adjusted_size = pool_size(iter->second);
+  fhtagn::size_t old_adjusted_size = pool_size(iter->second);
   if (iter->second == old_adjusted_size) {
     m_pool_map[iter->second]->free(ptr);
   }
@@ -196,9 +196,9 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
 
 
 template <
-  std::size_t OBJECTS_PER_POOL,
-  std::size_t MIN_OBJECT_SIZE,
-  std::size_t MAX_OBJECT_SIZE,
+  fhtagn::size_t OBJECTS_PER_POOL,
+  fhtagn::size_t MIN_OBJECT_SIZE,
+  fhtagn::size_t MAX_OBJECT_SIZE,
   template <int> class incrementorT,
   typename mutexT
 >
@@ -218,7 +218,7 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
     return;
   }
 
-  std::size_t adjusted_size = pool_size(iter->second);
+  fhtagn::size_t adjusted_size = pool_size(iter->second);
   if (iter->second == adjusted_size) {
     m_pool_map[iter->second]->free(ptr);
   }
@@ -232,9 +232,9 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
 
 
 template <
-  std::size_t OBJECTS_PER_POOL,
-  std::size_t MIN_OBJECT_SIZE,
-  std::size_t MAX_OBJECT_SIZE,
+  fhtagn::size_t OBJECTS_PER_POOL,
+  fhtagn::size_t MIN_OBJECT_SIZE,
+  fhtagn::size_t MAX_OBJECT_SIZE,
   template <int> class incrementorT,
   typename mutexT
 >
@@ -249,13 +249,13 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
 
 
 template <
-  std::size_t OBJECTS_PER_POOL,
-  std::size_t MIN_OBJECT_SIZE,
-  std::size_t MAX_OBJECT_SIZE,
+  fhtagn::size_t OBJECTS_PER_POOL,
+  fhtagn::size_t MIN_OBJECT_SIZE,
+  fhtagn::size_t MAX_OBJECT_SIZE,
   template <int> class incrementorT,
   typename mutexT
 >
-std::size_t
+fhtagn::size_t
 size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
     incrementorT, mutexT>::alloc_size(void * ptr) const
 {
@@ -267,7 +267,7 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
     return 0;
   }
 
-  std::size_t adjusted_size = pool_size(iter->second);
+  fhtagn::size_t adjusted_size = pool_size(iter->second);
   if (iter->second != adjusted_size) {
     return m_heap.alloc_size(ptr);
   }
@@ -278,7 +278,7 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
     // Pretty much impossible.
     throw std::bad_alloc();
   }
-  std::size_t ret = pool_iter->second->alloc_size(ptr);
+  fhtagn::size_t ret = pool_iter->second->alloc_size(ptr);
   assert(ret);
   return ret;
 }

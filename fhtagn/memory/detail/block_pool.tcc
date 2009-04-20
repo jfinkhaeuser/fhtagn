@@ -47,12 +47,12 @@ namespace fhtagn {
 namespace memory {
 
 template <
-  std::size_t BLOCK_SIZE,
+  fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
   typename block_alignmentT
 >
 block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::block_pool(void * memblock,
-    std::size_t size)
+    fhtagn::size_t size)
   : m_memblock(memblock)
 {
   // We don't really need to know the beginning of the memory block and it's
@@ -65,9 +65,9 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::block_pool(void * memblock,
   // |----|xxxx|xxxx|----|  fully adjusted memory block
 
   void * adjusted_start = block_alignment_t::adjust_pointer(m_memblock);
-  std::size_t size_diff = pointer(adjusted_start).char_ptr
+  fhtagn::size_t size_diff = pointer(adjusted_start).char_ptr
     - pointer(m_memblock).char_ptr;
-  std::size_t adjusted_size = size - size_diff;
+  fhtagn::size_t adjusted_size = size - size_diff;
 
   size_diff = adjusted_size % block_alignment_t::BLOCK_SIZE;
   adjusted_size -= size_diff;
@@ -85,15 +85,17 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::block_pool(void * memblock,
   //    and repeat at 2.
 
   // Count the assumed data in units of BLOCK_SIZE.
-  std::size_t assumed_size = adjusted_size / BLOCK_SIZE;
-  std::size_t remainder = adjusted_size - (assumed_size * BLOCK_SIZE);
-  std::size_t metadata_size = block_alignment<sizeof(std::size_t)>::adjust_size(
-      std::ceil((assumed_size * 8) / float(BITS_PER_SIZE_T)));
+  fhtagn::size_t assumed_size = adjusted_size / BLOCK_SIZE;
+  fhtagn::size_t remainder = adjusted_size - (assumed_size * BLOCK_SIZE);
+  fhtagn::size_t metadata_size = block_alignment<sizeof(fhtagn::size_t)>::adjust_size(
+      static_cast<fhtagn::size_t>(
+        std::ceil((assumed_size * 8) / float(BITS_PER_SIZE_T))));
   do {
     --assumed_size;
     remainder = adjusted_size - (assumed_size * BLOCK_SIZE);
-    metadata_size = block_alignment<sizeof(std::size_t)>::adjust_size(
-        std::ceil((assumed_size * 8) / float(BITS_PER_SIZE_T)));
+    metadata_size = block_alignment<sizeof(fhtagn::size_t)>::adjust_size(
+        static_cast<fhtagn::size_t>(
+          std::ceil((assumed_size * 8) / float(BITS_PER_SIZE_T))));
   } while (metadata_size > remainder);
 
   // Throw bad_alloc if we can't split off enough metadata.
@@ -101,10 +103,10 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::block_pool(void * memblock,
     throw std::bad_alloc();
   }
 
-  // On the assumption that BLOCK_SIZE is a multiple of std::size_t, we'll place
+  // On the assumption that BLOCK_SIZE is a multiple of fhtagn::size_t, we'll place
   // the metadata behind the data, because that automatically aligns it properly.
   m_size = assumed_size;
-  m_metadata = reinterpret_cast<std::size_t *>(
+  m_metadata = reinterpret_cast<fhtagn::size_t *>(
       pointer(m_memblock).char_ptr + (m_size * BLOCK_SIZE));
   ::memset(m_metadata, 0, metadata_size);
 }
@@ -112,12 +114,12 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::block_pool(void * memblock,
 
 
 template <
-  std::size_t BLOCK_SIZE,
+  fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
   typename block_alignmentT
 >
 void *
-block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc(std::size_t size)
+block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc(fhtagn::size_t size)
 {
   if (!size) {
     return NULL;
@@ -131,10 +133,10 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc(std::size_t size)
 
   // Find the segment (described by how many bits fit into a size_t) for the
   // first free block of memory.
-  std::size_t * metadata = m_metadata;
-  std::size_t segment = 0;
+  fhtagn::size_t * metadata = m_metadata;
+  fhtagn::size_t segment = 0;
   do {
-    if (*metadata ^ ~std::size_t(0)) {
+    if (*metadata ^ ~fhtagn::size_t(0)) {
       // Got a metadata where not all bits are set. We can allocate from here!
       break;
     }
@@ -145,8 +147,8 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc(std::size_t size)
 
 
   // Within the segment, search backwards (easier/more portable) for a free bit
-  std::size_t mask = 1;
-  std::size_t offs = BITS_PER_SIZE_T;
+  fhtagn::size_t mask = 1;
+  fhtagn::size_t offs = BITS_PER_SIZE_T;
   do {
     if (!(*metadata & mask)) {
       // Got a zero bit, that's the one we want to allocate.
@@ -159,7 +161,7 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc(std::size_t size)
 
   // Translate to index. The offset is (BITS_PER_SIZE_T - offs) because we
   // searched backwards above.
-  std::size_t index = (segment * BITS_PER_SIZE_T) + (BITS_PER_SIZE_T - offs);
+  fhtagn::size_t index = (segment * BITS_PER_SIZE_T) + (BITS_PER_SIZE_T - offs);
 
   // We *may* have more metadata than data, i.e. if we have a number of entries
   // not divisible by the number of bits in a size_t. So let's first check whether
@@ -178,13 +180,13 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc(std::size_t size)
 
 
 template <
-  std::size_t BLOCK_SIZE,
+  fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
   typename block_alignmentT
 >
 void *
 block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::realloc(void * ptr,
-    std::size_t new_size)
+    fhtagn::size_t new_size)
 {
   typename mutex_t::scoped_lock lock(m_mutex);
 
@@ -203,7 +205,7 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::realloc(void * ptr,
 
 
 template <
-  std::size_t BLOCK_SIZE,
+  fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
   typename block_alignmentT
 >
@@ -222,27 +224,27 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::free(void * ptr)
   }
 
   // Calculate index of the ptr into m_memblock.
-  std::size_t index = (pointer(ptr).char_ptr - pointer(m_memblock).char_ptr)
+  fhtagn::size_t index = (pointer(ptr).char_ptr - pointer(m_memblock).char_ptr)
     / BLOCK_SIZE;
 
   // Translate that into segment and offset. Note that the offset should really
   // be (BITS_PER_SIZE_T - (index % BITS_PER_SIZE_T)), but in order to use it
   // to shift the mask (below), we'd need to invert it yet again.
-  std::size_t segment = index / BITS_PER_SIZE_T;
-  std::size_t offset = index % BITS_PER_SIZE_T;
+  fhtagn::size_t segment = index / BITS_PER_SIZE_T;
+  fhtagn::size_t offset = index % BITS_PER_SIZE_T;
 
-  std::size_t mask = 1;
+  fhtagn::size_t mask = 1;
   mask <<= offset;
 
   // Toggle bit for the pointer to mark it free.
-  std::size_t * metadata = m_metadata + segment;
+  fhtagn::size_t * metadata = m_metadata + segment;
   *metadata ^= mask;
 }
 
 
 
 template <
-  std::size_t BLOCK_SIZE,
+  fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
   typename block_alignmentT
 >
@@ -253,8 +255,8 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::in_use() const
 
   // The pool is in use if any of the metadata items has any bit set. Simple,
   // really.
-  std::size_t * metadata = m_metadata;
-  std::size_t segment = 0;
+  fhtagn::size_t * metadata = m_metadata;
+  fhtagn::size_t segment = 0;
   do {
     if (*metadata) {
       return true;
@@ -271,11 +273,11 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::in_use() const
 
 
 template <
-  std::size_t BLOCK_SIZE,
+  fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
   typename block_alignmentT
 >
-std::size_t
+fhtagn::size_t
 block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc_size(void * ptr) const
 {
   if (!ptr) {

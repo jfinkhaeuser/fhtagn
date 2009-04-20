@@ -55,7 +55,7 @@ namespace memory {
  * boundary.
  **/
 template <
-  std::size_t T_BLOCK_SIZE = sizeof(std::size_t)
+  fhtagn::size_t T_BLOCK_SIZE = sizeof(fhtagn::size_t)
 >
 struct block_alignment
 {
@@ -63,9 +63,9 @@ struct block_alignment
     BLOCK_SIZE = T_BLOCK_SIZE,
   };
 
-  static inline std::size_t adjust_size(std::size_t size)
+  static inline fhtagn::size_t adjust_size(fhtagn::size_t size)
   {
-    std::size_t remainder = size % BLOCK_SIZE;
+    fhtagn::size_t remainder = size % BLOCK_SIZE;
     if (!remainder) {
       return size;
     }
@@ -76,7 +76,7 @@ struct block_alignment
   static inline void * adjust_pointer(void * ptr)
   {
     return reinterpret_cast<void *>(
-        adjust_size(reinterpret_cast<std::size_t>(ptr)));
+        adjust_size(reinterpret_cast<fhtagn::size_t>(ptr)));
   }
 };
 

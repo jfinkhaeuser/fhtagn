@@ -50,7 +50,7 @@ template <
   typename block_alignmentT
 >
 fixed_pool<mutexT, block_alignmentT>::fixed_pool(void * memblock,
-    std::size_t size)
+    fhtagn::size_t size)
   : m_memblock(memblock)
   , m_size(size)
 {
@@ -64,9 +64,9 @@ fixed_pool<mutexT, block_alignmentT>::fixed_pool(void * memblock,
   // |----|xxxx|xxxx|----|  fully adjusted memory block
 
   void * adjusted_start = block_alignment_t::adjust_pointer(m_memblock);
-  std::size_t size_diff = pointer(adjusted_start).char_ptr
+  fhtagn::size_t size_diff = pointer(adjusted_start).char_ptr
     - pointer(m_memblock).char_ptr;
-  std::size_t adjusted_size = m_size - size_diff;
+  fhtagn::size_t adjusted_size = m_size - size_diff;
 
   size_diff = adjusted_size % block_alignment_t::BLOCK_SIZE;
   adjusted_size -= size_diff;
@@ -85,7 +85,7 @@ template <
   typename block_alignmentT
 >
 typename fixed_pool<mutexT, block_alignmentT>::segment *
-fixed_pool<mutexT, block_alignmentT>::allocate_segment(std::size_t size)
+fixed_pool<mutexT, block_alignmentT>::allocate_segment(fhtagn::size_t size)
 {
   // We search for a suitable segment in two passes. In the first pass, we try
   // to find segments with exactly the requested size, so that we don't need to
@@ -120,7 +120,7 @@ fixed_pool<mutexT, block_alignmentT>::allocate_segment(std::size_t size)
   //      it's our last chance for finding enough space.
   // For the time being, we'll consider creating zero-sized segments the
   // lesser evil.
-  std::size_t full_size = size + segment::header_size();
+  fhtagn::size_t full_size = size + segment::header_size();
 
   seg = m_start;
   while (seg->status == segment::ALLOCATED || seg->size < full_size) {
@@ -157,7 +157,7 @@ template <
   typename block_alignmentT
 >
 void *
-fixed_pool<mutexT, block_alignmentT>::alloc(std::size_t size)
+fixed_pool<mutexT, block_alignmentT>::alloc(fhtagn::size_t size)
 {
   if (!size) {
     return NULL;
@@ -183,7 +183,7 @@ template <
 >
 void *
 fixed_pool<mutexT, block_alignmentT>::realloc(void * ptr,
-    std::size_t new_size)
+    fhtagn::size_t new_size)
 {
   if (!new_size) {
     return NULL;
@@ -212,7 +212,7 @@ fixed_pool<mutexT, block_alignmentT>::realloc(void * ptr,
     // split the segment.
     if (new_size <= seg->size - segment::header_size()) {
 
-      std::size_t new_seg_size = seg->size - new_size;
+      fhtagn::size_t new_seg_size = seg->size - new_size;
       seg->size = new_size;
 
       void * new_seg_addr = pointer(seg).char_ptr + seg->full_size();
@@ -234,7 +234,7 @@ fixed_pool<mutexT, block_alignmentT>::realloc(void * ptr,
   {
     // The next segment may be a candidate. Calculate the combined size for
     // both, and check whether that'd be enough.
-    std::size_t combined_size = seg->size + seg->next->full_size();
+    fhtagn::size_t combined_size = seg->size + seg->next->full_size();
     if (combined_size >= new_size) {
       // This is awesome, the new size would fit. There are however a few cases
       // here, that need careful handling.
@@ -440,7 +440,7 @@ template <
   typename mutexT,
   typename block_alignmentT
 >
-std::size_t
+fhtagn::size_t
 fixed_pool<mutexT, block_alignmentT>::alloc_size(void * ptr) const
 {
   if (!ptr) {

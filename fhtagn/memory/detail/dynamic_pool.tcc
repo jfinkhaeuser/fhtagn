@@ -51,7 +51,7 @@ template <
   typename mutexT
 >
 void *
-dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::alloc(std::size_t size)
+dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::alloc(fhtagn::size_t size)
 {
   typename mutex_t::scoped_lock lock(m_mutex);
   return lockfree_alloc(size);
@@ -66,7 +66,7 @@ template <
 >
 void *
 dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::lockfree_alloc(
-    std::size_t size)
+    fhtagn::size_t size)
 {
 
   // Iterate over all pools and try to allocate from each of them. If one
@@ -164,7 +164,7 @@ template <
 >
 void *
 dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::realloc(void * ptr,
-    std::size_t new_size)
+    fhtagn::size_t new_size)
 {
   if (!ptr) {
     return alloc(new_size);
@@ -261,7 +261,7 @@ template <
   int MEMORY_BLOCK_SIZE,
   typename mutexT
 >
-std::size_t
+fhtagn::size_t
 dynamic_pool<poolT, MEMORY_BLOCK_SIZE, mutexT>::alloc_size(void * ptr) const
 {
   if (!ptr) {

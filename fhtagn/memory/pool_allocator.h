@@ -152,7 +152,7 @@ public:
   typedef value_type const *  const_pointer;
   typedef value_type &        reference;
   typedef value_type const &  const_reference;
-  typedef std::size_t         size_type;
+  typedef fhtagn::size_t      size_type;
   typedef std::ptrdiff_t      difference_type;
 
 
