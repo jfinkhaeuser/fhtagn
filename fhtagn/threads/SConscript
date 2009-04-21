@@ -13,9 +13,11 @@ SOURCES = [
 HEADERS = [
   'tasklet.h',
   'lock_policy.h',
+  'future.h',
   os.path.join('detail', 'mutex_concepts.h'),
   os.path.join('detail', 'fake_mutex.h'),
   os.path.join('detail', 'pseudo_mutex.h'),
+  os.path.join('detail', 'future.tcc'),
 ]
 
 env.addSources('fhtagn', SOURCES)

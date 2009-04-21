@@ -41,6 +41,7 @@
 
 #include <fhtagn/threads/tasklet.h>
 #include <fhtagn/threads/lock_policy.h>
+#include <fhtagn/threads/future.h>
 
 namespace {
 
@@ -305,6 +306,18 @@ struct mutex_test
 
 
 
+fhtagn::size_t future_func()
+{
+  return 42;
+}
+
+fhtagn::size_t throwing_future_func()
+{
+  throw std::runtime_error("This is expected.");
+  return 42;
+}
+
+
 } // anonymous namespace
 
 class ThreadsTest
@@ -321,6 +334,8 @@ public:
 
         CPPUNIT_TEST(testMutexConcepts);
         CPPUNIT_TEST(testMutexes);
+
+        CPPUNIT_TEST(testFutures);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -634,6 +649,33 @@ private:
           m.test_timed_lock_recursive();
           m.test_shared_lock();
         }
+    }
+
+
+    void testFutures()
+    {
+      namespace th = fhtagn::threads;
+
+      // immediate evaluation
+      {
+        th::future<fhtagn::size_t> f(&future_func);
+        fhtagn::size_t x = f;
+        CPPUNIT_ASSERT_EQUAL(fhtagn::size_t(42), x);
+      }
+
+      // lazy evaluation
+      {
+        th::future<fhtagn::size_t> f(&future_func, th::futures::lazy_evaluate());
+        fhtagn::size_t x = f;
+        CPPUNIT_ASSERT_EQUAL(fhtagn::size_t(42), x);
+      }
+
+      // future and exception
+      {
+        th::future<fhtagn::size_t> f(&throwing_future_func);
+        fhtagn::size_t x = 0;
+        CPPUNIT_ASSERT_THROW(x = f, th::futures::exception);
+      }
     }
 };
 
