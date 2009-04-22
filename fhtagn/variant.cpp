@@ -38,14 +38,14 @@
 
 namespace fhtagn {
 
-boost::shared_ptr<variant> variant::invalid_value;
+fhtagn::shared_ptr<variant> variant::invalid_value;
 
 
 void
 variant::instanciate_invalid_value()
 {
     if (!invalid_value) {
-        invalid_value = boost::shared_ptr<variant>(new variant(IS_INVALID));
+        invalid_value = fhtagn::shared_ptr<variant>(new variant(IS_INVALID));
     }
 }
 

@@ -40,7 +40,6 @@
 #endif
 
 #include <fhtagn/fhtagn.h>
-#include <fhtagn/property.h>
 
 #include <string>
 #include <exception>
@@ -48,7 +47,9 @@
 #include <boost/signal.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
-#include <boost/shared_ptr.hpp>
+
+#include <fhtagn/shared_ptr.h>
+#include <fhtagn/property.h>
 
 namespace fhtagn {
 namespace threads {
@@ -158,7 +159,7 @@ private:
 
   // By pimpl-ing the future, future objects become copyable - they've
   // got read-only semantics, so sharing an impl doesn't hurt.
-  boost::shared_ptr<future_impl>  m_impl;
+  fhtagn::shared_ptr<future_impl> m_impl;
 };
 
 

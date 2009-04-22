@@ -49,7 +49,8 @@
 #include <functional>
 
 #include <boost/static_assert.hpp>
-#include <boost/shared_ptr.hpp>
+
+#include <fhtagn/shared_ptr.h>
 
 /**
  * Call this macro to specialize the variant for use with the specified type.
@@ -595,7 +596,7 @@ private:
      * functions returns an invalid value.
      **/
     static void instanciate_invalid_value();
-    static boost::shared_ptr<variant> invalid_value;
+    static fhtagn::shared_ptr<variant> invalid_value;
 };
 
 

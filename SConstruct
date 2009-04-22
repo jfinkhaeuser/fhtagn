@@ -58,7 +58,6 @@ class FhtagnEnvironment(ExtendedEnvironment):
       )
 
     mandatory_headers = [
-
       # C++ headers (representing STL)
       ('C++', 'cmath'),
       ('C++', 'iostream'),
@@ -66,8 +65,13 @@ class FhtagnEnvironment(ExtendedEnvironment):
 
       # C++ headers (representing boost)
       ('C++', 'boost/cstdint.hpp'),
-      ('C++', 'boost/shared_ptr.hpp'),
       ('C++', 'boost/integer_traits.hpp'),
+    ]
+
+    optional_headers = [
+      # C++ headers
+      ('C++', 'tr1/memory'),
+      ('C++', 'boost/shared_ptr.hpp'),
     ]
 
     optional_types = [
@@ -109,6 +113,15 @@ class FhtagnEnvironment(ExtendedEnvironment):
 
 
     if not self.checkMandatoryHeaders(conf, mandatory_headers):
+      return False
+
+    self.checkOptionalHeaders(conf, optional_headers)
+    if env.has_key('HAVE_TR1_MEMORY'):
+      print '>> Using shared_ptr from TR1'
+    elif  env.has_key('HAVE_BOOST_SHARED_PTR_HPP'):
+      print '>> Using shared_ptr from boost'
+    else:
+      print '>> Did not find a shared_ptr definition from either TR1 or boost!'
       return False
 
     self.checkOptionalTypes(conf, optional_types)

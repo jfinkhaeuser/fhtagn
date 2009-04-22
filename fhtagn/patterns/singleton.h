@@ -39,9 +39,10 @@
 #error You are trying to include a C++ only header file
 #endif
 
-#include <boost/shared_ptr.hpp>
 
 #include <fhtagn/fhtagn.h>
+
+#include <fhtagn/shared_ptr.h>
 #include <fhtagn/threads/lock_policy.h>
 
 namespace fhtagn {
@@ -159,8 +160,8 @@ public:
   /**
    * Embedded types.
    **/
-  typedef boost::shared_ptr<wrappedT> shared_ptr;
-  typedef boost::shared_ptr<creatorT> creator_shared_ptr;
+  typedef fhtagn::shared_ptr<wrappedT> shared_ptr;
+  typedef fhtagn::shared_ptr<creatorT> creator_shared_ptr;
   typedef mutexT mutex_type;
 
   /**

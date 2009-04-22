@@ -41,8 +41,7 @@
 
 #include <fhtagn/fhtagn.h>
 
-#include <boost/shared_ptr.hpp>
-
+#include <fhtagn/shared_ptr.h>
 #include <fhtagn/memory/memory_pool.h>
 
 namespace fhtagn {
@@ -118,7 +117,7 @@ public:
    * Convenience typedefs
    **/
   typedef memory_poolT                      memory_pool_t;
-  typedef boost::shared_ptr<memory_pool_t>  memory_pool_ptr;
+  typedef fhtagn::shared_ptr<memory_pool_t> memory_pool_ptr;
 
   /**
    * Global memory pool. While shared_ptr itself may be thread safe, access to

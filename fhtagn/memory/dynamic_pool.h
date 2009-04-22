@@ -43,8 +43,7 @@
 
 #include <map>
 
-#include <boost/shared_ptr.hpp>
-
+#include <fhtagn/shared_ptr.h>
 #include <fhtagn/memory/memory_pool.h>
 #include <fhtagn/memory/utility.h>
 #include <fhtagn/threads/lock_policy.h>
@@ -99,7 +98,7 @@ public:
 
 private:
 
-  typedef boost::shared_ptr<pool_t>       pool_ptr;
+  typedef fhtagn::shared_ptr<pool_t>      pool_ptr;
   typedef std::pair<void *, void *>       pool_key_t;
   typedef std::map<pool_key_t, pool_ptr>  pool_map_t;
 

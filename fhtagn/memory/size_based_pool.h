@@ -146,9 +146,9 @@ private:
   };
 
 
-  typedef boost::shared_ptr<virtual_pool_base>      virtual_pool_ptr;
-  typedef std::map<fhtagn::size_t, virtual_pool_ptr>   pool_map_t;
-  typedef std::map<void *, fhtagn::size_t>             pointer_size_map_t;
+  typedef fhtagn::shared_ptr<virtual_pool_base>       virtual_pool_ptr;
+  typedef std::map<fhtagn::size_t, virtual_pool_ptr>  pool_map_t;
+  typedef std::map<void *, fhtagn::size_t>            pointer_size_map_t;
 
   template <int I>
   struct pool_creator
