@@ -63,7 +63,7 @@ future<return_valueT>::future(typename future::func_type::slot_type slot)
   : property_t(this, &future<return_valueT>::get)
   , m_thread(NULL)
   , m_value(NULL)
-  , m_caught_ex(NULL)
+  , m_exception_message(NULL)
 {
   m_func.connect(slot);
   start_thread();
@@ -79,7 +79,7 @@ future<return_valueT>::future(typename future::func_type::slot_type slot,
   : property_t(this, &future::get)
   , m_thread(NULL)
   , m_value(NULL)
-  , m_caught_ex(NULL)
+  , m_exception_message(NULL)
 {
   m_func.connect(slot);
 }
@@ -97,7 +97,7 @@ future<return_valueT>::~future()
   }
 
   delete m_value;
-  delete m_caught_ex;
+  delete m_exception_message;
 }
 
 
@@ -121,22 +121,21 @@ return_valueT
 future<return_valueT>::get() const
 {
   boost::mutex::scoped_lock l(m_mutex);
-  if (!(m_value || m_caught_ex)) {
+  if (!(m_value || m_exception_message)) {
     // If there's no thread, start it. That happens with lazy evaluation.
     if (!m_thread) {
       const_cast<future*>(this)->start_thread();
     }
 
     // Wait for the thread to finish.
-    while (!(m_value || m_caught_ex)) {
+    while (!(m_value || m_exception_message)) {
       m_finish.wait(l);
     }
   }
 
   // May need to throw an exception.
-  if (m_caught_ex) {
-    std::string msg = m_caught_ex->what();
-    throw futures::exception(msg.c_str());
+  if (m_exception_message) {
+    throw futures::exception(*m_exception_message);
   }
 
   // Return value!
@@ -152,24 +151,24 @@ void
 future<return_valueT>::thread_runner()
 {
   return_valueT * value = NULL;
-  futures::exception * caught_ex = NULL;
+  std::string * exception_message = NULL;
   try {
     value = new return_valueT(m_func());
 
   } catch (std::exception const & ex) {
     boost::mutex::scoped_lock l(m_mutex);
-    caught_ex = new futures::exception(ex.what());
+    exception_message = new std::string(ex.what());
 
   } catch (...) {
     boost::mutex::scoped_lock l(m_mutex);
-    caught_ex = new futures::exception("Unspecified exception occurred in "
+    exception_message = new std::string("Unspecified exception occurred in "
         "bound function.");
   }
 
   // Store value and signal that we're done.
   boost::mutex::scoped_lock l(m_mutex);
   m_value = value;
-  m_caught_ex = caught_ex;
+  m_exception_message = exception_message;
 
   m_finish.notify_all();
 }

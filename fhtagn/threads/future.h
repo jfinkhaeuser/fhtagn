@@ -42,6 +42,7 @@
 #include <fhtagn/fhtagn.h>
 #include <fhtagn/property.h>
 
+#include <string>
 #include <exception>
 
 #include <boost/signal.hpp>
@@ -86,12 +87,21 @@ struct exception
  * Reading the value will block until the thread used to calculate it finishes.
  * Once the thread is finished, the future's value can be read without further
  * delays.
+ *
+ * Note #1: futures are not designed to be thread-safe. That is, some thought
+ *          into making them thread-safe had to be invested purely by virtue of
+ *          them abstracting thread creation and destruction. But it would not
+ *          be advisable to share a future instance between multiple threads.
+ *
+ * Note #2: futures are non-copyable for the time being; making them copyable
+ *          would be an improvement.
  **/
 template <
   typename return_valueT
 >
 class future
-  : public fhtagn::property<
+  : public boost::noncopyable
+  , public fhtagn::property<
       return_valueT,
       future<return_valueT>,
       fhtagn::read_only_property
@@ -129,7 +139,8 @@ private:
   // Getter - see fhtagn/property.h for details
   inline return_valueT get() const;
 
-  // Helper function to call the bound function and set m_value or m_caught_ex
+  // Helper function to call the bound function and set m_value or exception
+  // text.
   inline void thread_runner();
 
   // Bound function
@@ -144,8 +155,8 @@ private:
   // Result of the bound function. Pointer, so we can avoid default-
   // construction and (possible) save expensive setup.
   return_valueT *           m_value;
-  // Optional exception.
-  futures::exception *      m_caught_ex;
+  // Optional exception message.
+  std::string *             m_exception_message;
 };
 
 
