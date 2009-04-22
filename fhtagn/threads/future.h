@@ -48,6 +48,7 @@
 #include <boost/signal.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace fhtagn {
 namespace threads {
@@ -92,16 +93,12 @@ struct exception
  *          into making them thread-safe had to be invested purely by virtue of
  *          them abstracting thread creation and destruction. But it would not
  *          be advisable to share a future instance between multiple threads.
- *
- * Note #2: futures are non-copyable for the time being; making them copyable
- *          would be an improvement.
  **/
 template <
   typename return_valueT
 >
 class future
-  : public boost::noncopyable
-  , public fhtagn::property<
+  : public fhtagn::property<
       return_valueT,
       future<return_valueT>,
       fhtagn::read_only_property
@@ -127,36 +124,41 @@ public:
   inline future(typename func_type::slot_type slot);
   inline future(typename func_type::slot_type slot, futures::lazy_evaluate const &);
 
-  /**
-   * Destructor. Will join the spawned thread, if any.
-   **/
-  inline ~future();
-
 private:
-  // Spawns the calculating thread.
-  inline void start_thread();
-
   // Getter - see fhtagn/property.h for details
   inline return_valueT get() const;
 
-  // Helper function to call the bound function and set m_value or exception
-  // text.
-  inline void thread_runner();
+  struct future_impl
+  {
+    inline future_impl();
+    inline ~future_impl();
 
-  // Bound function
-  func_type                 m_func;
-  // Internal thread in which the bound function is executed.
-  boost::thread *           m_thread;
-  // Condition to signal a change in the m_stopped flag.
-  mutable boost::condition  m_finish;
-  // Mutex used with the condition variable above
-  mutable boost::mutex      m_mutex;
+    // Spawns the calculating thread.
+    inline void start_thread();
 
-  // Result of the bound function. Pointer, so we can avoid default-
-  // construction and (possible) save expensive setup.
-  return_valueT *           m_value;
-  // Optional exception message.
-  std::string *             m_exception_message;
+    // Helper function to call the bound function and set m_value or exception
+    // text.
+    inline void thread_runner();
+
+    // Bound function
+    func_type         m_func;
+    // Internal thread in which the bound function is executed.
+    boost::thread *   m_thread;
+    // Condition to signal a change in the m_stopped flag.
+    boost::condition  m_finish;
+    // Mutex used with the condition variable above
+    boost::mutex      m_mutex;
+
+    // Result of the bound function. Pointer, so we can avoid default-
+    // construction and (possible) save expensive setup.
+    return_valueT *   m_value;
+    // Optional exception message.
+    std::string *     m_exception_message;
+  };
+
+  // By pimpl-ing the future, future objects become copyable - they've
+  // got read-only semantics, so sharing an impl doesn't hurt.
+  boost::shared_ptr<future_impl>  m_impl;
 };
 
 

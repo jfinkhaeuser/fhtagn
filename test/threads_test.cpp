@@ -676,6 +676,15 @@ private:
         fhtagn::size_t x = 0;
         CPPUNIT_ASSERT_THROW(x = f, th::futures::exception);
       }
+
+      // copy futures
+      {
+        th::future<fhtagn::size_t> f1(&future_func);
+        th::future<fhtagn::size_t> f2 = f1;
+        fhtagn::size_t x = f1;
+        CPPUNIT_ASSERT_EQUAL(fhtagn::size_t(42), x);
+        CPPUNIT_ASSERT_EQUAL(f1, f2);
+      }
     }
 };
 

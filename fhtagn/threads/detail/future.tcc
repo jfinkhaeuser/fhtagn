@@ -54,19 +54,16 @@ exception::exception(std::string const & msg)
 
 
 /*****************************************************************************
- * future
+ * future::future_impl
  **/
 template <
   typename return_valueT
 >
-future<return_valueT>::future(typename future::func_type::slot_type slot)
-  : property_t(this, &future<return_valueT>::get)
-  , m_thread(NULL)
+future<return_valueT>::future_impl::future_impl()
+  : m_thread(NULL)
   , m_value(NULL)
   , m_exception_message(NULL)
 {
-  m_func.connect(slot);
-  start_thread();
 }
 
 
@@ -74,22 +71,7 @@ future<return_valueT>::future(typename future::func_type::slot_type slot)
 template <
   typename return_valueT
 >
-future<return_valueT>::future(typename future::func_type::slot_type slot,
-    futures::lazy_evaluate const &)
-  : property_t(this, &future::get)
-  , m_thread(NULL)
-  , m_value(NULL)
-  , m_exception_message(NULL)
-{
-  m_func.connect(slot);
-}
-
-
-
-template <
-  typename return_valueT
->
-future<return_valueT>::~future()
+future<return_valueT>::future_impl::~future_impl()
 {
   if (m_thread) {
     m_thread->join();
@@ -106,9 +88,9 @@ template <
   typename return_valueT
 >
 void
-future<return_valueT>::start_thread()
+future<return_valueT>::future_impl::start_thread()
 {
-  m_thread = new boost::thread(boost::bind(&future::thread_runner,
+  m_thread = new boost::thread(boost::bind(&future_impl::thread_runner,
         this));
 }
 
@@ -117,38 +99,8 @@ future<return_valueT>::start_thread()
 template <
   typename return_valueT
 >
-return_valueT
-future<return_valueT>::get() const
-{
-  boost::mutex::scoped_lock l(m_mutex);
-  if (!(m_value || m_exception_message)) {
-    // If there's no thread, start it. That happens with lazy evaluation.
-    if (!m_thread) {
-      const_cast<future*>(this)->start_thread();
-    }
-
-    // Wait for the thread to finish.
-    while (!(m_value || m_exception_message)) {
-      m_finish.wait(l);
-    }
-  }
-
-  // May need to throw an exception.
-  if (m_exception_message) {
-    throw futures::exception(*m_exception_message);
-  }
-
-  // Return value!
-  return *m_value;
-}
-
-
-
-template <
-  typename return_valueT
->
 void
-future<return_valueT>::thread_runner()
+future<return_valueT>::future_impl::thread_runner()
 {
   return_valueT * value = NULL;
   std::string * exception_message = NULL;
@@ -171,6 +123,68 @@ future<return_valueT>::thread_runner()
   m_exception_message = exception_message;
 
   m_finish.notify_all();
+}
+
+
+
+
+
+
+/*****************************************************************************
+ * future
+ **/
+template <
+  typename return_valueT
+>
+future<return_valueT>::future(typename future::func_type::slot_type slot)
+  : property_t(this, &future<return_valueT>::get)
+  , m_impl(new future_impl())
+{
+  m_impl->m_func.connect(slot);
+  m_impl->start_thread();
+}
+
+
+
+template <
+  typename return_valueT
+>
+future<return_valueT>::future(typename future::func_type::slot_type slot,
+    futures::lazy_evaluate const &)
+  : property_t(this, &future::get)
+  , m_impl(new future_impl())
+{
+  m_impl->m_func.connect(slot);
+}
+
+
+
+template <
+  typename return_valueT
+>
+return_valueT
+future<return_valueT>::get() const
+{
+  boost::mutex::scoped_lock l(m_impl->m_mutex);
+  if (!(m_impl->m_value || m_impl->m_exception_message)) {
+    // If there's no thread, start it. That happens with lazy evaluation.
+    if (!m_impl->m_thread) {
+      m_impl->start_thread();
+    }
+
+    // Wait for the thread to finish.
+    while (!(m_impl->m_value || m_impl->m_exception_message)) {
+      m_impl->m_finish.wait(l);
+    }
+  }
+
+  // May need to throw an exception.
+  if (m_impl->m_exception_message) {
+    throw futures::exception(*m_impl->m_exception_message);
+  }
+
+  // Return value!
+  return *m_impl->m_value;
 }
 
 
