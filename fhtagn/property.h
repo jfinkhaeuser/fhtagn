@@ -158,6 +158,36 @@ struct write_only_property
  * Explicitly not provided are operators that read the property value, modify
  * it, and return a temporary with the result, such as (for example) a simple
  * addition operator, because it makes no sense to do so for a property.
+ *
+ * Note: The property class can also be used to implement classes with e.g.
+ *       read-only or write-only value semantics:
+ *
+ *          template <
+ *            typename reprT
+ *          >
+ *          struct read_only
+ *            : public property<
+ *                reprT,
+ *                read_only<reprT>,
+ *                read_only_property
+ *              >
+ *          {
+ *            inline read_only(reprT const & initial_value)
+ *              : property<reprT, read_only<reprT>, read_only_property>(this,
+ *                  &read_only<reprT>::get)
+ *              , m_value(initial_value)
+ *            {
+ *            }
+ *
+ *            inline reprT get() const
+ *            {
+ *              return m_value;
+ *            }
+ *
+ *            reprT m_value;
+ *          };
+ *
+ *       A class that does just that can be found in threads/future.h
  **/
 template <
     /** The type to "simulate" in the property */
