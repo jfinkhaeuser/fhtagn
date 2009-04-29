@@ -39,6 +39,8 @@
 #error You are trying to include a C++ only header file
 #endif
 
+#include <string.h>
+
 #include <stdexcept>
 #include <algorithm>
 #include <boost/bind.hpp>
@@ -175,7 +177,7 @@ struct child_container
   // Vector-like functions - minimal interface for the child container
   inline child_container()
   {
-    ::bzero(m_data, CHILD_NODES * sizeof(node_ptr));
+    ::memset(m_data, 0, CHILD_NODES * sizeof(node_ptr));
   }
 
   inline ~child_container()
