@@ -454,7 +454,12 @@ private:
       unlimited_tree_t unlimited_tree;
 
       typedef std::vector<int> vector_t;
-      vector_t::size_type expected_max_size = vector_t::size_type(-1) / sizeof(vector_t::value_type);
+      vector_t::size_type expected_max_size = 0;
+      {
+        typedef std::vector<int *> int_ptr_vector_t;
+        expected_max_size = int_ptr_vector_t::size_type(-1)
+          / sizeof(int_ptr_vector_t::value_type);
+      }
       testNTreeGeneric(unlimited_tree, expected_max_size);
 
       // Test operator->
