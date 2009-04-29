@@ -13,6 +13,7 @@ if env.has_key('FHTAGN_CPPUNIT_VERSION'):
     'allocator_test.cpp',
     'misc_test.cpp',
     'meta_test.cpp',
+    'container_test.cpp',
     'testdriver.cpp',
   ]
 
