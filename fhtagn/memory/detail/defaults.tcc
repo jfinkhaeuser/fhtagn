@@ -206,7 +206,7 @@ template <
   typename T
 >
 void
-default_object_traits<T>::construct(T * p, const T & t)
+default_object_traits<T>::construct(T * p, T const & t)
 {
   new(p) T(t);
 }
