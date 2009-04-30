@@ -39,6 +39,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <fhtagn/meta/comparison.h>
 #include <fhtagn/meta/for.h>
 
 namespace {
@@ -91,12 +92,48 @@ class MetaTest
 public:
     CPPUNIT_TEST_SUITE(MetaTest);
 
+      CPPUNIT_TEST(testComparison);
       CPPUNIT_TEST(testDynamicFor);
       CPPUNIT_TEST(testStaticFor);
 
     CPPUNIT_TEST_SUITE_END();
 
 private:
+    void testComparison()
+    {
+      namespace meta = fhtagn::meta;
+
+      // equal
+      CPPUNIT_ASSERT_EQUAL(true,  bool(meta::equal<42, 42>::value));
+      CPPUNIT_ASSERT_EQUAL(false, bool(meta::equal<42, 43>::value));
+
+      // not_equal
+      CPPUNIT_ASSERT_EQUAL(false, bool(meta::not_equal<42, 42>::value));
+      CPPUNIT_ASSERT_EQUAL(true,  bool(meta::not_equal<42, 43>::value));
+
+      // greater
+      CPPUNIT_ASSERT_EQUAL(false, bool(meta::greater<42, 42>::value));
+      CPPUNIT_ASSERT_EQUAL(false, bool(meta::greater<42, 43>::value));
+      CPPUNIT_ASSERT_EQUAL(true,  bool(meta::greater<43, 42>::value));
+
+      // less
+      CPPUNIT_ASSERT_EQUAL(false, bool(meta::less<42, 42>::value));
+      CPPUNIT_ASSERT_EQUAL(true,  bool(meta::less<42, 43>::value));
+      CPPUNIT_ASSERT_EQUAL(false, bool(meta::less<43, 42>::value));
+
+      // greater_equal
+      CPPUNIT_ASSERT_EQUAL(true,  bool(meta::greater_equal<42, 42>::value));
+      CPPUNIT_ASSERT_EQUAL(false, bool(meta::greater_equal<42, 43>::value));
+      CPPUNIT_ASSERT_EQUAL(true,  bool(meta::greater_equal<43, 42>::value));
+
+      // less_equal
+      CPPUNIT_ASSERT_EQUAL(true,  bool(meta::less_equal<42, 42>::value));
+      CPPUNIT_ASSERT_EQUAL(true,  bool(meta::less_equal<42, 43>::value));
+      CPPUNIT_ASSERT_EQUAL(false, bool(meta::less_equal<43, 42>::value));
+    }
+
+
+
     void testDynamicFor()
     {
       namespace meta = fhtagn::meta;
@@ -128,6 +165,20 @@ private:
         meta::dynamic_for<0, 10, inc_twice>(f);
         CPPUNIT_ASSERT_EQUAL(20, test_sum);
       }
+
+      // Test both functor with a custom comparator.
+      test_sum = 0;
+      {
+        meta::dynamic_for<0, 10, meta::less_equal>(&dynamic_for_functor1);
+        CPPUNIT_ASSERT_EQUAL(55, test_sum);
+      }
+
+      test_sum = 0;
+      {
+        dynamic_for_functor2 f;
+        meta::dynamic_for<0, 10, meta::less_equal>(f);
+        CPPUNIT_ASSERT_EQUAL(55, test_sum);
+      }
     }
 
 
@@ -135,6 +186,7 @@ private:
     {
       namespace meta = fhtagn::meta;
 
+      // *** Tests with default comparator
       // Test functor with default increments and no aditional parameter
       test_sum = 0;
       {
@@ -161,6 +213,35 @@ private:
       {
         meta::static_for<0, 10, inc_twice, static_functor>(3);
         CPPUNIT_ASSERT_EQUAL(20 * 3, test_sum);
+      }
+
+      // *** Tests with non-default comparator
+      // Test functor with default increments and no aditional parameter
+      test_sum = 0;
+      {
+        meta::static_for<0, 10, meta::less_equal, static_functor>();
+        CPPUNIT_ASSERT_EQUAL(55, test_sum);
+      }
+
+      // Test functor with increments by two and no additional parameter
+      test_sum = 0;
+      {
+        meta::static_for<0, 10, inc_twice, meta::less_equal, static_functor>();
+        CPPUNIT_ASSERT_EQUAL(30, test_sum);
+      }
+
+      // Test functor with default increments and an addtional parameter
+      test_sum = 0;
+      {
+        meta::static_for<0, 10, meta::less_equal, static_functor>(3);
+        CPPUNIT_ASSERT_EQUAL(55 * 3, test_sum);
+      }
+
+      // Test functor with increments by two and an additional parameter
+      test_sum = 0;
+      {
+        meta::static_for<0, 10, inc_twice, meta::less_equal, static_functor>(3);
+        CPPUNIT_ASSERT_EQUAL(30 * 3, test_sum);
       }
     }
 };
