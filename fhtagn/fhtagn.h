@@ -39,6 +39,12 @@
 #error You are trying to include a C++ only header file
 #endif
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#endif
+
 #include <fhtagn/fhtagn-config.h>
 
 #ifndef HAVE_BOOST_CSTDINT_HPP
