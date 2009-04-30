@@ -28,6 +28,10 @@ if env.has_key('HAVE_GETRUSAGE') and env.has_key('HAVE_GETTIMEOFDAY'):
   SOURCES += [
     os.path.join('platform', 'unix', 'stopwatch.cpp'),
   ]
+elif not env.is_unix():
+  SOURCES += [
+    os.path.join('platform', 'win32', 'stopwatch.cpp'),
+  ]
 
 env.addSources('fhtagn_util', SOURCES)
 env.addHeaders('fhtagn_util', HEADERS)
