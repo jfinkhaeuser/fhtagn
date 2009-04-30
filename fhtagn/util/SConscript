@@ -5,6 +5,8 @@
 # included in this source distribution.
 Import('env')
 
+import os.path
+
 SOURCES = []
 
 HEADERS = []
@@ -19,12 +21,12 @@ if env.has_key('FHTAGN_CPPUNIT_VERSION'):
   ]
 
 
+HEADERS += [
+  'stopwatch.h',
+]
 if env.has_key('HAVE_GETRUSAGE') and env.has_key('HAVE_GETTIMEOFDAY'):
   SOURCES += [
-    'stopwatch.cpp',
-  ]
-  HEADERS += [
-    'stopwatch.h',
+    os.path.join('platform', 'unix', 'stopwatch.cpp'),
   ]
 
 env.addSources('fhtagn_util', SOURCES)
