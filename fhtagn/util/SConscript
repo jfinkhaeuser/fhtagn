@@ -24,6 +24,9 @@ if env.has_key('FHTAGN_CPPUNIT_VERSION'):
 HEADERS += [
   'stopwatch.h',
 ]
+SOURCES += [
+  'stopwatch.cpp',
+]
 if env.has_key('HAVE_GETRUSAGE') and env.has_key('HAVE_GETTIMEOFDAY'):
   SOURCES += [
     os.path.join('platform', 'unix', 'stopwatch.cpp'),

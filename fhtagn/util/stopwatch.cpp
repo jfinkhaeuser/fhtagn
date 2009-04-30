@@ -35,13 +35,6 @@
 
 #include <fhtagn/util/stopwatch.h>
 
-#include <errno.h>
-#include <string.h>
-#include <sys/resource.h>
-#include <sys/time.h>
-
-#include <stdexcept>
-
 namespace fhtagn {
 namespace util {
 
@@ -56,33 +49,6 @@ void
 stopwatch::reset()
 {
   m_start = m_checkpoint = get_absolute_times();
-}
-
-
-
-stopwatch::times_t
-stopwatch::get_absolute_times()
-{
-  // Initialize wall time
-  struct ::timeval tv;
-  int res = ::gettimeofday(&tv, NULL);
-  if (-1 == res) {
-    throw std::runtime_error(::strerror(errno));
-  }
-  usec_t wall_time = (static_cast<usec_t>(tv.tv_sec) * 1000000) + tv.tv_usec;
-
-  // Initialize system & user time
-  struct ::rusage usg;
-  res = ::getrusage(RUSAGE_SELF, &usg);
-  if (-1 == res) {
-    throw std::runtime_error(::strerror(errno));
-  }
-  usec_t sys_time = (static_cast<usec_t>(usg.ru_stime.tv_sec) * 1000000)
-    + usg.ru_stime.tv_usec;
-  usec_t user_time = (static_cast<usec_t>(usg.ru_utime.tv_sec) * 1000000)
-    + usg.ru_utime.tv_usec;
-
-  return boost::make_tuple(wall_time, sys_time, user_time);
 }
 
 

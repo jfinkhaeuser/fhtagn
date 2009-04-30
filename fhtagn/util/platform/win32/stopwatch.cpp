@@ -40,21 +40,6 @@
 namespace fhtagn {
 namespace util {
 
-stopwatch::stopwatch()
-{
-  reset();
-}
-
-
-
-void
-stopwatch::reset()
-{
-  m_start = m_checkpoint = get_absolute_times();
-}
-
-
-
 stopwatch::times_t
 stopwatch::get_absolute_times()
 {
@@ -103,33 +88,5 @@ stopwatch::get_absolute_times()
 
   return boost::make_tuple(wall_time, sys_time, user_time);
 }
-
-
-
-stopwatch::times_t
-stopwatch::get_times()
-{
-  times_t current = get_absolute_times();
-  times_t result = boost::make_tuple(
-      current.get<0>() - m_checkpoint.get<0>(),
-      current.get<1>() - m_checkpoint.get<1>(),
-      current.get<2>() - m_checkpoint.get<2>());
-  m_checkpoint = current;
-  return result;
-}
-
-
-
-stopwatch::times_t
-stopwatch::get_cumulative_times()
-{
-  times_t current = get_absolute_times();
-  times_t result = boost::make_tuple(
-      current.get<0>() - m_start.get<0>(),
-      current.get<1>() - m_start.get<1>(),
-      current.get<2>() - m_start.get<2>());
-  return result;
-}
-
 
 }} // namespace fhtagn::util
