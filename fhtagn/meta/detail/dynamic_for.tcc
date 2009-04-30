@@ -39,6 +39,8 @@
 #error You are trying to include a C++ only header file
 #endif
 
+#include <fhtagn/meta/comparison.h>
+
 namespace fhtagn {
 namespace meta {
 
@@ -62,7 +64,8 @@ template <
   int TRUE_FALSE, // result of exit condition; next is specialized on this below
   int CURRENT,    // current value of the for loop counter
   int END,        // end of the for loop
-  template <int> class incrementorT
+  template <int> class incrementorT,
+  template <int, int> class comparatorT
 >
 struct next
 {
@@ -71,10 +74,11 @@ struct next
   {
     func(CURRENT);
     next<
-      incrementorT<CURRENT>::value != END,
+      comparatorT<incrementorT<CURRENT>::value, END>::value,
       incrementorT<CURRENT>::value,
       END,
-      incrementorT
+      incrementorT,
+      comparatorT
     >::run(func);
   }
 
@@ -83,10 +87,11 @@ struct next
   {
     func(CURRENT);
     next<
-      incrementorT<CURRENT>::value != END,
+      comparatorT<incrementorT<CURRENT>::value, END>::value,
       incrementorT<CURRENT>::value,
       END,
-      incrementorT
+      incrementorT,
+      comparatorT
     >::run(func);
   }
 };
@@ -99,9 +104,10 @@ struct next
 template <
   int CURRENT,
   int END,
-  template <int> class incrementorT
+  template <int> class incrementorT,
+  template <int, int> class comparatorT
 >
-struct next<0, CURRENT, END, incrementorT>
+struct next<0, CURRENT, END, incrementorT, comparatorT>
 {
   template <typename functorT>
   inline static void run(functorT & f)
@@ -129,10 +135,11 @@ inline void
 dynamic_for(functorT const & func)
 {
   detail::dynamic_for_helpers::next<
-    START != END,
+    ::fhtagn::meta::less<START, END>::value,
     START,
     END,
-    ::fhtagn::meta::inc_once
+    ::fhtagn::meta::inc_once,
+    ::fhtagn::meta::less
   >::template run<functorT>(func);
 }
 
@@ -147,10 +154,50 @@ inline void
 dynamic_for(functorT const & func)
 {
   detail::dynamic_for_helpers::next<
-    START != END,
+    ::fhtagn::meta::less<START, END>::value,
     START,
     END,
-    incrementorT
+    incrementorT,
+    ::fhtagn::meta::less
+  >::template run<functorT>(func);
+}
+
+
+template <
+  int START,
+  int END,
+  template <int, int> class comparatorT,
+  typename functorT
+>
+inline void
+dynamic_for(functorT const & func)
+{
+  detail::dynamic_for_helpers::next<
+    comparatorT<START, END>::value,
+    START,
+    END,
+    ::fhtagn::meta::inc_once,
+    comparatorT
+  >::template run<functorT>(func);
+}
+
+
+template <
+  int START,
+  int END,
+  template <int> class incrementorT,
+  template <int, int> class comparatorT,
+  typename functorT
+>
+inline void
+dynamic_for(functorT const & func)
+{
+  detail::dynamic_for_helpers::next<
+    comparatorT<START, END>::value,
+    START,
+    END,
+    incrementorT,
+    comparatorT
   >::template run<functorT>(func);
 }
 
@@ -164,10 +211,11 @@ inline void
 dynamic_for(functorT & func)
 {
   detail::dynamic_for_helpers::next<
-    START != END,
+    ::fhtagn::meta::less<START, END>::value,
     START,
     END,
-    ::fhtagn::meta::inc_once
+    ::fhtagn::meta::inc_once,
+    ::fhtagn::meta::less
   >::template run<functorT>(func);
 }
 
@@ -182,10 +230,50 @@ inline void
 dynamic_for(functorT & func)
 {
   detail::dynamic_for_helpers::next<
-    START != END,
+    ::fhtagn::meta::less<START, END>::value,
     START,
     END,
-    incrementorT
+    incrementorT,
+    ::fhtagn::meta::less
+  >::template run<functorT>(func);
+}
+
+
+template <
+  int START,
+  int END,
+  template <int, int> class comparatorT,
+  typename functorT
+>
+inline void
+dynamic_for(functorT & func)
+{
+  detail::dynamic_for_helpers::next<
+    comparatorT<START, END>::value,
+    START,
+    END,
+    ::fhtagn::meta::inc_once,
+    comparatorT
+  >::template run<functorT>(func);
+}
+
+
+template <
+  int START,
+  int END,
+  template <int> class incrementorT,
+  template <int, int> class comparatorT,
+  typename functorT
+>
+inline void
+dynamic_for(functorT & func)
+{
+  detail::dynamic_for_helpers::next<
+    comparatorT<START, END>::value,
+    START,
+    END,
+    incrementorT,
+    comparatorT
   >::template run<functorT>(func);
 }
 

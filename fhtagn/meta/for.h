@@ -134,6 +134,12 @@ struct divide
  * The dynamic_for construct allows for an optional template parameter to change
  * how the loop increments the current iteration value. By default, the inc_once
  * structure above is used.
+ *
+ * Finally, dynamic_for allows for an optional comparator template parameter, to
+ * change how the current loop value is compared to the end loop value. By
+ * default, a less operation is performed, to follow the runtime for loop
+ * semantics. Alternatively, you can also choose to supply any of the
+ * comparators from fhtagn/meta/comparison.h, or your custom constructs.
  **/
 template <
   int START,
@@ -157,6 +163,27 @@ dynamic_for(functorT const & func);
 template <
   int START,
   int END,
+  template <int, int> class comparatorT,
+  typename functorT
+>
+inline void
+dynamic_for(functorT const & func);
+
+
+template <
+  int START,
+  int END,
+  template <int> class incrementorT,
+  template <int, int> class comparatorT,
+  typename functorT
+>
+inline void
+dynamic_for(functorT const & func);
+
+
+template <
+  int START,
+  int END,
   typename functorT
 >
 inline void
@@ -167,6 +194,27 @@ template <
   int START,
   int END,
   template <int> class incrementorT,
+  typename functorT
+>
+inline void
+dynamic_for(functorT & func);
+
+
+template <
+  int START,
+  int END,
+  template <int, int> class comparatorT,
+  typename functorT
+>
+inline void
+dynamic_for(functorT & func);
+
+
+template <
+  int START,
+  int END,
+  template <int> class incrementorT,
+  template <int, int> class comparatorT,
   typename functorT
 >
 inline void
@@ -208,6 +256,16 @@ dynamic_for(functorT & func);
  * The static_for construct allows for an optional template parameter to change
  * how the loop increments the current iteration value. By default, the inc_once
  * structure above is used.
+ *
+ * Finally, dynamic_for allows for an optional comparator template parameter, to
+ * change how the current loop value is compared to the end loop value. By
+ * default, a less operation is performed, to follow the runtime for loop
+ * semantics. Alternatively, you can also choose to supply any of the
+ * comparators from fhtagn/meta/comparison.h, or your custom constructs.
+ **/
+
+/**
+ * No parameter
  **/
 template <
   int START,
@@ -231,6 +289,30 @@ static_for();
 template <
   int START,
   int END,
+  template <int, int> class comparatorT,
+  template <int> class functorT
+>
+inline void
+static_for();
+
+
+template <
+  int START,
+  int END,
+  template <int> class incrementorT,
+  template <int, int> class comparatorT,
+  template <int> class functorT
+>
+inline void
+static_for();
+
+
+/**
+ * Parameter by reference
+ **/
+template <
+  int START,
+  int END,
   template <int> class functorT,
   typename functor_paramT
 >
@@ -252,6 +334,32 @@ static_for(functor_paramT & param);
 template <
   int START,
   int END,
+  template <int, int> class comparatorT,
+  template <int> class functorT,
+  typename functor_paramT
+>
+inline void
+static_for(functor_paramT & param);
+
+
+template <
+  int START,
+  int END,
+  template <int> class incrementorT,
+  template <int, int> class comparatorT,
+  template <int> class functorT,
+  typename functor_paramT
+>
+inline void
+static_for(functor_paramT & param);
+
+
+/**
+ * Parameter by const reference
+ **/
+template <
+  int START,
+  int END,
   template <int> class functorT,
   typename functor_paramT
 >
@@ -268,6 +376,31 @@ template <
 >
 inline void
 static_for(functor_paramT const & param);
+
+
+template <
+  int START,
+  int END,
+  template <int, int> class comparatorT,
+  template <int> class functorT,
+  typename functor_paramT
+>
+inline void
+static_for(functor_paramT const & param);
+
+
+template <
+  int START,
+  int END,
+  template <int> class incrementorT,
+  template <int, int> class comparatorT,
+  template <int> class functorT,
+  typename functor_paramT
+>
+inline void
+static_for(functor_paramT const & param);
+
+
 
 }} // namespace fhtagn::meta
 
