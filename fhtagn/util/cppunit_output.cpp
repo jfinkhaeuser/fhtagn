@@ -117,7 +117,7 @@ struct line
 VerboseOutput::VerboseOutput(std::ostream & os,
         fhtagn::size_t indent_by /* = 2 */, fhtagn::size_t max_line /* = 79 */)
     : m_results()
-    , m_status(OK)
+    , m_status(ST_OK)
     , m_os(os)
     , m_indent_by(indent_by)
     , m_max_line(max_line)
@@ -145,7 +145,7 @@ VerboseOutput::startTest(CppUnit::Test * test)
 void
 VerboseOutput::addFailure(CppUnit::TestFailure const & failure)
 {
-    m_status = (failure.isError() ? ERROR : FAILURE);
+    m_status = (failure.isError() ? ST_ERROR : ST_FAILURE);
 }
 
 
@@ -154,22 +154,22 @@ void
 VerboseOutput::endTest(CppUnit::Test * test)
 {
     switch (m_status) {
-        case OK:
+        case ST_OK:
             m_os << "OK" << std::endl;
             ++(m_results.top().successes);
             break;
-        case FAILURE:
+        case ST_FAILURE:
             m_os << "FAILURE" << std::endl;
             ++(m_results.top().failures);
             break;
-        case ERROR:
+        case ST_ERROR:
             m_os << "ERROR" << std::endl;
             ++(m_results.top().errors);
             break;
         default:
             assert(0);
     }
-    m_status = OK;
+    m_status = ST_OK;
 }
 
 
@@ -236,7 +236,7 @@ VerboseOutput::endTestRun(CppUnit::Test * test,
 
 HTMLOutput::HTMLOutput(std::ostream & os)
     : m_results()
-    , m_status(OK)
+    , m_status(ST_OK)
     , m_os(os)
 {
     results tmp = { 0, 0, 0 };
@@ -260,7 +260,7 @@ HTMLOutput::startTest(CppUnit::Test * test)
 void
 HTMLOutput::addFailure(CppUnit::TestFailure const & failure)
 {
-    m_status = (failure.isError() ? ERROR : FAILURE);
+    m_status = (failure.isError() ? ST_ERROR : ST_FAILURE);
 }
 
 
@@ -272,15 +272,15 @@ HTMLOutput::endTest(CppUnit::Test * test)
     m_os << "</pre></td>" << std::endl;
 
     switch (m_status) {
-        case OK:
+        case ST_OK:
             m_os << "<td class=\"test-success\">OK</td>" << std::endl;
             ++(m_results.top().successes);
             break;
-        case FAILURE:
+        case ST_FAILURE:
             m_os << "<td class=\"test-failure\">FAILURE</td>" << std::endl;
             ++(m_results.top().failures);
             break;
-        case ERROR:
+        case ST_ERROR:
             m_os << "<td class=\"test-error\">ERROR</td>" << std::endl;
             ++(m_results.top().errors);
             break;
@@ -289,7 +289,7 @@ HTMLOutput::endTest(CppUnit::Test * test)
     }
     m_os << "</tr></table>" << std::endl;
 
-    m_status = OK;
+    m_status = ST_OK;
 }
 
 

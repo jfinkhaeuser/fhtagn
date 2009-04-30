@@ -81,9 +81,9 @@ private:
      **/
     enum status
     {
-        OK,
-        FAILURE,
-        ERROR
+        ST_OK,
+        ST_FAILURE,
+        ST_ERROR
     };
 
 
@@ -168,9 +168,9 @@ private:
      **/
     enum status
     {
-        OK,
-        FAILURE,
-        ERROR
+        ST_OK,
+        ST_FAILURE,
+        ST_ERROR
     };
 
 
