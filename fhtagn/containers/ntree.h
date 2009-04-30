@@ -41,11 +41,8 @@
 
 #include <fhtagn/fhtagn.h>
 
-#include <stdint.h>
-
-#if defined(HAVE_BOOST)
+#include <boost/cstdint.hpp>
 #include <boost/concept_check.hpp>
-#endif // HAVE_BOOST
 
 namespace fhtagn {
 namespace containers {
@@ -148,7 +145,6 @@ struct default_contained_store;
 } // namespace detail
 
 
-#if defined(HAVE_BOOST)
 
 namespace concepts {
 
@@ -184,7 +180,6 @@ struct ContainedStoreConcept
 
 } // namespace concepts
 
-#endif // HAVE_BOOST
 
 template <
   fhtagn::size_t CHILD_NODES,
@@ -257,10 +252,8 @@ public:
   // Value store related
   typedef contained_storeT contained_store_t;
 
-#if defined(HAVE_BOOST)
   BOOST_CLASS_REQUIRE(contained_store_t, fhtagn::containers::concepts,
       ContainedStoreConcept);
-#endif // HAVE_BOOST
 
   /**
    * Emdedded typedefs for container semantics. This is a container of n_tree,
