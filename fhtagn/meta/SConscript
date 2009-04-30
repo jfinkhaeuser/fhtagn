@@ -11,6 +11,7 @@ SOURCES = [
 
 HEADERS = [
   'for.h',
+  'comparison.h',
   os.path.join('detail', 'dynamic_for.tcc'),
   os.path.join('detail', 'static_for.tcc'),
 ]
