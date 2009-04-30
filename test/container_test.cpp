@@ -113,8 +113,8 @@ private:
       // Iterating over a leaf node should result in a zero-step loop
       std::size_t loop_count = 0;
       typename n_treeT::const_iterator tree_end = tree.end();
-      for (typename n_treeT::const_iterator tree_iter = tree.begin()
-          ; tree_iter != tree_end ; ++tree_iter)
+      for (typename n_treeT::const_iterator t_iter = tree.begin()
+          ; t_iter != tree_end ; ++t_iter)
       {
         ++loop_count;
       }
@@ -130,32 +130,32 @@ private:
       // Now we have children, let's iterate over them. None of the iterators
       // should resolve to anything but NULL, though.
       tree_end = tree.end();
-      for (typename n_treeT::const_iterator tree_iter = tree.begin()
-          ; tree_iter != tree_end ; ++tree_iter)
+      for (typename n_treeT::const_iterator t_iter = tree.begin()
+          ; t_iter != tree_end ; ++t_iter)
       {
-        CPPUNIT_ASSERT_EQUAL(static_cast<n_treeT *>(NULL), *tree_iter);
+        CPPUNIT_ASSERT_EQUAL(static_cast<n_treeT *>(NULL), *t_iter);
       }
 
       typename n_treeT::iterator mutable_tree_end = tree.end();
-      for (typename n_treeT::iterator tree_iter = tree.begin()
-          ; tree_iter != mutable_tree_end ; ++tree_iter)
+      for (typename n_treeT::iterator t_iter = tree.begin()
+          ; t_iter != mutable_tree_end ; ++t_iter)
       {
-        CPPUNIT_ASSERT_EQUAL(static_cast<n_treeT *>(NULL), *tree_iter);
+        CPPUNIT_ASSERT_EQUAL(static_cast<n_treeT *>(NULL), *t_iter);
       }
 
       // The same goes for reverse iteration.
       typename n_treeT::const_reverse_iterator tree_rend = tree.rend();
-      for (typename n_treeT::const_reverse_iterator tree_iter = tree.rbegin()
-          ; tree_iter != tree_rend ; ++tree_iter)
+      for (typename n_treeT::const_reverse_iterator t_iter = tree.rbegin()
+          ; t_iter != tree_rend ; ++t_iter)
       {
-        CPPUNIT_ASSERT_EQUAL(static_cast<n_treeT *>(NULL), *tree_iter);
+        CPPUNIT_ASSERT_EQUAL(static_cast<n_treeT *>(NULL), *t_iter);
       }
 
       typename n_treeT::reverse_iterator mutable_tree_rend = tree.rend();
-      for (typename n_treeT::reverse_iterator tree_iter = tree.rbegin()
-          ; tree_iter != mutable_tree_rend ; ++tree_iter)
+      for (typename n_treeT::reverse_iterator t_iter = tree.rbegin()
+          ; t_iter != mutable_tree_rend ; ++t_iter)
       {
-        CPPUNIT_ASSERT_EQUAL(static_cast<n_treeT *>(NULL), *tree_iter);
+        CPPUNIT_ASSERT_EQUAL(static_cast<n_treeT *>(NULL), *t_iter);
       }
 
       // Now we'll fill values into two of the child nodes. We're very specific
@@ -173,10 +173,10 @@ private:
       // two non-empty children.
       std::size_t non_empty = 0;
       tree_end = tree.end();
-      for (typename n_treeT::iterator tree_iter = tree.begin()
-          ; tree_iter != tree_end ; ++tree_iter)
+      for (typename n_treeT::iterator t_iter = tree.begin()
+          ; t_iter != tree_end ; ++t_iter)
       {
-        if (*tree_iter) {
+        if (*t_iter) {
           ++non_empty;
         }
       }
