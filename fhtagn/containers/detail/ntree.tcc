@@ -1027,6 +1027,10 @@ void
 n_tree<CHILD_NODES, containedT, allocatorT, contained_storeT>::erase(
     iterator position)
 {
+  if (position == end()) {
+    return;
+  }
+
   if (!*position) {
     return;
   }
