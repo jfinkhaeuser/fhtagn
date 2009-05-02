@@ -49,11 +49,13 @@ namespace memory {
 template <
   fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
-block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::block_pool(void * memblock,
-    fhtagn::size_t size)
-  : m_memblock(memblock)
+block_pool<BLOCK_SIZE, mutexT, block_alignmentT, adoption_policyT>::block_pool(
+    void * memblock, fhtagn::size_t size)
+  : adoption_policyT<char>(static_cast<char *>(memblock))
+  , m_memblock(memblock)
 {
   // We don't really need to know the beginning of the memory block and it's
   // full size; all we need is the block-aligned pointer, and a size that takes
@@ -116,10 +118,12 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::block_pool(void * memblock,
 template <
   fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 void *
-block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc(fhtagn::size_t size)
+block_pool<BLOCK_SIZE, mutexT, block_alignmentT, adoption_policyT>::alloc(
+    fhtagn::size_t size)
 {
   if (!size) {
     return NULL;
@@ -182,11 +186,12 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc(fhtagn::size_t size)
 template <
   fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 void *
-block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::realloc(void * ptr,
-    fhtagn::size_t new_size)
+block_pool<BLOCK_SIZE, mutexT, block_alignmentT, adoption_policyT>::realloc(
+    void * ptr, fhtagn::size_t new_size)
 {
   typename mutex_t::scoped_lock lock(m_mutex);
 
@@ -207,10 +212,12 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::realloc(void * ptr,
 template <
   fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 void
-block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::free(void * ptr)
+block_pool<BLOCK_SIZE, mutexT, block_alignmentT, adoption_policyT>::free(
+    void * ptr)
 {
   if (!ptr) {
     return;
@@ -246,10 +253,11 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::free(void * ptr)
 template <
   fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 bool
-block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::in_use() const
+block_pool<BLOCK_SIZE, mutexT, block_alignmentT, adoption_policyT>::in_use() const
 {
   typename mutex_t::scoped_lock lock(m_mutex);
 
@@ -275,10 +283,12 @@ block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::in_use() const
 template <
   fhtagn::size_t BLOCK_SIZE,
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 fhtagn::size_t
-block_pool<BLOCK_SIZE, mutexT, block_alignmentT>::alloc_size(void * ptr) const
+block_pool<BLOCK_SIZE, mutexT, block_alignmentT, adoption_policyT>::alloc_size(
+    void * ptr) const
 {
   if (!ptr) {
     return 0;

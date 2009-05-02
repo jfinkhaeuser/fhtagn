@@ -43,6 +43,7 @@
 
 #include <fhtagn/memory/utility.h>
 #include <fhtagn/memory/memory_pool.h>
+#include <fhtagn/memory/common.h>
 #include <fhtagn/threads/lock_policy.h>
 
 namespace fhtagn {
@@ -64,9 +65,10 @@ namespace memory {
 template <
   fhtagn::size_t BLOCK_SIZE,
   typename mutexT = fhtagn::threads::fake_mutex,
-  typename block_alignmentT = block_alignment<>
+  typename block_alignmentT = block_alignment<>,
+  template <typename> class adoption_policyT = fhtagn::memory::ignore_array_policy
 >
-class block_pool
+class block_pool : public adoption_policyT<char>
 {
 public:
   /**

@@ -43,6 +43,7 @@
 
 #include <fhtagn/memory/utility.h>
 #include <fhtagn/memory/memory_pool.h>
+#include <fhtagn/memory/common.h>
 #include <fhtagn/threads/lock_policy.h>
 
 namespace fhtagn {
@@ -51,7 +52,8 @@ namespace memory {
 /**
  * The fixed_pool class implements a MemoryPool that allocates space from a
  * fixed-sized chunk of preallocated memory. fixed_pool does not allocate this
- * chunk of memory itself, nor frees it, but merely subdivides it.
+ * chunk of memory itself, nor frees it (by default, that can be changed via
+ * the adoption_policyT template parameter), but merely subdivides it.
  *
  * As a result, fixed_pool works equally well with a heap and stack memory;
  * it's the perfect pool for allocation a reasonably small amount of stack or
@@ -72,9 +74,10 @@ namespace memory {
  **/
 template <
   typename mutexT = fhtagn::threads::fake_mutex,
-  typename block_alignmentT = block_alignment<>
+  typename block_alignmentT = block_alignment<>,
+  template <typename> class adoption_policyT = fhtagn::memory::ignore_array_policy
 >
-class fixed_pool
+class fixed_pool : public adoption_policyT<char>
 {
 public:
   /**

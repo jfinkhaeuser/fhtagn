@@ -47,11 +47,13 @@ namespace memory {
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
-fixed_pool<mutexT, block_alignmentT>::fixed_pool(void * memblock,
-    fhtagn::size_t size)
-  : m_memblock(memblock)
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::fixed_pool(
+    void * memblock, fhtagn::size_t size)
+  : adoption_policyT<char>(static_cast<char*>(memblock))
+  , m_memblock(memblock)
   , m_size(size)
 {
   // We don't really need to know the beginning of the memory block and it's
@@ -82,10 +84,12 @@ fixed_pool<mutexT, block_alignmentT>::fixed_pool(void * memblock,
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
-typename fixed_pool<mutexT, block_alignmentT>::segment *
-fixed_pool<mutexT, block_alignmentT>::allocate_segment(fhtagn::size_t size)
+typename fixed_pool<mutexT, block_alignmentT, adoption_policyT>::segment *
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::allocate_segment(
+    fhtagn::size_t size)
 {
   // We search for a suitable segment in two passes. In the first pass, we try
   // to find segments with exactly the requested size, so that we don't need to
@@ -154,10 +158,12 @@ fixed_pool<mutexT, block_alignmentT>::allocate_segment(fhtagn::size_t size)
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 void *
-fixed_pool<mutexT, block_alignmentT>::alloc(fhtagn::size_t size)
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::alloc(
+    fhtagn::size_t size)
 {
   if (!size) {
     return NULL;
@@ -179,11 +185,12 @@ fixed_pool<mutexT, block_alignmentT>::alloc(fhtagn::size_t size)
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 void *
-fixed_pool<mutexT, block_alignmentT>::realloc(void * ptr,
-    fhtagn::size_t new_size)
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::realloc(
+    void * ptr, fhtagn::size_t new_size)
 {
   if (!new_size) {
     return NULL;
@@ -298,10 +305,12 @@ fixed_pool<mutexT, block_alignmentT>::realloc(void * ptr,
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
-typename fixed_pool<mutexT, block_alignmentT>::segment *
-fixed_pool<mutexT, block_alignmentT>::find_segment_for(void * ptr) const
+typename fixed_pool<mutexT, block_alignmentT, adoption_policyT>::segment *
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::find_segment_for(
+    void * ptr) const
 {
   void * end = pointer(m_memblock).char_ptr + m_size;
   if (ptr < m_memblock || ptr >= end) {
@@ -339,10 +348,11 @@ fixed_pool<mutexT, block_alignmentT>::find_segment_for(void * ptr) const
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 void
-fixed_pool<mutexT, block_alignmentT>::free(void * ptr)
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::free(void * ptr)
 {
   if (!ptr) {
     return;
@@ -362,10 +372,11 @@ fixed_pool<mutexT, block_alignmentT>::free(void * ptr)
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 bool
-fixed_pool<mutexT, block_alignmentT>::in_use() const
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::in_use() const
 {
   typename mutex_t::scoped_lock lock(m_mutex);
 
@@ -376,10 +387,11 @@ fixed_pool<mutexT, block_alignmentT>::in_use() const
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 void
-fixed_pool<mutexT, block_alignmentT>::defragment_free_list()
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::defragment_free_list()
 {
   // Since all fragments are in sequence, all we need to do is find two or more
   // free segments in a row, and merge them.
@@ -438,10 +450,12 @@ fixed_pool<mutexT, block_alignmentT>::defragment_free_list()
 
 template <
   typename mutexT,
-  typename block_alignmentT
+  typename block_alignmentT,
+  template <typename> class adoption_policyT
 >
 fhtagn::size_t
-fixed_pool<mutexT, block_alignmentT>::alloc_size(void * ptr) const
+fixed_pool<mutexT, block_alignmentT, adoption_policyT>::alloc_size(
+    void * ptr) const
 {
   if (!ptr) {
     return 0;
