@@ -87,6 +87,23 @@ public:
   typedef block_alignmentT  block_alignment_t;
 
   /**
+   * Explicit subtypes of this pool type that adopt the memory block handed to
+   * them or not.
+   **/
+  typedef fixed_pool<
+    mutexT,
+    block_alignmentT,
+    fhtagn::memory::ignore_array_policy
+  > with_ignore_policy_t;
+
+  typedef fixed_pool<
+    mutexT,
+    block_alignmentT,
+    fhtagn::memory::adopt_array_policy
+  > with_adopt_policy_t;
+
+
+  /**
    * The constructor accepts a pointer to a block of memory of the given size.
    * Note that the class does not take ownership of this memory; you must ensure
    * yourself that the memory lives at least as long as this fixed_pool

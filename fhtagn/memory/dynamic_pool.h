@@ -55,6 +55,12 @@ namespace memory {
  * The dynamic_pool class is a thin wrapper around such MemoryPool objects that
  * manage memory blocks of a fixed size, such as fixed_pool or block_pool.
  *
+ * Note that as dynamic_pool allocates memory from the heap, the underlying pool
+ * type must adopt the pointer handed to it. For that purpose, block_pool and
+ * fixed_pool both define nested types which explicitly use the adopt or ignore
+ * policy from common.h. The former nested type is what dynamic_pool uses and
+ * expects any poolT to supply.
+ *
  * It maintains a defers to a list of such pools. If allocation from one of them
  * fails, an additional such pool is created, and memory is allocated from there
  * instead.
@@ -84,8 +90,8 @@ public:
   /**
    * Convenience typedefs
    **/
-  typedef mutexT            mutex_t;
-  typedef poolT             pool_t;
+  typedef mutexT                              mutex_t;
+  typedef typename poolT::with_adopt_policy_t pool_t;
 
   /**
    * API - see memory_pool.h for details
