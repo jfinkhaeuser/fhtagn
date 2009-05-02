@@ -23,6 +23,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
     opts = self.Options(config_file)
     opts.Add(BoolOption('GCOV', 'Create code coverage files', 'no'))
 
+    self.register_check(checks.ByteorderCheck, opts)
     self.register_check(checks.BoostCheck, opts)
     self.register_check(checks.CppUnitCheck, opts)
 
@@ -56,6 +57,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
           os.path.join('fhtagn', 'fhtagn-config.h')),
         custom_tests = self['CUSTOM_TESTS']
       )
+    conf.ByteorderCheck()
 
     mandatory_headers = [
       # C++ headers (representing STL)
