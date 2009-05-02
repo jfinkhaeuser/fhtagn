@@ -180,11 +180,12 @@ size_based_pool<OBJECTS_PER_POOL, MIN_OBJECT_SIZE, MAX_OBJECT_SIZE,
   }
 
   // Now release the old pointer.
+  fhtagn::size_t old_size = iter->second;
   m_pointer_size_map.erase(iter);
 
-  fhtagn::size_t old_adjusted_size = pool_size(iter->second);
-  if (iter->second == old_adjusted_size) {
-    m_pool_map[iter->second]->free(ptr);
+  fhtagn::size_t old_adjusted_size = pool_size(old_size);
+  if (old_size == old_adjusted_size) {
+    m_pool_map[old_size]->free(ptr);
   }
   else {
     m_heap.free(ptr);
