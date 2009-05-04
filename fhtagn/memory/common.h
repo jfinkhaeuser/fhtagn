@@ -61,7 +61,7 @@ struct adopt_policy
     delete m_obj;
   }
 
-  T * & m_obj;
+  T * m_obj;
 };
 
 
@@ -79,7 +79,7 @@ struct adopt_array_policy
     delete [] m_array;
   }
 
-  T * & m_array;
+  T * m_array;
 };
 
 
