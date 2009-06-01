@@ -95,8 +95,10 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::allocate_segment(
   // to find segments with exactly the requested size, so that we don't need to
   // fragment our free memory further.
   segment * seg = m_start;
-  while (seg->status == segment::ALLOCATED || seg->size != size) {
-    if (seg->marker == segment::LAST_SEGMENT) {
+  while (static_cast<char>(segment::ALLOCATED) == seg->status
+      || seg->size != size)
+  {
+    if (segment::LAST_SEGMENT == seg->marker) {
       // Reached the end of the list, end now.
       break;
     }
@@ -105,7 +107,7 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::allocate_segment(
 
   // If the segment we've ended up with is the exact size we want, let's use
   // it!
-  if (seg->status == segment::FREE && seg->size == size) {
+  if (static_cast<char>(segment::FREE) == seg->status && seg->size == size) {
     seg->status = segment::ALLOCATED;
     return seg;
   }
@@ -127,14 +129,18 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::allocate_segment(
   fhtagn::size_t full_size = size + segment::header_size();
 
   seg = m_start;
-  while (seg->status == segment::ALLOCATED || seg->size < full_size) {
-    if (seg->marker == segment::LAST_SEGMENT) {
+  while (static_cast<char>(segment::ALLOCATED) == seg->status
+      || seg->size < full_size)
+  {
+    if (segment::LAST_SEGMENT == seg->marker) {
       break;
     }
     seg = seg->next;
   }
 
-  if (seg->status == segment::ALLOCATED || seg->size < full_size) {
+  if (static_cast<char>(segment::ALLOCATED) == seg->status
+      || seg->size < full_size)
+  {
     // If this is still the case, we didn't find a suitably sized segment and
     // need to give up.
     return NULL;
@@ -236,8 +242,8 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::realloc(
   // The best case would be if ptr's segment was followed by a free segment
   // large enough to hold the new size. Given that free segments get
   // defragmented, we only need to check the following segment.
-  if (seg->marker != segment::LAST_SEGMENT
-      && seg->next->status == segment::FREE)
+  if (segment::LAST_SEGMENT != seg->marker
+      && static_cast<char>(segment::FREE) == seg->next->status)
   {
     // The next segment may be a candidate. Calculate the combined size for
     // both, and check whether that'd be enough.
@@ -327,7 +333,7 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::find_segment_for(
   segment * seg = m_start;
 
   while (ptr != pointer(seg).char_ptr + segment::header_size()) {
-    if (seg->marker == segment::LAST_SEGMENT) {
+    if (segment::LAST_SEGMENT == seg->marker) {
       break;
     }
     seg = seg->next;
@@ -380,7 +386,7 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::in_use() const
 {
   typename mutex_t::scoped_lock lock(m_mutex);
 
-  return (m_start->marker != segment::LAST_SEGMENT);
+  return (segment::LAST_SEGMENT != m_start->marker);
 }
 
 
@@ -400,7 +406,7 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::defragment_free_list()
   segment * seg = m_start;
   do {
 
-    if (segment::FREE == seg->status) {
+    if (static_cast<char>(segment::FREE) == seg->status) {
       // If there's no current contiguous segment, start one now. That's all
       // we need to do at this point.
       if (!contiguous) {
@@ -409,7 +415,7 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::defragment_free_list()
       // All other free segments are part of the current contiguous segment
     }
 
-    else if (seg->status == segment::ALLOCATED) {
+    else if (static_cast<char>(segment::ALLOCATED) == seg->status) {
       // If there's a contiguous segment, then this current segments signals
       // the end of it.
       if (contiguous) {
@@ -431,7 +437,7 @@ fixed_pool<mutexT, block_alignmentT, adoption_policyT>::defragment_free_list()
     }
 
     // Break after last segment.
-    if (seg->marker == segment::LAST_SEGMENT) {
+    if (segment::LAST_SEGMENT == seg->marker) {
       break;
     }
     seg = seg->next;
