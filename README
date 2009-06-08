@@ -66,44 +66,36 @@ Build Configuration
 =======================
 
    At the time of writing, the Fhtagn! build defines the following build
-configuration variables and their defaults:
+configuration variables:
+
+CXX: C++ compiler to use
+
+CC: C compiler to use
 
 CXXFLAGS: Flags for the C++ compiler
-    default: -ansi -std=c++98 -Wall -Wsign-promo -fstrict-aliasing
-             -Wstrict-aliasing
-    actual: -ansi -std=c++98 -Wall -Wsign-promo -fstrict-aliasing
-            -Wstrict-aliasing -ggdb -O2
 
-    CXXFLAGS are modified depending on the BUILD_CONFIG (see below). The
-    `release' BUILD_CONFIG adds optimization flags.
+CFLAGS: Flags for the C compiler
+
+LINKFLAGS: Flags for the linker
 
 BUILD_CONFIG: Target for the build (debug|release)
     default: release
-    actual: release
 
 BUILD_LIB_TYPE: Type of library to build (static|shared|both)
-    default: both
-    actual: both
+    default: both on UNIX-like OSes, static on win32 (see below)
 
 BUILD_PREFIX: Build directory ( /path/to/BUILD_PREFIX )
     default: build
-    actual: build
-
-    The BUILD_PREFIX is relative to the root source directory.
 
 INSTALL_PREFIX: Base path for the installation. ( /path/to/INSTALL_PREFIX )
-    default: /opt/local
-    actual: /opt/local
+
+GCOV: Create code coverage files (yes|no)
 
 BOOST_PREFIX: Base path of boost installation; use this if auto-detection fails.
-              ( /path/to/BOOST_PREFIX )
-    default: None
-    actual: None
+    ( /path/to/BOOST_PREFIX )
 
 CPPUNIT_PREFIX: Base path of cppunit installation; use this if auto-detection
-                fails. ( /path/to/CPPUNIT_PREFIX )
-    default: None
-    actual: None
+    fails. ( /path/to/CPPUNIT_PREFIX )
 
 
 Platforms
@@ -114,7 +106,11 @@ hasn't been built on many platforms yet. The list of currently tested platforms
 includes:
 
    Mac OS 10.4 (Intel), using their version of GCC 4.0.1
-   Ubuntu Edgy Eft, using their version of GCC 4.1.2
+   Mac OS 10.5 (Intel), using their version of GCC 4.2.1
+   Ubuntu Liux in various versions, using several versions of GCC, on PowerPC,
+    32-bit Intel and 64-bit AMD.
+
+   Win32 builds are only partially supported at this time.
 
    If you can add more platforms to this list, please send a mail to
 fhtagn-devel@lists.sourceforge.net with details.
