@@ -20,6 +20,7 @@ HEADERS = [
   'dynamic_pool.h',
   'size_based_pool.h',
   'pool_allocator.h',
+  'common.h',
   os.path.join('detail', 'concepts.h'),
   os.path.join('detail', 'allocator.tcc'),
   os.path.join('detail', 'defaults.tcc'),
