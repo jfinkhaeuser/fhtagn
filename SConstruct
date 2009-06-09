@@ -163,7 +163,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
 
 ###############################################################################
 # initialize environment
-FHTAGN_VERSION = (0, 1) # (major, minor)
+FHTAGN_VERSION = (0, 3) # (major, minor)
 
 env = FhtagnEnvironment(FHTAGN_VERSION, LIBPATH = [
     'fhtagn',
