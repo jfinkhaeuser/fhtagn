@@ -32,7 +32,13 @@
 
 #include <fhtagn/fhtagn.h>
 
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 103800
+#define BOOST_SPIRIT_USE_OLD_NAMESPACE
+#include <boost/spirit/include/classic_core.hpp>
+#else
 #include <boost/spirit/core.hpp>
+#endif
 
 #include <fhtagn/text/decoders.h>
 
