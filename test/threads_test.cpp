@@ -24,6 +24,8 @@
  * Please send your enquiries to the copyright holder's address above.
  **/
 
+#include <cmath>
+
 #include <boost/bind.hpp>
 #include <boost/thread/xtime.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -381,9 +383,9 @@ private:
             boost::uint64_t st1 = (t1.sec * 1000000000) + t1.nsec;
             boost::uint64_t st2 = (t2.sec * 1000000000) + t2.nsec;
 
-            // The time difference must always be larger than the sleep time of
-            // 500 msec
-            CPPUNIT_ASSERT((st2 - st1) >= 500000000);
+            // The time difference must be very close to the sleep time of
+            // 500msec. We'll want no less than 0.1 msec difference.
+            CPPUNIT_ASSERT(std::labs((st2 - st1) - 500000000) < 1000000);
         }
 
     }
