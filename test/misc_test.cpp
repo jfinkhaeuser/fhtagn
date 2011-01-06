@@ -29,6 +29,9 @@
 #include <fhtagn/byteorder.h>
 #include <fhtagn/patterns/singleton.h>
 #include <fhtagn/compressed_value.h>
+#include <fhtagn/closure.h>
+
+#include <boost/bind.hpp>
 
 namespace {
 
@@ -113,6 +116,62 @@ struct large_value_t
 
 
 
+static int void_result = 0;
+void void_add(int a, int b)
+{
+  void_result = a + b;
+}
+
+
+int add(int a, int b)
+{
+  return a + b;
+}
+
+
+double subtract(double a, double b)
+{
+  return a - b;
+}
+
+
+double no_args()
+{
+  return 3.14;
+}
+
+static int void_no_args_result = 0;
+void void_no_args()
+{
+  void_no_args_result = 42;
+}
+
+struct divide
+{
+  divide()
+    : m_x(0)
+  {
+  }
+
+  divide(divide const &)
+    : m_x(-1)
+  {
+  }
+
+  double operator()(double a, int b)
+  {
+    return a / b;
+  }
+
+  int asdf(double a, double b)
+  {
+    return m_x;
+  }
+
+  int m_x;
+};
+
+
 } // anonymous namespace
 
 FHTAGN_SINGLETON_INITIALIZE
@@ -126,6 +185,7 @@ public:
         CPPUNIT_TEST(testByteOrder);
         CPPUNIT_TEST(testSingleton);
         CPPUNIT_TEST(testCompressedValue);
+        CPPUNIT_TEST(testClosures);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -229,6 +289,58 @@ private:
       cv3 = cv1;
       CPPUNIT_ASSERT_EQUAL(boost::uint8_t(42), *cv3);
 
+    }
+
+
+
+    void testClosures()
+    {
+      // Test that a function returning ints succeeds, and the result can be
+      // obtained.
+      fhtagn::closure c1 = fhtagn::make_closure<int, int, int>(&add, 1, 2);
+      int result = 0;
+      CPPUNIT_ASSERT_THROW(result = c1.result<int>(), boost::bad_any_cast);
+      c1();
+      CPPUNIT_ASSERT_NO_THROW(result = c1.result<int>());
+      CPPUNIT_ASSERT_EQUAL(3, result);
+
+      // Test that a function returning void can be used.
+      c1 = fhtagn::make_closure<void, int, int>(&void_add, 1, 2);
+      CPPUNIT_ASSERT(3 != void_result);
+      c1();
+      CPPUNIT_ASSERT_THROW(result = c1.result<int>(), boost::bad_any_cast);
+      CPPUNIT_ASSERT_EQUAL(3, void_result);
+
+      // Test that functions without arguments work.
+      c1 = fhtagn::make_closure<double>(&no_args);
+      double result2 = 0;
+      c1();
+      CPPUNIT_ASSERT_NO_THROW(result2 = c1.result<double>());
+      CPPUNIT_ASSERT_EQUAL(3.14, result2);
+
+      c1 = fhtagn::make_closure<void>(&void_no_args);
+      CPPUNIT_ASSERT_EQUAL(0, void_no_args_result);
+      c1();
+      CPPUNIT_ASSERT_EQUAL(42, void_no_args_result);
+      c1();
+
+      // Test functors.
+      c1 = fhtagn::make_closure<double, double, int>(divide(), 13, 2);
+      c1();
+      CPPUNIT_ASSERT_NO_THROW(result2 = c1.result<double>());
+      CPPUNIT_ASSERT_EQUAL(6.5, result2);
+
+      // Test bound member functions
+      divide d;
+      c1 = fhtagn::make_closure<int, double, double>(boost::bind(&divide::asdf, d, _1, _2), 3.14, 123);
+      c1();
+      CPPUNIT_ASSERT_NO_THROW(result = c1.result<int>());
+      CPPUNIT_ASSERT_EQUAL(-1, result); // Because the functor was copied
+
+      c1 = fhtagn::make_closure<int, double, double>(boost::bind(&divide::asdf, boost::ref(d), _1, _2), 3.14, 123);
+      c1();
+      CPPUNIT_ASSERT_NO_THROW(result = c1.result<int>());
+      CPPUNIT_ASSERT_EQUAL(0, result); // Because we used boost::ref
     }
 };
 
