@@ -62,7 +62,7 @@ version()
 
 
 char const * const copyright_string = "Fhtagn! " FHTAGN_STRINGIFY(FHTAGN_VERSION)
-    " - Copyright (c) 2009 by Jens Finkhaeuser.\n"
+    " - Copyright (c) 2009,2010,2011 by Jens Finkhaeuser.\n"
     "This program comes with ABSOLUTELY NO WARRANTY. For licensing details see\n"
     "the file COPYING included in the source distribution.\n";
 
