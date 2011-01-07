@@ -106,7 +106,10 @@ public:
   inline allocator(allocator const & other);
 
   template <typename U>
-  inline allocator(allocator<U> const &);
+  inline allocator(allocator<U, allocation_policyT, object_traitsT> const &);
+
+  template <typename U, typename other_policyT>
+  inline allocator(allocator<U, other_policyT, object_traitsT> const &);
 
   template <typename U, typename other_policyT, typename other_traitsT>
   inline allocator(allocator<U, other_policyT, other_traitsT> const & other);

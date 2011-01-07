@@ -79,7 +79,25 @@ template <
   typename U
 >
 allocator<T, allocation_policyT, object_traitsT>::allocator(
-    allocator<U> const &)
+    allocator<U, allocation_policyT, object_traitsT> const &)
+{
+}
+
+
+
+template <
+  typename T,
+  typename allocation_policyT,
+  typename object_traitsT
+>
+template <
+  typename U,
+  typename other_policyT
+>
+allocator<T, allocation_policyT, object_traitsT>::allocator(
+    allocator<U, other_policyT, object_traitsT> const & other)
+  : allocation_policyT(other)
+  , object_traitsT(other)
 {
 }
 

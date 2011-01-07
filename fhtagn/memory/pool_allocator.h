@@ -152,7 +152,7 @@ public:
   template<typename U>
   struct rebind
   {
-    typedef pool_allocation_policy<U> other;
+    typedef pool_allocation_policy<U, memory_poolT, tagT> other;
   };
 
 
@@ -165,10 +165,10 @@ public:
   inline explicit pool_allocation_policy(pool_allocation_policy const &);
 
   template <typename U>
-  inline explicit pool_allocation_policy(pool_allocation_policy<U> const &);
+  inline explicit pool_allocation_policy(pool_allocation_policy<U, memory_poolT, tagT> const &);
 
   template <typename U, typename other_poolT>
-  inline explicit pool_allocation_policy(pool_allocation_policy<U, other_poolT> const &);
+  inline explicit pool_allocation_policy(pool_allocation_policy<U, other_poolT, tagT> const &);
 
   template <typename U, typename other_poolT, typename other_tagT>
   inline explicit pool_allocation_policy(pool_allocation_policy<U, other_poolT, other_tagT> const &);

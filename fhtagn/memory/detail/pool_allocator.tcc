@@ -85,7 +85,7 @@ template <
   typename U
 >
 pool_allocation_policy<T, memory_poolT, tagT>::pool_allocation_policy(
-    pool_allocation_policy<U> const &)
+    pool_allocation_policy<U, memory_poolT, tagT> const &)
 {
   initialize_pool();
 }
@@ -102,7 +102,7 @@ template <
   typename other_poolT
 >
 pool_allocation_policy<T, memory_poolT, tagT>::pool_allocation_policy(
-    pool_allocation_policy<U, other_poolT> const &)
+    pool_allocation_policy<U, other_poolT, tagT> const &)
 {
   initialize_pool();
 }
@@ -231,8 +231,8 @@ template <
   typename tagT
 >
 inline bool operator==(
-    pool_allocation_policy<T1, memory_poolT> const & rhs,
-    pool_allocation_policy<T2, memory_poolT> const & lhs)
+    pool_allocation_policy<T1, memory_poolT, tagT> const & rhs,
+    pool_allocation_policy<T2, memory_poolT, tagT> const & lhs)
 {
   // Same memory_poolT, so we can if it's also the same instance.
   return (rhs.get_memory_pool() == lhs.get_memory_pool());
