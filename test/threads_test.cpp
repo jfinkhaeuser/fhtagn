@@ -128,6 +128,9 @@ struct bind_test
           wake_condition.notify_all();
         }
 
+        // Notify again in case the first sleep ended with a STOPPED state.
+        wake_condition.notify_all();
+
         // Signal that the function is finished.
         done = true;
     }
@@ -427,9 +430,14 @@ private:
 
             CPPUNIT_ASSERT(task.wakeup());
 
-            // Wait until the wakup is handled.
+            // Wait until the wakup is handled. There's a possibility for a race
+            // in that it's possible the thread has gone to sleep once more by
+            // the time we're trying to wait on the condition, in which case the
+            // thread will not notify us and stay in its sleep state.
             boost::mutex::scoped_lock l(bt.wake_mutex);
-            bt.wake_condition.wait(bt.wake_mutex);
+            if (0 == bt.wake_count) {
+              bt.wake_condition.wait(bt.wake_mutex);
+            }
             CPPUNIT_ASSERT_EQUAL(int(1), bt.wake_count);
 
             CPPUNIT_ASSERT(task.stop());
