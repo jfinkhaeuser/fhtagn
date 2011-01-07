@@ -110,6 +110,7 @@ struct closure
 
     struct closure_base
     {
+      virtual ~closure_base() {}
       virtual void invoke() = 0;
       boost::any  m_result;
     };
@@ -154,6 +155,8 @@ struct closure_wrapper
   {
   }
 
+  virtual ~closure_wrapper() {}
+
   virtual void invoke()
   {
     m_result = m_func(m_t0, m_t1, m_t2, m_t3, m_t4, m_t5, m_t6, m_t7, m_t8, m_t9);
@@ -178,25 +181,27 @@ struct closure_wrapper
 
 #define FHTAGN_CLOSURE_WRAPPER_SPECIALIZATION(z, n, unused)                         \
   template <                                                                        \
-    typename R BOOST_PP_COMMA_IF(n) \
+    typename R BOOST_PP_COMMA_IF(n)                                                 \
     BOOST_PP_ENUM_PARAMS(n, typename T)                                             \
   >                                                                                 \
   struct closure_wrapper<                                                           \
-    R BOOST_PP_COMMA_IF(n) \
+    R BOOST_PP_COMMA_IF(n)                                                          \
     BOOST_PP_ENUM_PARAMS(n, T)                                                      \
     BOOST_PP_REPEAT(BOOST_PP_SUB(10, n), FHTAGN_CLOSURE_WRAPPER_SPECIALIZED, -)     \
   > : public closure::closure_base                                                  \
   {                                                                                 \
     typedef boost::BOOST_PP_CAT(function, n) <                                      \
-      R BOOST_PP_COMMA_IF(n) \
+      R BOOST_PP_COMMA_IF(n)                                                        \
       BOOST_PP_ENUM_PARAMS(n, T)                                                    \
     > func_type;                                                                    \
                                                                                     \
     func_type m_func;                                                               \
     BOOST_PP_REPEAT(n, FHTAGN_CLOSURE_WRAPPER_MEMBER, -)                            \
                                                                                     \
-    closure_wrapper(func_type func BOOST_PP_COMMA_IF(n) \
-        BOOST_PP_ENUM_BINARY_PARAMS(n, T, const & t))   \
+    virtual ~closure_wrapper() {}                                                   \
+                                                                                    \
+    closure_wrapper(func_type func BOOST_PP_COMMA_IF(n)                             \
+        BOOST_PP_ENUM_BINARY_PARAMS(n, T, const & t))                               \
       : m_func(func)                                                                \
       BOOST_PP_REPEAT(n, FHTAGN_CLOSURE_WRAPPER_INITIALIZER, -)                     \
     {                                                                               \
@@ -218,21 +223,23 @@ struct closure_wrapper
     BOOST_PP_ENUM_PARAMS(n, typename T)                                             \
   >                                                                                 \
   struct closure_wrapper<                                                           \
-    void BOOST_PP_COMMA_IF(n) \
+    void BOOST_PP_COMMA_IF(n)                                                       \
     BOOST_PP_ENUM_PARAMS(n, T)                                                      \
     BOOST_PP_REPEAT(BOOST_PP_SUB(10, n), FHTAGN_CLOSURE_WRAPPER_SPECIALIZED, -)     \
   > : public closure::closure_base                                                  \
   {                                                                                 \
     typedef boost::BOOST_PP_CAT(function, n) <                                      \
-      void BOOST_PP_COMMA_IF(n) \
+      void BOOST_PP_COMMA_IF(n)                                                     \
       BOOST_PP_ENUM_PARAMS(n, T)                                                    \
     > func_type;                                                                    \
                                                                                     \
     func_type m_func;                                                               \
     BOOST_PP_REPEAT(n, FHTAGN_CLOSURE_WRAPPER_MEMBER, -)                            \
                                                                                     \
-    closure_wrapper(func_type func BOOST_PP_COMMA_IF(n) \
-        BOOST_PP_ENUM_BINARY_PARAMS(n, T, const & t))   \
+    virtual ~closure_wrapper() {}                                                   \
+                                                                                    \
+    closure_wrapper(func_type func BOOST_PP_COMMA_IF(n)                             \
+        BOOST_PP_ENUM_BINARY_PARAMS(n, T, const & t))                               \
       : m_func(func)                                                                \
       BOOST_PP_REPEAT(n, FHTAGN_CLOSURE_WRAPPER_INITIALIZER, -)                     \
     {                                                                               \
@@ -255,25 +262,25 @@ struct closure_wrapper
 
 #define FHTAGN_MAKE_CLOSURE(z, n, unused)                                           \
   template <                                                                        \
-    typename R BOOST_PP_COMMA_IF(n) \
+    typename R BOOST_PP_COMMA_IF(n)                                                 \
     BOOST_PP_ENUM_PARAMS(n, typename T)                                             \
   >                                                                                 \
   closure                                                                           \
   make_closure(                                                                     \
       typename closure_wrapper<                                                     \
-        R BOOST_PP_COMMA_IF(n) \
+        R BOOST_PP_COMMA_IF(n)                                                      \
         BOOST_PP_ENUM_PARAMS(n, T)                                                  \
         BOOST_PP_REPEAT(BOOST_PP_SUB(10, n), FHTAGN_CLOSURE_WRAPPER_SPECIALIZED, -) \
-      >::func_type func BOOST_PP_COMMA_IF(n) \
+      >::func_type func BOOST_PP_COMMA_IF(n)                                        \
       BOOST_PP_ENUM_BINARY_PARAMS(n, T, const & t)                                  \
   )                                                                                 \
   {                                                                                 \
     return closure_wrapper<                                                         \
-      R BOOST_PP_COMMA_IF(n) \
+      R BOOST_PP_COMMA_IF(n)                                                        \
       BOOST_PP_ENUM_PARAMS(n, T)                                                    \
       BOOST_PP_REPEAT(BOOST_PP_SUB(10, n), FHTAGN_CLOSURE_WRAPPER_SPECIALIZED, -)   \
     >(                                                                              \
-        func BOOST_PP_COMMA_IF(n) \
+        func BOOST_PP_COMMA_IF(n)                                                   \
         BOOST_PP_ENUM_PARAMS(n, t)                                                  \
     );                                                                              \
   }
