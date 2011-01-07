@@ -2,7 +2,7 @@
  * $Id$
  *
  * This file is part of the Fhtagn! C++ Library.
- * Copyright (C) 2009 Jens Finkhaeuser <unwesen@users.sourceforge.net>.
+ * Copyright (C) 2009,2010,2011 Jens Finkhaeuser <unwesen@users.sourceforge.net>.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -76,9 +76,8 @@ tasklet::stop()
     if (IS_ALIVE) {
         m_state = STOPPED;
     }
-    lock.unlock();
 
-    m_finish.notify_all();
+    m_state_change.notify_all();
     return true;
 }
 
@@ -93,7 +92,7 @@ tasklet::wait()
     }
 
     while (IS_ALIVE) {
-        m_finish.wait(lock);
+        m_state_change.wait(lock);
     }
 
     // Copy m_thread in order to be able to join it without holding m_mutex
@@ -185,14 +184,14 @@ tasklet::sleep(boost::uint32_t usecs /* = 0 */)
         while (m_state == SLEEPING) {
             if (usecs) {
                 // sleep until timeout
-                if (!m_finish.timed_wait(lock, t)) {
+                if (!m_state_change.timed_wait(lock, t)) {
                     // Timeout! We don't care what the flag says, we have to
                     // exit right now.
                     break;
                 }
             } else {
                 // sleep indefinitely
-                m_finish.wait(lock);
+                m_state_change.wait(lock);
             }
         }
 
@@ -205,6 +204,20 @@ tasklet::sleep(boost::uint32_t usecs /* = 0 */)
     return m_state;
 }
 
+
+
+bool
+tasklet::wakeup()
+{
+    boost::mutex::scoped_lock lock(m_mutex);
+    if (!m_thread) {
+        return false;
+    }
+
+    m_state = RUNNING;
+    m_state_change.notify_all();
+    return true;
+}
 
 
 
@@ -250,14 +263,12 @@ tasklet::thread_runner()
         }
     }
 
-    {
-        boost::mutex::scoped_lock lock(m_mutex);
-        if (IS_ALIVE) {
-            m_state = FINISHED;
-        }
+    boost::mutex::scoped_lock lock(m_mutex);
+    if (IS_ALIVE) {
+        m_state = FINISHED;
     }
 
-    m_finish.notify_all();
+    m_state_change.notify_all();
 }
 
 

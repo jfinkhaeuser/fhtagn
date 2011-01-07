@@ -2,7 +2,7 @@
  * $Id$
  *
  * This file is part of the Fhtagn! C++ Library.
- * Copyright (C) 2009 Jens Finkhaeuser <unwesen@users.sourceforge.net>.
+ * Copyright (C) 2009,2011 Jens Finkhaeuser <unwesen@users.sourceforge.net>.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -63,6 +63,7 @@ struct bind_test
 {
     bind_test()
         : done(false)
+        , wake_count(0)
     {
     }
 
@@ -115,7 +116,28 @@ struct bind_test
         done = true;
     }
 
+
+    void counting_member(fhtagn::threads::tasklet & t)
+    {
+        namespace th = fhtagn::threads;
+        th::tasklet::state s = th::tasklet::STANDING_BY;
+
+        while (th::tasklet::STOPPED != (s = t.sleep())) {
+          boost::mutex::scoped_lock l(wake_mutex);
+          ++wake_count;
+          wake_condition.notify_all();
+        }
+
+        // Signal that the function is finished.
+        done = true;
+    }
+
+
     bool     done;
+
+    boost::mutex      wake_mutex;
+    boost::condition  wake_condition;
+    int               wake_count;
 };
 
 
@@ -388,6 +410,31 @@ private:
             CPPUNIT_ASSERT(std::labs((st2 - st1) - 500000000) < 1000000);
         }
 
+        // Count how often the thread got woken. Since it sleeps indefinitely,
+        // it should get woken exactly twice: once due to wakeup(), and once
+        // due to stop(). The stop() one would not result in wake_count to be
+        // incremented, though.
+        {
+            bind_test bt;
+            th::tasklet task(boost::bind(&bind_test::counting_member,
+                        boost::ref(bt), _1));
+
+            CPPUNIT_ASSERT(task.start());
+
+            // Loop until the thread is running. Otherwise, wakeup() won't be
+            // able to do anything (unless the thread runs quickly).
+            while (th::tasklet::SLEEPING != task.get_state());
+
+            CPPUNIT_ASSERT(task.wakeup());
+
+            // Wait until the wakup is handled.
+            boost::mutex::scoped_lock l(bt.wake_mutex);
+            bt.wake_condition.wait(bt.wake_mutex);
+            CPPUNIT_ASSERT_EQUAL(int(1), bt.wake_count);
+
+            CPPUNIT_ASSERT(task.stop());
+            CPPUNIT_ASSERT(task.wait());
+        }
     }
 
 

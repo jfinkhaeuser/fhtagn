@@ -2,7 +2,7 @@
  * $Id$
  *
  * This file is part of the Fhtagn! C++ Library.
- * Copyright (C) 2009 Jens Finkhaeuser <unwesen@users.sourceforge.net>.
+ * Copyright (C) 2009,2010,2011 Jens Finkhaeuser <unwesen@users.sourceforge.net>.
  *
  * Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
  *
@@ -194,6 +194,15 @@ public:
 
 
     /**
+     * Counterpart to sleep() above. Wakes the thread, but does not ask it to
+     * shut down (like e.g. stop()) would.
+     *
+     * @return true if started(), else false.
+     **/
+    bool wakeup();
+
+
+    /**
      * Allows to set an error handler function for the tasklet that's invoked
      * if the bound function produces any exception derived from std::exception
      * (such as std::runtime_error, etc.).
@@ -231,8 +240,8 @@ private:
     state                   m_state;
     // Internal thread in which the bound function is executed.
     boost::thread *         m_thread;
-    // Condition to signal a change in the m_stopped flag.
-    boost::condition        m_finish;
+    // Condition to signal a change in m_state.
+    boost::condition        m_state_change;
     // Mutex to serialize access to flags and m_thread.
     mutable boost::mutex    m_mutex;
     // Mutex to serialize access to the error handler callback. It's a separate
