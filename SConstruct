@@ -23,8 +23,6 @@
 # Alternatively, licenses for commercial purposes are available as well.
 # Please send your enquiries to the copyright holder's address above.
 
-EnsureSConsVersion(0, 98, 4)
-
 from scons_util import ExtendedEnvironment
 from scons_util import checks
 
@@ -39,15 +37,15 @@ class FhtagnEnvironment(ExtendedEnvironment):
     ### Define options for config.py
     config_file = os.environ.get('SCONS_CONF', 'fhtagn.conf')
     print 'Using config file "%s"...' % config_file
-    opts = self.Options(config_file)
-    opts.Add(BoolOption('GCOV', 'Create code coverage files', 'no'))
+    vars = self.Variables(config_file)
+    vars.Add(BoolVariable('GCOV', 'Create code coverage files', 'no'))
 
-    self.register_check(checks.ByteorderCheck, opts)
-    self.register_check(checks.BoostCheck, opts)
-    self.register_check(checks.CppUnitCheck, opts)
+    self.register_check(checks.ByteorderCheck, vars)
+    self.register_check(checks.BoostCheck, vars)
+    self.register_check(checks.CppUnitCheck, vars)
 
     ### Fixup kwargs
-    kw['options'] = opts
+    kw['variables'] = vars
     kw['name'] = 'fhtagn'
     kw['version'] = version
     kw['ENV'] = os.environ
@@ -61,7 +59,7 @@ class FhtagnEnvironment(ExtendedEnvironment):
     self.init_checks('FHTAGN', 'CUSTOM_TESTS')
 
     ### Render help
-    Help(opts.GenerateHelpText(self))
+    Help(vars.GenerateHelpText(self))
 
 
   def configure(self):
@@ -205,13 +203,13 @@ if env.has_key('FHTAGN_BOOST_VERSION'):
 
 import os.path
 for subdir in SUBDIRS:
-  build_dir = os.path.join('#', env[env.BUILD_PREFIX], subdir)
+  variant_dir = os.path.join('#', env[env.BUILD_PREFIX], subdir)
   SConscript(
       os.path.join(subdir, 'SConscript'),
       exports = [
         'env',
       ],
-      build_dir = build_dir
+      variant_dir = variant_dir
     )
 
 
