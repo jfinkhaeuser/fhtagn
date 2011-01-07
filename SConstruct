@@ -2,7 +2,7 @@
 # $Id$
 #
 # This file is part of the Fhtagn! C++ Library.
-# Copyright (C) 2009 Jens Finkhaeuser <unwesen@users.sourceforge.net>.
+# Copyright (C) 2009,2010,2011 Jens Finkhaeuser <unwesen@users.sourceforge.net>.
 #
 # Author: Jens Finkhaeuser <unwesen@users.sourceforge.net>
 #
@@ -169,6 +169,9 @@ env = FhtagnEnvironment(FHTAGN_VERSION, LIBPATH = [
     'fhtagn',
     os.path.join('fhtagn', 'util'),
   ])
+# print env.Dump()
+# Exit(1)
+
 
 if not env.GetOption('clean'):
   if not env.configure():
@@ -191,6 +194,7 @@ SUBDIRS = [
   os.path.join('fhtagn', 'containers'),
   os.path.join('fhtagn', 'util'),
   'test',
+  'tools',
 ]
 
 if env.has_key('FHTAGN_BOOST_VERSION'):
@@ -273,6 +277,14 @@ if env.getSources('allocspeed'):
       LIBS = env.getLibs('allocspeed'),
       LINKFLAGS = env['LINKFLAGS'] + EXECUTABLE_EXTRA_LINKFLAGS)
   env.Default(allocspeed)
+
+
+if env.getSources('ftime'):
+  ftime_name = os.path.join('#', env[env.BUILD_PREFIX], 'tools', 'ftime')
+  ftime = env.Program(ftime_name, env.getSources('ftime'),
+      LIBS = env.getLibs('ftime'),
+      LINKFLAGS = env['LINKFLAGS'] + EXECUTABLE_EXTRA_LINKFLAGS)
+  env.Default(ftime)
 
 
 if env.is_unix():
